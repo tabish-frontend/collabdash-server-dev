@@ -1,0 +1,80 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.login = exports.signup = void 0;
+const types_1 = require("../types");
+const utils_1 = require("../utils");
+const email_1 = require("../config/email");
+const models_1 = require("../models");
+const generateAccessAndRefreshToken = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const user = yield models_1.UserModel.findById(userId);
+        const accessToken = user.generateAccessToken();
+        return accessToken;
+    }
+    catch (error) {
+        throw new utils_1.AppError("Something went wrong while generating token", 500);
+    }
+});
+// CREATE USER
+exports.signup = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { username, email } = req.body;
+    // check if user already exists: username, email
+    const existedUser = yield models_1.UserModel.findOne({
+        $or: [{ username }, { email }],
+    });
+    if (existedUser) {
+        throw new utils_1.AppError("User with email or username already exists", 409);
+    }
+    const newUser = yield models_1.UserModel.create(req.body);
+    yield (0, email_1.send_email)({
+        to: req.body.email,
+        subject: `Action Required: Update Your ${utils_1.TUITION_HIGHWAY} Password`,
+        html: (0, utils_1.get_email_template_for_temporary_password)(newUser.full_name, req.body.password),
+    });
+    const createdUser = yield models_1.UserModel.findById(newUser._id).select("-password -refresh_token -__v -createdAt -updatedAt ");
+    if (!createdUser) {
+        throw new utils_1.AppError("Something went wrong while registering a User", 500);
+    }
+    return res
+        .status(201)
+        .json(new utils_1.AppResponse(201, createdUser, "User created succefully", utils_1.ResponseStatus.SUCCESS));
+}));
+// LOGIN USER
+exports.login = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
+    const username = email;
+    // 1) Check if email and password is exist
+    if (!email) {
+        return next(new utils_1.AppError("username or email is required", 400));
+    }
+    // 2) Check if user exist and password is correct
+    const user = yield models_1.UserModel.findOne({
+        $or: [{ username }, { email }],
+    });
+    if (!user) {
+        throw new utils_1.AppError("user doest not exist", 404);
+    }
+    if (user.account_status === types_1.AccountStatus.Deleted) {
+        throw new utils_1.AppError("Your account has been deleted please contact with Adminitrstor to get back your account", 404);
+    }
+    const isPasswordValid = yield user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+        throw new utils_1.AppError("Invalid user credentials", 404);
+    }
+    const accessToken = yield generateAccessAndRefreshToken(user._id);
+    const loggedInUser = yield models_1.UserModel.findById(user._id).select("-password -__v -createdAt -updatedAt ");
+    return res.status(200).json(new utils_1.AppResponse(200, {
+        user: loggedInUser,
+        accessToken,
+    }, "User Logged In Successfully", utils_1.ResponseStatus.SUCCESS));
+}));
+//# sourceMappingURL=authController.js.map
