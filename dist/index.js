@@ -16,11 +16,8 @@ const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
 const corsOptions = {
-    origin: [
-        process.env.ORIGIN_CLIENT_LOCAL,
-        process.env.ORIGIN_CLIENT_LOCAL_MOBILE_APP,
-        process.env.ORIGIN_CLIENT_LIVE,
-    ],
+    origin: [process.env.ORIGIN_CLIENT_LOCAL, process.env.ORIGIN_CLIENT_LIVE],
+    credentials: true,
 };
 const corsMiddleware = (0, cors_1.default)(corsOptions);
 const app = (0, express_1.default)();
