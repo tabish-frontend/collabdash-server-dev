@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextFunction, Request, Response } from "express";
-import { AccountStatus, AnyObjectType, TUser } from "../types";
+import { AccountStatus, AnyObjectType } from "../types";
+import jwt from "jsonwebtoken";
 import {
   AppError,
   TUITION_HIGHWAY,
@@ -8,6 +9,7 @@ import {
   ResponseStatus,
   get_email_template_for_temporary_password,
   AppResponse,
+  get_email_template_for_reset_password,
 } from "../utils";
 import { send_email } from "../config/email";
 import { Types } from "mongoose";
@@ -108,7 +110,7 @@ export const login = catchAsync(
 
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
-      throw new AppError("Invalid user credentials", 404);
+      throw new AppError("Invalid user credentials", 401);
     }
 
     const accessToken = await generateAccessAndRefreshToken(user._id);
@@ -130,3 +132,131 @@ export const login = catchAsync(
     );
   }
 );
+
+// FORGOT PASSWORD
+export const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+
+    const username = email;
+
+    // 1) Check if email is exist
+    if (!email) {
+      return next(new AppError("Please provide email or username!", 400));
+    }
+
+    // 2) Get user based on POSTed email
+    const user = await UserModel.findOne({
+      $or: [{ username }, { email }],
+    });
+
+    if (!user) {
+      throw new AppError(
+        "There is no user exist with that email address.",
+        404
+      );
+    }
+
+    // 3) Generate the random reset token
+    const accessToken = await generateAccessAndRefreshToken(user._id);
+
+    try {
+      const resetURL = `${process.env.ORIGIN_CLIENT_LIVE}/reset-password/${accessToken}`;
+
+      await send_email({
+        to: user.email,
+        subject: `Password Reset Instructions for Your ${TUITION_HIGHWAY} Account.`,
+        html: get_email_template_for_reset_password(user.full_name, resetURL),
+      });
+
+      return res.status(200).json(
+        new AppResponse(
+          200,
+          {
+            resetURL: resetURL,
+            accessToken,
+          },
+          "Reset Password link sent to your email!",
+          ResponseStatus.SUCCESS
+        )
+      );
+    } catch (err) {
+      return next(
+        new AppError(
+          "There was an error sending the email. Try again leter!",
+          500
+        )
+      );
+    }
+  }
+);
+
+// RESET PASSWORD
+export const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const incomingAccessToken = req.params.token;
+
+    console.log("incomingRefreshToken", incomingAccessToken);
+
+    if (!incomingAccessToken) {
+      throw new AppError("Unauthorized request", 401);
+    }
+
+    // 1) Get user based on the token
+
+    try {
+      const decodedToken: any = jwt.verify(
+        incomingAccessToken,
+        process.env.ACCESS_TOKEN_SECRET
+      );
+
+      const user = await UserModel.findById(decodedToken?._id);
+
+      if (!user) {
+        throw new AppError("Invalid access token", 401);
+      }
+
+      user.password = req.body.password;
+      await user.save({ validateBeforeSave: false });
+
+      return res
+        .status(200)
+        .json(
+          new AppResponse(
+            200,
+            {},
+            "Password Changed successfully",
+            ResponseStatus.SUCCESS
+          )
+        );
+    } catch (error) {
+      throw new AppError(error?.message || "Invalid access token", 401);
+    }
+  }
+);
+
+// UPDATE CURRENT USER PASSWORD
+export const updateMyPassword = catchAsync(async (req, res) => {
+  // 1) Get user from collection
+  const user: any = await UserModel.findById(req.user._id);
+
+  // 2) Check if Posted current password is correct
+  if (!(await user.isPasswordCorrect(req.body.current_password))) {
+    throw new AppError("Your current password is wrong", 401);
+  }
+
+  // 3) If so, update password
+  user.password = req.body.password;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        {},
+        "Password changed Successfully Please Login Again",
+        ResponseStatus.SUCCESS
+      )
+    );
+});

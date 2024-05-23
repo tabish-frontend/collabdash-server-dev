@@ -8,6 +8,8 @@ import morgan from "morgan";
 
 import { globalErrorHandler } from "./controllers";
 import authRoutes from "./routes/authRoutes";
+import userRouter from "./routes/userRoutes";
+
 import { AppError, xssMiddleware } from "./utils";
 
 // CORS configuration to allow requests from specified origins
@@ -63,6 +65,7 @@ app.get("/", (req: Request, res: Response) => {
 
 // Route handlers for different parts of the application
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRouter);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

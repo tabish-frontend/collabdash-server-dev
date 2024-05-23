@@ -1,25 +1,24 @@
 import express from "express";
 
-// import { Protect } from "../middlewares/authMiddlewares.js";
-import { generatePassword } from "../middlewares/generateRandomPasswordMiddleware";
-
-import { login, signup } from "../controllers/authController";
+import {
+  forgotPassword,
+  login,
+  resetPassword,
+  signup,
+  updateMyPassword,
+} from "../controllers";
+import { Protect, generatePassword } from "../middlewares";
 
 const router = express.Router();
-
-// router.route("/refresh-token").post(refreshAccessToken);
 
 router.post("/signup", generatePassword, signup);
 
 router.post("/login", login);
 
-// router.post("/forgotPassword", forgotPassword);
-// router.patch("/resetPassword/:token", refreshAccessToken);
+router.post("/forgotPassword", forgotPassword);
+router.patch("/resetPassword/:token", resetPassword);
 
 //PROTECTED ROUTES
-
-// router.use(Protect);
-// router.post("/logout", logoutUser);
-// router.patch("/updateMyPassword", updateMyPassword);
+router.patch("/updateMyPassword", Protect, updateMyPassword);
 
 export default router;
