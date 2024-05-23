@@ -1,0 +1,1 @@
+{"version":3,"file":"getUserIdMiddleware.js","sourceRoot":"","sources":["../../src/middlewares/getUserIdMiddleware.ts"],"names":[],"mappings":";;;AAAO,MAAM,OAAO,GAAG,CAAC,GAAQ,EAAE,GAAQ,EAAE,IAAgB,EAAE,EAAE;IAC9D,GAAG,CAAC,MAAM,CAAC,GAAG,GAAG,GAAG,CAAC,IAAI,CAAC,GAAG,CAAC;IAC9B,IAAI,EAAE,CAAC;AACT,CAAC,CAAC;AAHW,QAAA,OAAO,WAGlB"}

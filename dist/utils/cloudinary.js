@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.uploadOnCloudinary = void 0;
 const cloudinary_1 = require("cloudinary");
 const fs_1 = __importDefault(require("fs"));
 cloudinary_1.v2.config({
@@ -37,5 +38,5 @@ const uploadOnCloudinary = (locaLFilePath) => __awaiter(void 0, void 0, void 0, 
         return null;
     }
 });
-exports.default = uploadOnCloudinary;
+exports.uploadOnCloudinary = uploadOnCloudinary;
 //# sourceMappingURL=cloudinary.js.map

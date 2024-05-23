@@ -4,18 +4,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-// import { Protect } from "../middlewares/authMiddlewares.js";
-const generateRandomPasswordMiddleware_1 = require("../middlewares/generateRandomPasswordMiddleware");
-const authController_1 = require("../controllers/authController");
+const controllers_1 = require("../controllers");
+const middlewares_1 = require("../middlewares");
 const router = express_1.default.Router();
-// router.route("/refresh-token").post(refreshAccessToken);
-router.post("/signup", generateRandomPasswordMiddleware_1.generatePassword, authController_1.signup);
-router.post("/login", authController_1.login);
-// router.post("/forgotPassword", forgotPassword);
-// router.patch("/resetPassword/:token", refreshAccessToken);
+router.post("/signup", middlewares_1.generatePassword, controllers_1.signup);
+router.post("/login", controllers_1.login);
+router.post("/forgotPassword", controllers_1.forgotPassword);
+router.patch("/resetPassword/:token", controllers_1.resetPassword);
 //PROTECTED ROUTES
-// router.use(Protect);
-// router.post("/logout", logoutUser);
-// router.patch("/updateMyPassword", updateMyPassword);
+router.patch("/updateMyPassword", middlewares_1.Protect, controllers_1.updateMyPassword);
 exports.default = router;
 //# sourceMappingURL=authRoutes.js.map
