@@ -7,8 +7,11 @@ import hpp from "hpp";
 import morgan from "morgan";
 
 import { globalErrorHandler } from "./controllers";
+
 import authRoutes from "./routes/authRoutes";
 import userRouter from "./routes/userRoutes";
+import attendanceRoutes from "./routes/attendanceRoutes";
+import employeeRoutes from "./routes/employeeRoutes";
 
 import { AppError, xssMiddleware } from "./utils";
 
@@ -66,6 +69,8 @@ app.get("/", (req: Request, res: Response) => {
 // Route handlers for different parts of the application
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/attendance", attendanceRoutes);
+app.use("/api/v1/employees", employeeRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

@@ -14,6 +14,8 @@ const morgan_1 = __importDefault(require("morgan"));
 const controllers_1 = require("./controllers");
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const attendanceRoutes_1 = __importDefault(require("./routes/attendanceRoutes"));
+const employeeRoutes_1 = __importDefault(require("./routes/employeeRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
 const corsOptions = {
@@ -57,6 +59,8 @@ app.get("/", (req, res) => {
 // Route handlers for different parts of the application
 app.use("/api/v1/auth", authRoutes_1.default);
 app.use("/api/v1/users", userRoutes_1.default);
+app.use("/api/v1/attendance", attendanceRoutes_1.default);
+app.use("/api/v1/employees", employeeRoutes_1.default);
 // Catch-all for unhandled routes
 app.all("*", (req, res, next) => {
     next(new utils_1.AppError(`Can't find ${req.originalUrl} on this server!`, 404));

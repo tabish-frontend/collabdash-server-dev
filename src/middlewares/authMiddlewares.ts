@@ -32,7 +32,7 @@ export const Protect = catchAsync(async (req, res, next) => {
 });
 
 export const restrictTo = (...roles: string[]) => {
-  return (req: { user: { role: any } }, res: any, next: () => void) => {
+  return (req: any, res: any, next: () => void) => {
     if (!roles.includes(req.user.role)) {
       throw new AppError(
         "You dont have permisssion to perform this action",

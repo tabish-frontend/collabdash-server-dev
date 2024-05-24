@@ -18,4 +18,5 @@ __exportStar(require("./authController"), exports);
 __exportStar(require("./userController"), exports);
 __exportStar(require("./attendanceController"), exports);
 __exportStar(require("./error"), exports);
+__exportStar(require("./employeeController"), exports);
 //# sourceMappingURL=index.js.map

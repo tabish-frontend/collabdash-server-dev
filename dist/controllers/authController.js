@@ -39,6 +39,7 @@ exports.signup = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, v
         throw new utils_1.AppError("User with email or username already exists", 409);
     }
     const newUser = yield models_1.UserModel.create(req.body);
+    console.log("password", req.body.password);
     yield (0, email_1.send_email)({
         to: req.body.email,
         subject: `Action Required: Update Your ${utils_1.TUITION_HIGHWAY} Password`,
