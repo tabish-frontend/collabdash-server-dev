@@ -13,7 +13,7 @@ const router = Router();
 // PROTECTED ROUTES ONLY USE FOR HR
 
 router.use(Protect);
-router.use(restrictTo("hr"));
+router.use(restrictTo("hr", "admin"));
 
 router.route("/").get(getAllEmployees).post(generatePassword, signup);
 

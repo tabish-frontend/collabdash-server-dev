@@ -5,7 +5,7 @@ import { getAll, getOne, updateOne } from "./handleFactory";
 
 export const getAllEmployees = getAll(
   UserModel,
-  "employee",
+  true,
   "-password -__v -createdAt -updatedAt "
 );
 

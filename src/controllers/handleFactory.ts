@@ -26,18 +26,20 @@ export const getOne = (Model: any, hideFields: string, popOptions?: any) =>
       .json(new AppResponse(200, document, "", ResponseStatus.SUCCESS));
   });
 
-export const getAll = (Model: any, getByRole = "", hideFields: string) =>
+export const getAll = (
+  Model: any,
+  excludeCurrentUser = false,
+  hideFields: string
+) =>
   catchAsync(async (req, res, next) => {
     // To allow for nested GET reviews on tour (hack)
-    let filter: any = {
-      role: getByRole,
-    };
+    let filter: any = {};
 
     if (req.params.tourId) filter = { tour: req.params.tourId };
 
-    // if (excludeCurrentUser) {
-    //   filter._id = { $ne: req.user._id };
-    // }
+    if (excludeCurrentUser) {
+      filter._id = { $ne: req.user._id };
+    }
 
     const total_counts = await Model.find();
     const features = new APIFeatures(Model.find(filter), req.query)
