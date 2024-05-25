@@ -1,6 +1,14 @@
 // import AppError from "../utils/app-error";
-import { AppError, catchAsync, AppResponse, ResponseStatus } from "../utils";
+import mongoose from "mongoose";
+import {
+  AppError,
+  catchAsync,
+  AppResponse,
+  ResponseStatus,
+  AttendanceStatus,
+} from "../utils";
 import { UserModel, AttendanceModal } from "../models";
+const { ObjectId } = mongoose.Types;
 
 export const manageAttendanceLogs = catchAsync(async (req, res) => {
   try {
@@ -34,7 +42,7 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
       attendance = new AttendanceModal({
         user: userId,
         date: new Date(),
-        status: "Present", // Default status
+        status: AttendanceStatus.ONLINE, // Default status
         timeIn: new Date(),
         notes,
       });
@@ -54,11 +62,11 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
 
         console.log("duration", duration);
         if (duration < 4) {
-          attendance.status = "Short Attendance";
+          attendance.status = AttendanceStatus.SHORT_ATTENDANCE;
         } else if (duration >= 4 && duration < 8) {
-          attendance.status = "Half Day";
+          attendance.status = AttendanceStatus.HALF_DAY_PRESENT;
         } else {
-          attendance.status = "Full Day";
+          attendance.status = AttendanceStatus.FULL_DAY_PRESENT;
         }
 
         attendance.duration = duration;
@@ -105,5 +113,104 @@ export const getTodayAttendanceOfUser = catchAsync(async (req, res) => {
       .json(new AppResponse(200, { attendance }, "", ResponseStatus.SUCCESS));
   } catch (error) {
     throw new AppError(error?.message || "Something went wrong", 401);
+  }
+});
+
+export const getAllUsersAttendance = catchAsync(async (req: any, res) => {
+  try {
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+      return res
+        .status(400)
+        .json({ error: "Month and year are required parameters" });
+    }
+
+    const monthNumber = parseInt(month as string, 10);
+    const yearNumber = parseInt(year as string, 10);
+
+    // BASIC APPROACH
+
+    // Fetch all users
+    // const users = await UserModel.find().select(
+    //   "-password  -__v -createdAt -updatedAt "
+    // );
+
+    // // Loop through each user
+    // const usersWithAttendance = await Promise.all(
+    //   users.map(async (user) => {
+    //     // Fetch attendance data for the specified month
+    //     const attendance = await AttendanceModal.find({
+    //       user: user._id,
+    //       date: {
+    //         $gte: new Date(yearNumber, monthNumber - 1, 1),
+    //         $lt: new Date(yearNumber, monthNumber, 0),
+    //       },
+    //     });
+
+    //     // Return user object with attendance data
+    //     return {
+    //       user: user.toObject(),
+    //       attendance,
+    //     };
+    //   })
+    // );
+
+    // AGGREGATE APPROACH
+
+    const userExcludedFields = {
+      password: 0,
+      bio: 0,
+      dob: 0,
+      languages: 0,
+      gender: 0,
+      national_identity_number: 0,
+      refresh_token: 0,
+      __v: 0,
+      createdAt: 0,
+      updatedAt: 0,
+    };
+
+    const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
+
+    const usersWithAttendance = await UserModel.aggregate([
+      ...req.pipelineModification,
+      {
+        $lookup: {
+          from: "attendances",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$user", "$$userId"] },
+                    {
+                      $gte: ["$date", new Date(yearNumber, monthNumber - 1, 1)],
+                    },
+                    { $lt: ["$date", new Date(yearNumber, monthNumber, 0)] },
+                  ],
+                },
+              },
+            },
+            {
+              $project: attendanceExcludedFields,
+            },
+          ],
+          as: "attendance",
+        },
+      },
+      {
+        $project: userExcludedFields,
+      },
+    ]);
+
+    return res
+      .status(200)
+      .json(
+        new AppResponse(200, usersWithAttendance, "", ResponseStatus.SUCCESS)
+      );
+  } catch (error) {
+    throw new AppError("Error fetching users attendance", 500);
   }
 });
