@@ -5,15 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadUserPhoto = void 0;
 const multer_1 = __importDefault(require("multer"));
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, "./public/temp/");
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, file.originalname);
-//   },
-// });
-// const upload = multer({ storage });
 const storage = multer_1.default.diskStorage({
     filename: (req, file, cb) => {
         console.log("file.mimetype", file.mimetype);

@@ -8,11 +8,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTodayAttendanceOfUser = exports.manageAttendanceLogs = void 0;
+exports.getAllUsersAttendance = exports.getTodayAttendanceOfUser = exports.manageAttendanceLogs = void 0;
 // import AppError from "../utils/app-error";
+const mongoose_1 = __importDefault(require("mongoose"));
 const utils_1 = require("../utils");
 const models_1 = require("../models");
+const { ObjectId } = mongoose_1.default.Types;
 exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { notes } = req.body;
@@ -41,7 +46,7 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             attendance = new models_1.AttendanceModal({
                 user: userId,
                 date: new Date(),
-                status: "Present",
+                status: utils_1.AttendanceStatus.ONLINE,
                 timeIn: new Date(),
                 notes,
             });
@@ -61,13 +66,13 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
                 const duration = (timeOut - timeIn) / (1000 * 60 * 60); // Duration in hours
                 console.log("duration", duration);
                 if (duration < 4) {
-                    attendance.status = "Short Attendance";
+                    attendance.status = utils_1.AttendanceStatus.SHORT_ATTENDANCE;
                 }
                 else if (duration >= 4 && duration < 8) {
-                    attendance.status = "Half Day";
+                    attendance.status = utils_1.AttendanceStatus.HALF_DAY_PRESENT;
                 }
                 else {
-                    attendance.status = "Full Day";
+                    attendance.status = utils_1.AttendanceStatus.FULL_DAY_PRESENT;
                 }
                 attendance.duration = duration;
                 attendance.timeOut = timeOut;
@@ -103,6 +108,92 @@ exports.getTodayAttendanceOfUser = (0, utils_1.catchAsync)((req, res) => __await
     }
     catch (error) {
         throw new utils_1.AppError((error === null || error === void 0 ? void 0 : error.message) || "Something went wrong", 401);
+    }
+}));
+exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { month, year } = req.query;
+        if (!month || !year) {
+            return res
+                .status(400)
+                .json({ error: "Month and year are required parameters" });
+        }
+        const monthNumber = parseInt(month, 10);
+        const yearNumber = parseInt(year, 10);
+        // BASIC APPROACH
+        // Fetch all users
+        // const users = await UserModel.find().select(
+        //   "-password  -__v -createdAt -updatedAt "
+        // );
+        // // Loop through each user
+        // const usersWithAttendance = await Promise.all(
+        //   users.map(async (user) => {
+        //     // Fetch attendance data for the specified month
+        //     const attendance = await AttendanceModal.find({
+        //       user: user._id,
+        //       date: {
+        //         $gte: new Date(yearNumber, monthNumber - 1, 1),
+        //         $lt: new Date(yearNumber, monthNumber, 0),
+        //       },
+        //     });
+        //     // Return user object with attendance data
+        //     return {
+        //       user: user.toObject(),
+        //       attendance,
+        //     };
+        //   })
+        // );
+        // AGGREGATE APPROACH
+        const userExcludedFields = {
+            password: 0,
+            bio: 0,
+            dob: 0,
+            languages: 0,
+            gender: 0,
+            national_identity_number: 0,
+            refresh_token: 0,
+            __v: 0,
+            createdAt: 0,
+            updatedAt: 0,
+        };
+        const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
+        const usersWithAttendance = yield models_1.UserModel.aggregate([
+            ...req.pipelineModification,
+            {
+                $lookup: {
+                    from: "attendances",
+                    let: { userId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$user", "$$userId"] },
+                                        {
+                                            $gte: ["$date", new Date(yearNumber, monthNumber - 1, 1)],
+                                        },
+                                        { $lt: ["$date", new Date(yearNumber, monthNumber, 0)] },
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            $project: attendanceExcludedFields,
+                        },
+                    ],
+                    as: "attendance",
+                },
+            },
+            {
+                $project: userExcludedFields,
+            },
+        ]);
+        return res
+            .status(200)
+            .json(new utils_1.AppResponse(200, usersWithAttendance, "", utils_1.ResponseStatus.SUCCESS));
+    }
+    catch (error) {
+        throw new utils_1.AppError("Error fetching users attendance", 500);
     }
 }));
 //# sourceMappingURL=attendanceController.js.map

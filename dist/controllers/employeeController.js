@@ -14,7 +14,7 @@ const utils_1 = require("../utils");
 const types_1 = require("../types");
 const models_1 = require("../models");
 const handleFactory_1 = require("./handleFactory");
-exports.getAllEmployees = (0, handleFactory_1.getAll)(models_1.UserModel, "employee", "-password -__v -createdAt -updatedAt ");
+exports.getAllEmployees = (0, handleFactory_1.getAll)(models_1.UserModel, true, "-password -__v -createdAt -updatedAt ");
 exports.getEmployee = (0, handleFactory_1.getOne)(models_1.UserModel, "-password -__v -createdAt -updatedAt");
 exports.updateEmployee = (0, handleFactory_1.updateOne)(models_1.UserModel, "-password -__v -createdAt -updatedAt ");
 exports.deleteEmployee = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
