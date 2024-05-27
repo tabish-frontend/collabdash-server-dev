@@ -45,7 +45,7 @@ exports.signup = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, v
         subject: `Action Required: Update Your ${utils_1.TUITION_HIGHWAY} Password`,
         html: (0, utils_1.get_email_template_for_temporary_password)(newUser.full_name, req.body.password),
     });
-    const createdUser = yield models_1.UserModel.findById(newUser._id).select("-password -refresh_token -__v -createdAt -updatedAt ");
+    const createdUser = yield models_1.UserModel.findById(newUser._id).select(utils_1.ExcludedFields);
     if (!createdUser) {
         throw new utils_1.AppError("Something went wrong while registering a User", 500);
     }
@@ -76,7 +76,7 @@ exports.login = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, vo
         throw new utils_1.AppError("Invalid user credentials", 401);
     }
     const accessToken = yield generateAccessAndRefreshToken(user._id);
-    const loggedInUser = yield models_1.UserModel.findById(user._id).select("-password -__v -createdAt -updatedAt ");
+    const loggedInUser = yield models_1.UserModel.findById(user._id).select(utils_1.ExcludedFields);
     return res.status(200).json(new utils_1.AppResponse(200, {
         user: loggedInUser,
         accessToken,

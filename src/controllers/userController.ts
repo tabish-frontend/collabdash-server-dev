@@ -4,13 +4,14 @@ import { AccountStatus } from "../types";
 import {
   AppError,
   AppResponse,
+  ExcludedFields,
   ResponseStatus,
   catchAsync,
   isFilesObject,
   uploadOnCloudinary,
 } from "../utils";
 
-export const getMe = getOne(UserModel, "-password -__v -createdAt -updatedAt");
+export const getMe = getOne(UserModel, ExcludedFields);
 
 export const updateMe = catchAsync(async (req, res) => {
   // 1) Create error if user Post password data in this route
@@ -35,7 +36,7 @@ export const updateMe = catchAsync(async (req, res) => {
       new: true,
       runValidators: true,
     }
-  ).select("-password  -__v -createdAt -updatedAt ");
+  ).select(ExcludedFields);
 
   return res
     .status(201)

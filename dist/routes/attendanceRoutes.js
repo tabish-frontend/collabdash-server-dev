@@ -10,6 +10,7 @@ router.post("/:action", controllers_1.manageAttendanceLogs);
 router.get("/myTodayAttendance", controllers_1.getTodayAttendanceOfUser);
 // RESTRICTED ROUTES
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
+router.get("/:_id", controllers_1.getUserAttendance);
 router.get("/", middlewares_1.filterAttendanceByRole, controllers_1.getAllUsersAttendance);
 exports.default = router;
 //# sourceMappingURL=attendanceRoutes.js.map

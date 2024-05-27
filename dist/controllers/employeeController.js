@@ -14,9 +14,31 @@ const utils_1 = require("../utils");
 const types_1 = require("../types");
 const models_1 = require("../models");
 const handleFactory_1 = require("./handleFactory");
-exports.getAllEmployees = (0, handleFactory_1.getAll)(models_1.UserModel, true, "-password -__v -createdAt -updatedAt ");
-exports.getEmployee = (0, handleFactory_1.getOne)(models_1.UserModel, "-password -__v -createdAt -updatedAt");
-exports.updateEmployee = (0, handleFactory_1.updateOne)(models_1.UserModel, "-password -__v -createdAt -updatedAt ");
+exports.getAllEmployees = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    // To allow for nested GET reviews on tour (hack)
+    let filter = {};
+    if (req.user.role === types_1.Roles.HR) {
+        filter.role = { $nin: [types_1.Roles.HR, types_1.Roles.Admin] }; // Exclude HR and Admin
+    }
+    else if (req.user.role === types_1.Roles.Admin) {
+        filter.role = { $ne: types_1.Roles.Admin }; // Exclude only Admin
+    }
+    const total_counts = yield models_1.UserModel.find();
+    const features = new utils_1.APIFeatures(models_1.UserModel.find(filter), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+    // const document = await features.query.explain();
+    const document = yield features.query.select(utils_1.ExcludedFields);
+    return res.status(200).json(new utils_1.AppResponse(200, {
+        users: document,
+        result: document.length,
+        total_counts: total_counts.length,
+    }, "", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.getEmployee = (0, handleFactory_1.getOne)(models_1.UserModel, utils_1.ExcludedFields);
+exports.updateEmployee = (0, handleFactory_1.updateOne)(models_1.UserModel, utils_1.ExcludedFields);
 exports.deleteEmployee = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username } = req.params;
     const document = yield models_1.UserModel.findOneAndUpdate({ username: username }, {

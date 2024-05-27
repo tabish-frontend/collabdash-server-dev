@@ -9,5 +9,6 @@ router.use(middlewares_1.Protect);
 router.get("/me", middlewares_1.getMyId, controllers_1.getMe);
 router.patch("/update-me", middlewares_1.uploadUserPhoto, controllers_1.updateMe);
 router.delete("/delete-me", controllers_1.deleteMe);
+router.get("/attendance", middlewares_1.getMyId, controllers_1.getUserAttendance);
 exports.default = router;
 //# sourceMappingURL=userRoutes.js.map

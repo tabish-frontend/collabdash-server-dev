@@ -10,6 +10,7 @@ import {
   get_email_template_for_temporary_password,
   AppResponse,
   get_email_template_for_reset_password,
+  ExcludedFields,
 } from "../utils";
 import { send_email } from "../config/email";
 import { Types } from "mongoose";
@@ -61,7 +62,7 @@ export const signup = catchAsync(
     });
 
     const createdUser = await UserModel.findById(newUser._id).select(
-      "-password -refresh_token -__v -createdAt -updatedAt "
+      ExcludedFields
     );
 
     if (!createdUser) {
@@ -117,7 +118,7 @@ export const login = catchAsync(
     const accessToken = await generateAccessAndRefreshToken(user._id);
 
     const loggedInUser = await UserModel.findById(user._id).select(
-      "-password -__v -createdAt -updatedAt "
+      ExcludedFields
     );
 
     return res.status(200).json(

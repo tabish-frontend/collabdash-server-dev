@@ -17,6 +17,9 @@ export const AttendanceStatus = {
   FULL_DAY_PRESENT: "full_day_present",
 };
 
+export const ExcludedFields =
+  "-password -__v -refresh_token -createdAt -updatedAt";
+
 export const DB_Name = "WorkDock";
 
 export const TUITION_HIGHWAY = "Tuition Highway";

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllUsersAttendance = exports.getTodayAttendanceOfUser = exports.manageAttendanceLogs = void 0;
+exports.getUserAttendance = exports.getAllUsersAttendance = exports.getTodayAttendanceOfUser = exports.manageAttendanceLogs = void 0;
 // import AppError from "../utils/app-error";
 const mongoose_1 = __importDefault(require("mongoose"));
 const utils_1 = require("../utils");
@@ -194,6 +194,111 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(
     }
     catch (error) {
         throw new utils_1.AppError("Error fetching users attendance", 500);
+    }
+}));
+// export const getUserAttendance = catchAsync(async (req, res) => {
+//   try {
+//     const { _id } = req.params;
+//     const { month, year } = req.query;
+//     if (!month || !year) {
+//       return res
+//         .status(400)
+//         .json({ error: "Month and year are required parameters" });
+//     }
+//     const monthNumber = parseInt(month as string, 10);
+//     const yearNumber = parseInt(year as string, 10);
+//     const userExcludedFields = {
+//       password: 0,
+//       bio: 0,
+//       dob: 0,
+//       languages: 0,
+//       gender: 0,
+//       national_identity_number: 0,
+//       refresh_token: 0,
+//       __v: 0,
+//       createdAt: 0,
+//       updatedAt: 0,
+//     };
+//     const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
+//     const userWithAttendance = await UserModel.aggregate([
+//       {
+//         $match: { _id: new mongoose.Types.ObjectId(_id) },
+//       },
+//       {
+//         $lookup: {
+//           from: "attendances",
+//           let: { userId: "$_id" },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $eq: ["$user", "$$userId"] },
+//                     {
+//                       $gte: ["$date", new Date(yearNumber, monthNumber - 1, 1)],
+//                     },
+//                     { $lt: ["$date", new Date(yearNumber, monthNumber, 1)] },
+//                   ],
+//                 },
+//               },
+//             },
+//             {
+//               $project: attendanceExcludedFields,
+//             },
+//           ],
+//           as: "attendance",
+//         },
+//       },
+//       {
+//         $project: userExcludedFields,
+//       },
+//     ]);
+//     if (userWithAttendance.length === 0) {
+//       return res
+//         .status(404)
+//         .json(
+//           new AppResponse(404, null, "User not found", ResponseStatus.FAIL)
+//         );
+//     }
+//     return res
+//       .status(200)
+//       .json(
+//         new AppResponse(200, userWithAttendance[0], "", ResponseStatus.SUCCESS)
+//       );
+//   } catch (error) {
+//     throw new AppError("Error fetching user attendance", 500);
+//   }
+// });
+exports.getUserAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { _id } = req.params;
+        const { month, year } = req.query;
+        if (!month || !year) {
+            return res
+                .status(400)
+                .json({ error: "Month and year are required parameters" });
+        }
+        const monthNumber = parseInt(month, 10);
+        const yearNumber = parseInt(year, 10);
+        const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
+        const attendanceRecords = yield models_1.AttendanceModal.find({
+            user: new mongoose_1.default.Types.ObjectId(_id),
+            date: {
+                $gte: new Date(yearNumber, monthNumber - 1, 1),
+                $lt: new Date(yearNumber, monthNumber, 1),
+            },
+        }).select(attendanceExcludedFields);
+        if (attendanceRecords.length === 0) {
+            return res
+                .status(404)
+                .json(new utils_1.AppResponse(404, [], "No records found", utils_1.ResponseStatus.FAIL));
+        }
+        return res.status(200).json(new utils_1.AppResponse(200, {
+            attendance: attendanceRecords,
+        }, "", utils_1.ResponseStatus.SUCCESS));
+    }
+    catch (error) {
+        throw new utils_1.AppError("Error fetching user attendance", 500);
     }
 }));
 //# sourceMappingURL=attendanceController.js.map

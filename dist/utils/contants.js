@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TUITION_HIGHWAY = exports.DB_Name = exports.AttendanceStatus = exports.HttpOptions = exports.ResponseStatus = void 0;
+exports.TUITION_HIGHWAY = exports.DB_Name = exports.ExcludedFields = exports.AttendanceStatus = exports.HttpOptions = exports.ResponseStatus = void 0;
 exports.ResponseStatus = {
     SUCCESS: "success",
     ERROR: "error",
@@ -17,6 +17,7 @@ exports.AttendanceStatus = {
     HALF_DAY_PRESENT: "half_day_present",
     FULL_DAY_PRESENT: "full_day_present",
 };
+exports.ExcludedFields = "-password -__v -refresh_token -createdAt -updatedAt";
 exports.DB_Name = "WorkDock";
 exports.TUITION_HIGHWAY = "Tuition Highway";
 //# sourceMappingURL=contants.js.map

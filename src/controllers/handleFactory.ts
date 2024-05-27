@@ -35,12 +35,6 @@ export const getAll = (
     // To allow for nested GET reviews on tour (hack)
     let filter: any = {};
 
-    if (req.params.tourId) filter = { tour: req.params.tourId };
-
-    if (excludeCurrentUser) {
-      filter._id = { $ne: req.user._id };
-    }
-
     const total_counts = await Model.find();
     const features = new APIFeatures(Model.find(filter), req.query)
       .filter()

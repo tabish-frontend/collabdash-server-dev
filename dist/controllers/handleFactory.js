@@ -30,11 +30,6 @@ exports.getOne = getOne;
 const getAll = (Model, excludeCurrentUser = false, hideFields) => (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // To allow for nested GET reviews on tour (hack)
     let filter = {};
-    if (req.params.tourId)
-        filter = { tour: req.params.tourId };
-    if (excludeCurrentUser) {
-        filter._id = { $ne: req.user._id };
-    }
     const total_counts = yield Model.find();
     const features = new utils_1.APIFeatures(Model.find(filter), req.query)
         .filter()

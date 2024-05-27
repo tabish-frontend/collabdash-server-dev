@@ -25,18 +25,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AttendanceModal = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const utils_1 = require("../utils");
 const attendanceSchema = new mongoose_1.Schema({
     user: { type: mongoose_1.default.Schema.ObjectId, ref: "User", required: true },
     date: { type: Date, required: true },
     status: {
         type: String,
         enum: [
-            "Present",
-            "Absent",
-            "Leave",
-            "Short Attendance",
-            "Half Day",
-            "Full Day",
+            utils_1.AttendanceStatus.FULL_DAY_PRESENT,
+            utils_1.AttendanceStatus.FULL_DAY_ABSENT,
+            utils_1.AttendanceStatus.SHORT_ATTENDANCE,
+            utils_1.AttendanceStatus.ONLINE,
+            utils_1.AttendanceStatus.HALF_DAY_PRESENT,
         ],
         required: true,
     },

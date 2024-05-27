@@ -14,7 +14,7 @@ const models_1 = require("../models");
 const handleFactory_1 = require("./handleFactory");
 const types_1 = require("../types");
 const utils_1 = require("../utils");
-exports.getMe = (0, handleFactory_1.getOne)(models_1.UserModel, "-password -__v -createdAt -updatedAt");
+exports.getMe = (0, handleFactory_1.getOne)(models_1.UserModel, utils_1.ExcludedFields);
 exports.updateMe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // 1) Create error if user Post password data in this route
     if (req.body.password || req.body.confirm_password) {
@@ -28,7 +28,7 @@ exports.updateMe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
     const updatedUser = yield models_1.UserModel.findByIdAndUpdate(req.user._id, req.body, {
         new: true,
         runValidators: true,
-    }).select("-password  -__v -createdAt -updatedAt ");
+    }).select(utils_1.ExcludedFields);
     return res
         .status(201)
         .json(new utils_1.AppResponse(200, updatedUser, "User Updated succefully", utils_1.ResponseStatus.SUCCESS));

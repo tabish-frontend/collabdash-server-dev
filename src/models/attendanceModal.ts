@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { Attendance } from "../types";
+import { AttendanceStatus } from "../utils";
 
 const attendanceSchema: Schema<Attendance> = new Schema<Attendance>(
   {
@@ -8,12 +9,11 @@ const attendanceSchema: Schema<Attendance> = new Schema<Attendance>(
     status: {
       type: String,
       enum: [
-        "Present",
-        "Absent",
-        "Leave",
-        "Short Attendance",
-        "Half Day",
-        "Full Day",
+        AttendanceStatus.FULL_DAY_PRESENT,
+        AttendanceStatus.FULL_DAY_ABSENT,
+        AttendanceStatus.SHORT_ATTENDANCE,
+        AttendanceStatus.ONLINE,
+        AttendanceStatus.HALF_DAY_PRESENT,
       ],
       required: true,
     },
