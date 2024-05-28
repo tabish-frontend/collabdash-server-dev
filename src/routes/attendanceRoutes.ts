@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   getAllUsersAttendance,
-  getTodayAttendanceOfUser,
   getUserAttendance,
   manageAttendanceLogs,
 } from "../controllers";
@@ -19,8 +18,6 @@ const router = Router();
 router.use(Protect);
 
 router.post("/:action", manageAttendanceLogs);
-
-router.get("/myTodayAttendance", getTodayAttendanceOfUser);
 
 // RESTRICTED ROUTES
 

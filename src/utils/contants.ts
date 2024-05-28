@@ -17,6 +17,19 @@ export const AttendanceStatus = {
   FULL_DAY_PRESENT: "full_day_present",
 };
 
+export const LeavesStatus = {
+  Pending: "pending",
+  Approved: "approved",
+  Declined: "declined",
+};
+
+export const LeavesTypes = {
+  Sick: "sick",
+  Casual: "casual",
+  Half_Day: "half_day",
+  Emergency: "emergency",
+};
+
 export const ExcludedFields =
   "-password -__v -refresh_token -createdAt -updatedAt";
 

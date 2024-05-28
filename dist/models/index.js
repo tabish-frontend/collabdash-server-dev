@@ -17,4 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./UserModal"), exports);
 __exportStar(require("./attendanceModal"), exports);
 __exportStar(require("./holidayModal"), exports);
+__exportStar(require("./leaveModal"), exports);
 //# sourceMappingURL=index.js.map

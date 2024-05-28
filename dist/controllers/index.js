@@ -20,4 +20,5 @@ __exportStar(require("./attendanceController"), exports);
 __exportStar(require("./error"), exports);
 __exportStar(require("./employeeController"), exports);
 __exportStar(require("./holidayControllers"), exports);
+__exportStar(require("./leavesController"), exports);
 //# sourceMappingURL=index.js.map

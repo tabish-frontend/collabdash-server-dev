@@ -7,7 +7,6 @@ const router = (0, express_1.Router)();
 // PROTECTED ROUTES
 router.use(middlewares_1.Protect);
 router.post("/:action", controllers_1.manageAttendanceLogs);
-router.get("/myTodayAttendance", controllers_1.getTodayAttendanceOfUser);
 // RESTRICTED ROUTES
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
 router.get("/:_id", controllers_1.getUserAttendance);

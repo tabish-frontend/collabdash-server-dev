@@ -9,7 +9,10 @@ router.use(middlewares_1.Protect);
 router.get("/me", middlewares_1.getMyId, controllers_1.getMe);
 router.patch("/update-me", middlewares_1.uploadUserPhoto, controllers_1.updateMe);
 router.delete("/delete-me", controllers_1.deleteMe);
-router.get("/attendance", middlewares_1.getMyId, controllers_1.getUserAttendance);
-router.get("/holidays", middlewares_1.getMyId, controllers_1.getUserHolidays);
+router.get("/myTodayAttendance", controllers_1.getTodayAttendanceOfUser);
+router.get("/getMyallAttendance", middlewares_1.getMyId, controllers_1.getUserAttendance);
+router.get("/getMyAllHolidays", middlewares_1.getMyId, controllers_1.getUserHolidays);
+router.get("/getMyLeaves", middlewares_1.getMyId, controllers_1.getUserLeaves);
+router.post("/leaveApply", middlewares_1.getMyId, controllers_1.addLeave);
 exports.default = router;
 //# sourceMappingURL=userRoutes.js.map
