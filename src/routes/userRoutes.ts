@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { deleteMe, getMe, getUserAttendance, updateMe } from "../controllers";
+import {
+  deleteMe,
+  getMe,
+  getUserAttendance,
+  getUserHolidays,
+  updateMe,
+} from "../controllers";
 import { Protect, getMyId, uploadUserPhoto } from "../middlewares";
 
 const router = Router();
@@ -15,5 +21,7 @@ router.patch("/update-me", uploadUserPhoto, updateMe);
 router.delete("/delete-me", deleteMe);
 
 router.get("/attendance", getMyId, getUserAttendance);
+
+router.get("/holidays", getMyId, getUserHolidays);
 
 export default router;

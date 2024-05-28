@@ -18,4 +18,5 @@ __exportStar(require("./shared"), exports);
 __exportStar(require("./user"), exports);
 __exportStar(require("./enum"), exports);
 __exportStar(require("./attendance"), exports);
+__exportStar(require("./holiday"), exports);
 //# sourceMappingURL=index.js.map

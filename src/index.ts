@@ -12,6 +12,7 @@ import authRoutes from "./routes/authRoutes";
 import userRouter from "./routes/userRoutes";
 import attendanceRoutes from "./routes/attendanceRoutes";
 import employeeRoutes from "./routes/employeeRoutes";
+import holidayRoutes from "./routes/holidayRoutes";
 
 import { AppError, xssMiddleware } from "./utils";
 
@@ -71,6 +72,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/employees", employeeRoutes);
+app.use("/api/v1/holidays", holidayRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

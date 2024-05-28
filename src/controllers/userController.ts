@@ -27,8 +27,6 @@ export const updateMe = catchAsync(async (req, res) => {
     req.body.avatar = avatar.url;
   }
 
-  console.log("req.body.avatar", req.body.avatar);
-
   const updatedUser = await UserModel.findByIdAndUpdate(
     req.user._id,
     req.body,

@@ -24,7 +24,6 @@ exports.updateMe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
         const avatar = yield (0, utils_1.uploadOnCloudinary)(req.files.avatar[0].path);
         req.body.avatar = avatar.url;
     }
-    console.log("req.body.avatar", req.body.avatar);
     const updatedUser = yield models_1.UserModel.findByIdAndUpdate(req.user._id, req.body, {
         new: true,
         runValidators: true,
