@@ -14,6 +14,7 @@ import attendanceRoutes from "./routes/attendanceRoutes";
 import employeeRoutes from "./routes/employeeRoutes";
 import holidayRoutes from "./routes/holidayRoutes";
 import leaveRoutes from "./routes/leaveRoutes";
+import shiftRoutes from "./routes/shiftRoutes";
 
 import { AppError, xssMiddleware } from "./utils";
 
@@ -75,6 +76,7 @@ app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/employees", employeeRoutes);
 app.use("/api/v1/holidays", holidayRoutes);
 app.use("/api/v1/leaves", leaveRoutes);
+app.use("/api/v1/shifts", shiftRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

@@ -20,7 +20,7 @@ export const AttendanceStatus = {
 export const LeavesStatus = {
   Pending: "pending",
   Approved: "approved",
-  Declined: "declined",
+  Rejected: "rejected",
 };
 
 export const LeavesTypes = {

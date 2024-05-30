@@ -6,9 +6,8 @@ const controllers_1 = require("../controllers");
 const router = (0, express_1.Router)();
 // PROTECTED ROUTES ONLY USE FOR HR
 router.use(middlewares_1.Protect);
-router.route("/:leave_id").patch(controllers_1.updateLeave).delete(controllers_1.deleteLeave);
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
-router.route("/").get(controllers_1.getAllUserLeaves).post(controllers_1.addLeave);
-router.put("/:leave_id/status/:status", controllers_1.updateLeaveStatus);
+router.route("/").post(controllers_1.addShift);
+router.patch("/:shift_id", controllers_1.updateShift);
 exports.default = router;
-//# sourceMappingURL=leaveRoutes.js.map
+//# sourceMappingURL=shiftRoutes.js.map

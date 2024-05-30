@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export interface BankDetails {
   bank_name: string;
   account_holder_name: string;
@@ -29,4 +31,5 @@ export interface User {
   qualification_certificates: string[];
   qualification: string;
   password: string;
+  shift: Types.ObjectId;
 }

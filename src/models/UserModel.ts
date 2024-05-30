@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Query, Schema } from "mongoose";
 import validator from "validator";
 import { Roles, AccountStatus, User, BankDetails } from "../types";
 import { validationMessages } from "../utils";
@@ -135,6 +135,11 @@ const userSchema: Schema<User> = new Schema<User>(
       type: Date,
       default: "",
     },
+    shift: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Shift",
+      default: null,
+    },
     qualification_certificates: { type: [String], default: [] },
     qualification: {
       type: String,
@@ -150,6 +155,15 @@ const userSchema: Schema<User> = new Schema<User>(
     timestamps: true,
   }
 );
+
+userSchema.pre<Query<any, any>>(/^find/, function (next) {
+  this.populate({
+    path: "shift",
+    select: "-__v",
+  });
+
+  next();
+});
 
 // MIDDLEWARE == // PRE-SAVE HOOKS START
 userSchema.pre("save", async function (next) {

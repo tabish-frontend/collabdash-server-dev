@@ -23,36 +23,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LeavesModal = void 0;
+exports.HolidayModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const utils_1 = require("../utils");
-const leavesSchema = new mongoose_1.Schema({
-    user: { type: mongoose_1.default.Schema.ObjectId, ref: "User", required: true },
-    date: { type: Date, required: true },
-    reason: String,
-    status: {
+const holidaySchema = new mongoose_1.Schema({
+    title: {
         type: String,
-        enum: [
-            utils_1.LeavesStatus.Pending,
-            utils_1.LeavesStatus.Approved,
-            utils_1.LeavesStatus.Declined,
-        ],
         required: true,
-        default: utils_1.LeavesStatus.Pending,
     },
-    leave_type: {
-        type: String,
-        enum: [
-            utils_1.LeavesTypes.Half_Day,
-            utils_1.LeavesTypes.Sick,
-            utils_1.LeavesTypes.Casual,
-            utils_1.LeavesTypes.Emergency,
-        ],
+    date: {
+        type: Date,
         required: true,
-        default: utils_1.LeavesStatus.Pending,
     },
+    users: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+    ],
 }, {
     timestamps: true,
 });
-exports.LeavesModal = mongoose_1.default.model("Leaves", leavesSchema);
-//# sourceMappingURL=leaveModal.js.map
+exports.HolidayModel = mongoose_1.default.model("Holiday", holidaySchema);
+//# sourceMappingURL=holidayModel.js.map

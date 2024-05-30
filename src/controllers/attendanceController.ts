@@ -7,7 +7,7 @@ import {
   ResponseStatus,
   AttendanceStatus,
 } from "../utils";
-import { UserModel, AttendanceModal } from "../models";
+import { UserModel, AttendanceModel } from "../models";
 const { ObjectId } = mongoose.Types;
 
 export const manageAttendanceLogs = catchAsync(async (req, res) => {
@@ -28,7 +28,7 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
     }
 
     // Check if an attendance record for the same user and date already exists
-    let attendance = await AttendanceModal.findOne({
+    let attendance = await AttendanceModel.findOne({
       user: userId,
       date: { $gte: startOfDay, $lte: endOfDay },
     });
@@ -39,7 +39,7 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
       }
 
       // Create a new attendance record if none exists and the action is clockIn
-      attendance = new AttendanceModal({
+      attendance = new AttendanceModel({
         user: userId,
         date: new Date(),
         status: AttendanceStatus.ONLINE, // Default status
@@ -99,7 +99,7 @@ export const getTodayAttendanceOfUser = catchAsync(async (req, res) => {
     const endOfDay = new Date(currentDate);
     endOfDay.setUTCHours(23, 59, 59, 999);
 
-    const attendance = await AttendanceModal.findOne({
+    const attendance = await AttendanceModel.findOne({
       user: userId,
       date: { $gte: startOfDay, $lte: endOfDay },
     });
@@ -140,7 +140,7 @@ export const getAllUsersAttendance = catchAsync(async (req: any, res) => {
     // const usersWithAttendance = await Promise.all(
     //   users.map(async (user) => {
     //     // Fetch attendance data for the specified month
-    //     const attendance = await AttendanceModal.find({
+    //     const attendance = await AttendanceModel.find({
     //       user: user._id,
     //       date: {
     //         $gte: new Date(yearNumber, monthNumber - 1, 1),
@@ -231,7 +231,7 @@ export const getUserAttendance = catchAsync(async (req, res) => {
 
     const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
 
-    const attendanceRecords = await AttendanceModal.find({
+    const attendanceRecords = await AttendanceModel.find({
       user: new mongoose.Types.ObjectId(_id),
       date: {
         $gte: new Date(yearNumber, monthNumber - 1, 1),

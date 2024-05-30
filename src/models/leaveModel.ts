@@ -5,14 +5,15 @@ import { LeavesStatus, LeavesTypes } from "../utils";
 const leavesSchema: Schema<Leaves> = new Schema<Leaves>(
   {
     user: { type: mongoose.Schema.ObjectId, ref: "User", required: true },
-    date: { type: Date, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
     reason: String,
     status: {
       type: String,
       enum: [
         LeavesStatus.Pending,
         LeavesStatus.Approved,
-        LeavesStatus.Declined,
+        LeavesStatus.Rejected,
       ],
       required: true,
       default: LeavesStatus.Pending,
@@ -34,4 +35,4 @@ const leavesSchema: Schema<Leaves> = new Schema<Leaves>(
   }
 );
 
-export const LeavesModal = mongoose.model("Leaves", leavesSchema);
+export const LeavesModel = mongoose.model("Leaves", leavesSchema);

@@ -24,4 +24,4 @@ const holidaySchema: Schema<Holiday> = new Schema<Holiday>(
   }
 );
 
-export const HolidayModal = mongoose.model("Holiday", holidaySchema);
+export const HolidayModel = mongoose.model("Holiday", holidaySchema);

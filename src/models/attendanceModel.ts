@@ -29,4 +29,4 @@ const attendanceSchema: Schema<Attendance> = new Schema<Attendance>(
 
 attendanceSchema.index({ user: 1, date: 1 }, { unique: true });
 
-export const AttendanceModal = mongoose.model("Attendance", attendanceSchema);
+export const AttendanceModel = mongoose.model("Attendance", attendanceSchema);

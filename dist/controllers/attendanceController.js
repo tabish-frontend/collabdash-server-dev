@@ -34,7 +34,7 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             throw new utils_1.AppError("User not found", 404);
         }
         // Check if an attendance record for the same user and date already exists
-        let attendance = yield models_1.AttendanceModal.findOne({
+        let attendance = yield models_1.AttendanceModel.findOne({
             user: userId,
             date: { $gte: startOfDay, $lte: endOfDay },
         });
@@ -43,7 +43,7 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
                 throw new utils_1.AppError("Cannot clock out without clocking in first", 400);
             }
             // Create a new attendance record if none exists and the action is clockIn
-            attendance = new models_1.AttendanceModal({
+            attendance = new models_1.AttendanceModel({
                 user: userId,
                 date: new Date(),
                 status: utils_1.AttendanceStatus.ONLINE,
@@ -95,7 +95,7 @@ exports.getTodayAttendanceOfUser = (0, utils_1.catchAsync)((req, res) => __await
         startOfDay.setUTCHours(0, 0, 0, 0);
         const endOfDay = new Date(currentDate);
         endOfDay.setUTCHours(23, 59, 59, 999);
-        const attendance = yield models_1.AttendanceModal.findOne({
+        const attendance = yield models_1.AttendanceModel.findOne({
             user: userId,
             date: { $gte: startOfDay, $lte: endOfDay },
         });
@@ -129,7 +129,7 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(
         // const usersWithAttendance = await Promise.all(
         //   users.map(async (user) => {
         //     // Fetch attendance data for the specified month
-        //     const attendance = await AttendanceModal.find({
+        //     const attendance = await AttendanceModel.find({
         //       user: user._id,
         //       date: {
         //         $gte: new Date(yearNumber, monthNumber - 1, 1),
@@ -208,7 +208,7 @@ exports.getUserAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void
         const monthNumber = parseInt(month, 10);
         const yearNumber = parseInt(year, 10);
         const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
-        const attendanceRecords = yield models_1.AttendanceModal.find({
+        const attendanceRecords = yield models_1.AttendanceModel.find({
             user: new mongoose_1.default.Types.ObjectId(_id),
             date: {
                 $gte: new Date(yearNumber, monthNumber - 1, 1),

@@ -170,6 +170,11 @@ const userSchema = new mongoose_1.Schema({
         type: Date,
         default: "",
     },
+    shift: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Shift",
+        default: null,
+    },
     qualification_certificates: { type: [String], default: [] },
     qualification: {
         type: String,
@@ -182,6 +187,13 @@ const userSchema = new mongoose_1.Schema({
     },
 }, {
     timestamps: true,
+});
+userSchema.pre(/^find/, function (next) {
+    this.populate({
+        path: "shift",
+        select: "-__v",
+    });
+    next();
 });
 // MIDDLEWARE == // PRE-SAVE HOOKS START
 userSchema.pre("save", function (next) {
@@ -211,4 +223,4 @@ userSchema.methods.generateAccessToken = function () {
     return accessToken;
 };
 exports.UserModel = mongoose_1.default.model("User", userSchema);
-//# sourceMappingURL=UserModal.js.map
+//# sourceMappingURL=UserModel.js.map

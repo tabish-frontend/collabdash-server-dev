@@ -20,7 +20,7 @@ exports.AttendanceStatus = {
 exports.LeavesStatus = {
     Pending: "pending",
     Approved: "approved",
-    Declined: "declined",
+    Rejected: "rejected",
 };
 exports.LeavesTypes = {
     Sick: "sick",

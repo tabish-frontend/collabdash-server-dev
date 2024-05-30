@@ -23,30 +23,20 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AttendanceModal = void 0;
+exports.ShiftModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const utils_1 = require("../utils");
-const attendanceSchema = new mongoose_1.Schema({
-    user: { type: mongoose_1.default.Schema.ObjectId, ref: "User", required: true },
-    date: { type: Date, required: true },
-    status: {
-        type: String,
-        enum: [
-            utils_1.AttendanceStatus.FULL_DAY_PRESENT,
-            utils_1.AttendanceStatus.FULL_DAY_ABSENT,
-            utils_1.AttendanceStatus.SHORT_ATTENDANCE,
-            utils_1.AttendanceStatus.ONLINE,
-            utils_1.AttendanceStatus.HALF_DAY_PRESENT,
-        ],
-        required: true,
-    },
-    timeIn: { type: Date, required: false },
-    timeOut: { type: Date, default: "", required: false },
-    duration: { type: Number, default: 0 },
-    notes: { type: String, required: false },
+const timeDetailsSchema = new mongoose_1.Schema({
+    start: { type: Date, default: null },
+    end: { type: Date, default: null },
+    days: { type: [String], required: true },
+});
+// Create the Shift schema
+const shiftSchema = new mongoose_1.Schema({
+    user: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true },
+    times: { type: [timeDetailsSchema], required: true },
+    weekends: { type: [String], required: true },
 }, {
     timestamps: true,
 });
-attendanceSchema.index({ user: 1, date: 1 }, { unique: true });
-exports.AttendanceModal = mongoose_1.default.model("Attendance", attendanceSchema);
-//# sourceMappingURL=attendanceModal.js.map
+exports.ShiftModel = mongoose_1.default.model("Shift", shiftSchema);
+//# sourceMappingURL=shiftModel.js.map

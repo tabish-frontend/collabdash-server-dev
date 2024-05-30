@@ -1,16 +1,16 @@
-import { HolidayModal } from "../models";
+import { HolidayModel } from "../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../utils";
 
 export const addHoliday = catchAsync(async (req, res) => {
   const { date } = req.body;
 
-  const existingHoliday = await HolidayModal.findOne({ date });
+  const existingHoliday = await HolidayModel.findOne({ date });
 
   if (existingHoliday) {
     throw new AppError("Holiday already exists for this date", 409);
   }
 
-  const newHoliday = await HolidayModal.create(req.body);
+  const newHoliday = await HolidayModel.create(req.body);
 
   return res
     .status(200)
@@ -29,7 +29,7 @@ export const getAllUserHolidays = catchAsync(async (req, res) => {
   const endDate = new Date(`${year}-12-31T23:59:59Z`);
 
   // Find holidays within the date range and populate user references
-  const holidays = await HolidayModal.find({
+  const holidays = await HolidayModel.find({
     date: {
       $gte: startDate,
       $lte: endDate,
@@ -62,7 +62,7 @@ export const getUserHolidays = catchAsync(async (req, res) => {
   const endDate = new Date(`${year}-12-31T23:59:59Z`);
 
   // Find all holidays for the specified user
-  const userHolidays = await HolidayModal.find({
+  const userHolidays = await HolidayModel.find({
     users: _id,
     date: {
       $gte: startDate,
@@ -83,8 +83,8 @@ export const updateHoliday = catchAsync(async (req, res) => {
 
   // Check if a holiday with the same date already exists (excluding the current holiday)
 
-  // const existingHoliday = await HolidayModal.findOne({ date });
-  const existingHoliday = await HolidayModal.findOne({
+  // const existingHoliday = await HolidayModel.findOne({ date });
+  const existingHoliday = await HolidayModel.findOne({
     date,
     _id: { $ne: _id }, // Exclude the current holiday being updated
   });
@@ -93,7 +93,7 @@ export const updateHoliday = catchAsync(async (req, res) => {
     throw new AppError("A holiday with the same date already exists", 400);
   }
 
-  const updatedHoliday = await HolidayModal.findByIdAndUpdate(_id, req.body, {
+  const updatedHoliday = await HolidayModel.findByIdAndUpdate(_id, req.body, {
     new: true,
     runValidators: true,
   });
@@ -117,7 +117,7 @@ export const updateHoliday = catchAsync(async (req, res) => {
 export const deleteHoliday = catchAsync(async (req, res) => {
   const { _id } = req.params;
 
-  const holiday = await HolidayModal.findByIdAndDelete(_id);
+  const holiday = await HolidayModel.findByIdAndDelete(_id);
 
   if (!holiday) {
     throw new AppError("No Holiday found with that ID", 400);

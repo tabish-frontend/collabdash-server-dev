@@ -2,13 +2,11 @@ import { Router } from "express";
 import { Protect, restrictTo } from "../middlewares";
 
 import {
-  addHoliday,
   addLeave,
-  deleteHoliday,
-  getAllUserHolidays,
+  deleteLeave,
   getAllUserLeaves,
-  getUserHolidays,
-  updateHoliday,
+  updateLeave,
+  updateLeaveStatus,
 } from "../controllers";
 
 const router = Router();
@@ -16,14 +14,13 @@ const router = Router();
 // PROTECTED ROUTES ONLY USE FOR HR
 
 router.use(Protect);
+
+router.route("/:leave_id").patch(updateLeave).delete(deleteLeave);
+
 router.use(restrictTo("hr", "admin"));
 
 router.route("/").get(getAllUserLeaves).post(addLeave);
 
-// router
-//   .route("/:_id")
-//   .patch(updateHoliday)
-//   .delete(deleteHoliday)
-//   .get(getUserHolidays);
+router.put("/:leave_id/status/:status", updateLeaveStatus);
 
 export default router;

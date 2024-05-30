@@ -14,11 +14,11 @@ const models_1 = require("../models");
 const utils_1 = require("../utils");
 exports.addHoliday = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { date } = req.body;
-    const existingHoliday = yield models_1.HolidayModal.findOne({ date });
+    const existingHoliday = yield models_1.HolidayModel.findOne({ date });
     if (existingHoliday) {
         throw new utils_1.AppError("Holiday already exists for this date", 409);
     }
-    const newHoliday = yield models_1.HolidayModal.create(req.body);
+    const newHoliday = yield models_1.HolidayModel.create(req.body);
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, newHoliday, "Holiday Added", utils_1.ResponseStatus.SUCCESS));
@@ -31,7 +31,7 @@ exports.getAllUserHolidays = (0, utils_1.catchAsync)((req, res) => __awaiter(voi
     const startDate = new Date(`${year}-01-01T00:00:00Z`);
     const endDate = new Date(`${year}-12-31T23:59:59Z`);
     // Find holidays within the date range and populate user references
-    const holidays = yield models_1.HolidayModal.find({
+    const holidays = yield models_1.HolidayModel.find({
         date: {
             $gte: startDate,
             $lte: endDate,
@@ -57,7 +57,7 @@ exports.getUserHolidays = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0
     const startDate = new Date(`${year}-01-01T00:00:00Z`);
     const endDate = new Date(`${year}-12-31T23:59:59Z`);
     // Find all holidays for the specified user
-    const userHolidays = yield models_1.HolidayModal.find({
+    const userHolidays = yield models_1.HolidayModel.find({
         users: _id,
         date: {
             $gte: startDate,
@@ -73,15 +73,15 @@ exports.updateHoliday = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
     const { _id } = req.params;
     const { date } = req.body;
     // Check if a holiday with the same date already exists (excluding the current holiday)
-    // const existingHoliday = await HolidayModal.findOne({ date });
-    const existingHoliday = yield models_1.HolidayModal.findOne({
+    // const existingHoliday = await HolidayModel.findOne({ date });
+    const existingHoliday = yield models_1.HolidayModel.findOne({
         date,
         _id: { $ne: _id }, // Exclude the current holiday being updated
     });
     if (existingHoliday) {
         throw new utils_1.AppError("A holiday with the same date already exists", 400);
     }
-    const updatedHoliday = yield models_1.HolidayModal.findByIdAndUpdate(_id, req.body, {
+    const updatedHoliday = yield models_1.HolidayModel.findByIdAndUpdate(_id, req.body, {
         new: true,
         runValidators: true,
     });
@@ -94,7 +94,7 @@ exports.updateHoliday = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
 }));
 exports.deleteHoliday = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id } = req.params;
-    const holiday = yield models_1.HolidayModal.findByIdAndDelete(_id);
+    const holiday = yield models_1.HolidayModel.findByIdAndDelete(_id);
     if (!holiday) {
         throw new utils_1.AppError("No Holiday found with that ID", 400);
     }
