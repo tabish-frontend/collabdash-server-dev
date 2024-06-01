@@ -17,17 +17,17 @@ exports.getUserAttendance = exports.getAllUsersAttendance = exports.getTodayAtte
 const mongoose_1 = __importDefault(require("mongoose"));
 const utils_1 = require("../utils");
 const models_1 = require("../models");
-const { ObjectId } = mongoose_1.default.Types;
+const lookups_1 = require("../lookups");
 exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { notes } = req.body;
         const userId = req.user._id;
-        const action = req.params.action; // "clockIn" or "clockOut"
+        const action = req.params.action;
         const currentDate = new Date();
-        const startOfDay = new Date(currentDate);
-        startOfDay.setUTCHours(0, 0, 0, 0);
-        const endOfDay = new Date(currentDate);
-        endOfDay.setUTCHours(23, 59, 59, 999);
+        const currentDay = currentDate.toLocaleString("en-US", { weekday: "long" });
+        const currentTime = currentDate.getTime();
+        const startOfDay = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 1, 0, 0, 0, 0));
+        const endOfDay = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate() - 1, 23, 59, 59, 999));
         // Validate if user exists
         const existingUser = yield models_1.UserModel.findById(userId);
         if (!existingUser) {
@@ -42,7 +42,10 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             if (action === "clockOut") {
                 throw new utils_1.AppError("Cannot clock out without clocking in first", 400);
             }
-            // Create a new attendance record if none exists and the action is clockIn
+            // Check holiday, leave, and shift
+            yield (0, utils_1.checkHoliday)(userId, startOfDay, endOfDay);
+            yield (0, utils_1.checkLeave)(userId, startOfDay, endOfDay);
+            yield (0, utils_1.checkShift)(userId, currentDay, currentTime);
             attendance = new models_1.AttendanceModel({
                 user: userId,
                 date: new Date(),
@@ -52,7 +55,6 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             });
         }
         else {
-            // Update the existing attendance record based on the action
             if (action === "clockIn") {
                 throw new utils_1.AppError("You are already clocked in today", 400);
             }
@@ -60,11 +62,9 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
                 if (attendance.timeOut) {
                     throw new utils_1.AppError("You are already clocked out today", 400);
                 }
-                // Calculate duration between timeIn and timeOut
                 const timeOut = new Date();
                 const timeIn = attendance.timeIn;
-                const duration = (timeOut - timeIn) / (1000 * 60 * 60); // Duration in hours
-                console.log("duration", duration);
+                const duration = (timeOut - timeIn) / (1000 * 60 * 60);
                 if (duration < 4) {
                     attendance.status = utils_1.AttendanceStatus.SHORT_ATTENDANCE;
                 }
@@ -110,7 +110,7 @@ exports.getTodayAttendanceOfUser = (0, utils_1.catchAsync)((req, res) => __await
         throw new utils_1.AppError((error === null || error === void 0 ? void 0 : error.message) || "Something went wrong", 401);
     }
 }));
-exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { month, year } = req.query;
         if (!month || !year) {
@@ -120,30 +120,6 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(
         }
         const monthNumber = parseInt(month, 10);
         const yearNumber = parseInt(year, 10);
-        // BASIC APPROACH
-        // Fetch all users
-        // const users = await UserModel.find().select(
-        //   "-password  -__v -createdAt -updatedAt "
-        // );
-        // // Loop through each user
-        // const usersWithAttendance = await Promise.all(
-        //   users.map(async (user) => {
-        //     // Fetch attendance data for the specified month
-        //     const attendance = await AttendanceModel.find({
-        //       user: user._id,
-        //       date: {
-        //         $gte: new Date(yearNumber, monthNumber - 1, 1),
-        //         $lt: new Date(yearNumber, monthNumber, 0),
-        //       },
-        //     });
-        //     // Return user object with attendance data
-        //     return {
-        //       user: user.toObject(),
-        //       attendance,
-        //     };
-        //   })
-        // );
-        // AGGREGATE APPROACH
         const userExcludedFields = {
             password: 0,
             bio: 0,
@@ -156,32 +132,16 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(
             createdAt: 0,
             updatedAt: 0,
         };
-        const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
         const usersWithAttendance = yield models_1.UserModel.aggregate([
             ...req.pipelineModification,
+            (0, lookups_1.lookupAttendance)(yearNumber, monthNumber),
+            (0, lookups_1.lookupHolidays)(yearNumber, monthNumber),
+            (0, lookups_1.lookupLeaves)(yearNumber, monthNumber),
+            (0, lookups_1.lookupShift)(),
             {
-                $lookup: {
-                    from: "attendances",
-                    let: { userId: "$_id" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$user", "$$userId"] },
-                                        {
-                                            $gte: ["$date", new Date(yearNumber, monthNumber - 1, 1)],
-                                        },
-                                        { $lt: ["$date", new Date(yearNumber, monthNumber, 0)] },
-                                    ],
-                                },
-                            },
-                        },
-                        {
-                            $project: attendanceExcludedFields,
-                        },
-                    ],
-                    as: "attendance",
+                $unwind: {
+                    path: "$shift",
+                    preserveNullAndEmptyArrays: true,
                 },
             },
             {
@@ -193,7 +153,7 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(
             .json(new utils_1.AppResponse(200, usersWithAttendance, "", utils_1.ResponseStatus.SUCCESS));
     }
     catch (error) {
-        throw new utils_1.AppError("Error fetching users attendance", 500);
+        return next(new utils_1.AppError("Error fetching users attendance", 500));
     }
 }));
 exports.getUserAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -215,11 +175,6 @@ exports.getUserAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void
                 $lt: new Date(yearNumber, monthNumber, 1),
             },
         }).select(attendanceExcludedFields);
-        if (attendanceRecords.length === 0) {
-            return res
-                .status(404)
-                .json(new utils_1.AppResponse(404, [], "No records found", utils_1.ResponseStatus.FAIL));
-        }
         return res.status(200).json(new utils_1.AppResponse(200, {
             attendance: attendanceRecords,
         }, "", utils_1.ResponseStatus.SUCCESS));

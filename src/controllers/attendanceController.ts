@@ -6,20 +6,56 @@ import {
   AppResponse,
   ResponseStatus,
   AttendanceStatus,
+  LeavesStatus,
+  checkHoliday,
+  checkLeave,
+  checkShift,
 } from "../utils";
-import { UserModel, AttendanceModel } from "../models";
-const { ObjectId } = mongoose.Types;
+import {
+  UserModel,
+  AttendanceModel,
+  HolidayModel,
+  LeavesModel,
+  ShiftModel,
+} from "../models";
+import {
+  lookupAttendance,
+  lookupHolidays,
+  lookupLeaves,
+  lookupShift,
+} from "../lookups";
 
 export const manageAttendanceLogs = catchAsync(async (req, res) => {
   try {
     const { notes } = req.body;
     const userId = req.user._id;
-    const action = req.params.action; // "clockIn" or "clockOut"
+    const action = req.params.action;
     const currentDate = new Date();
-    const startOfDay = new Date(currentDate);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    const endOfDay = new Date(currentDate);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    const currentDay = currentDate.toLocaleString("en-US", { weekday: "long" });
+    const currentTime = currentDate.getTime();
+    const startOfDay = new Date(
+      Date.UTC(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate() - 1,
+        0,
+        0,
+        0,
+        0
+      )
+    );
+
+    const endOfDay = new Date(
+      Date.UTC(
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate() - 1,
+        23,
+        59,
+        59,
+        999
+      )
+    );
 
     // Validate if user exists
     const existingUser = await UserModel.findById(userId);
@@ -38,16 +74,19 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
         throw new AppError("Cannot clock out without clocking in first", 400);
       }
 
-      // Create a new attendance record if none exists and the action is clockIn
+      // Check holiday, leave, and shift
+      await checkHoliday(userId, startOfDay, endOfDay);
+      await checkLeave(userId, startOfDay, endOfDay);
+      await checkShift(userId, currentDay, currentTime);
+
       attendance = new AttendanceModel({
         user: userId,
         date: new Date(),
-        status: AttendanceStatus.ONLINE, // Default status
+        status: AttendanceStatus.ONLINE,
         timeIn: new Date(),
         notes,
       });
     } else {
-      // Update the existing attendance record based on the action
       if (action === "clockIn") {
         throw new AppError("You are already clocked in today", 400);
       } else if (action === "clockOut") {
@@ -55,12 +94,10 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
           throw new AppError("You are already clocked out today", 400);
         }
 
-        // Calculate duration between timeIn and timeOut
         const timeOut: any = new Date();
         const timeIn: any = attendance.timeIn;
-        const duration = (timeOut - timeIn) / (1000 * 60 * 60); // Duration in hours
+        const duration = (timeOut - timeIn) / (1000 * 60 * 60);
 
-        console.log("duration", duration);
         if (duration < 4) {
           attendance.status = AttendanceStatus.SHORT_ATTENDANCE;
         } else if (duration >= 4 && duration < 8) {
@@ -116,7 +153,7 @@ export const getTodayAttendanceOfUser = catchAsync(async (req, res) => {
   }
 });
 
-export const getAllUsersAttendance = catchAsync(async (req: any, res) => {
+export const getAllUsersAttendance = catchAsync(async (req: any, res, next) => {
   try {
     const { month, year } = req.query;
 
@@ -128,35 +165,6 @@ export const getAllUsersAttendance = catchAsync(async (req: any, res) => {
 
     const monthNumber = parseInt(month as string, 10);
     const yearNumber = parseInt(year as string, 10);
-
-    // BASIC APPROACH
-
-    // Fetch all users
-    // const users = await UserModel.find().select(
-    //   "-password  -__v -createdAt -updatedAt "
-    // );
-
-    // // Loop through each user
-    // const usersWithAttendance = await Promise.all(
-    //   users.map(async (user) => {
-    //     // Fetch attendance data for the specified month
-    //     const attendance = await AttendanceModel.find({
-    //       user: user._id,
-    //       date: {
-    //         $gte: new Date(yearNumber, monthNumber - 1, 1),
-    //         $lt: new Date(yearNumber, monthNumber, 0),
-    //       },
-    //     });
-
-    //     // Return user object with attendance data
-    //     return {
-    //       user: user.toObject(),
-    //       attendance,
-    //     };
-    //   })
-    // );
-
-    // AGGREGATE APPROACH
 
     const userExcludedFields = {
       password: 0,
@@ -171,33 +179,16 @@ export const getAllUsersAttendance = catchAsync(async (req: any, res) => {
       updatedAt: 0,
     };
 
-    const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
-
     const usersWithAttendance = await UserModel.aggregate([
       ...req.pipelineModification,
+      lookupAttendance(yearNumber, monthNumber),
+      lookupHolidays(yearNumber, monthNumber),
+      lookupLeaves(yearNumber, monthNumber),
+      lookupShift(),
       {
-        $lookup: {
-          from: "attendances",
-          let: { userId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$user", "$$userId"] },
-                    {
-                      $gte: ["$date", new Date(yearNumber, monthNumber - 1, 1)],
-                    },
-                    { $lt: ["$date", new Date(yearNumber, monthNumber, 0)] },
-                  ],
-                },
-              },
-            },
-            {
-              $project: attendanceExcludedFields,
-            },
-          ],
-          as: "attendance",
+        $unwind: {
+          path: "$shift",
+          preserveNullAndEmptyArrays: true,
         },
       },
       {
@@ -211,7 +202,7 @@ export const getAllUsersAttendance = catchAsync(async (req: any, res) => {
         new AppResponse(200, usersWithAttendance, "", ResponseStatus.SUCCESS)
       );
   } catch (error) {
-    throw new AppError("Error fetching users attendance", 500);
+    return next(new AppError("Error fetching users attendance", 500));
   }
 });
 
@@ -238,14 +229,6 @@ export const getUserAttendance = catchAsync(async (req, res) => {
         $lt: new Date(yearNumber, monthNumber, 1),
       },
     }).select(attendanceExcludedFields);
-
-    if (attendanceRecords.length === 0) {
-      return res
-        .status(404)
-        .json(
-          new AppResponse(404, [], "No records found", ResponseStatus.FAIL)
-        );
-    }
 
     return res.status(200).json(
       new AppResponse(
