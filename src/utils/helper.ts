@@ -53,6 +53,10 @@ export async function checkShift(
     }
 
     const shiftMatch = shift.times.some((timeDetail) => {
+      console.log("currentTime", currentTime);
+      console.log("shiftStart", new Date(timeDetail.start).getTime());
+      console.log("shiftEnd", new Date(timeDetail.end).getTime());
+
       const shiftStart = new Date(timeDetail.start).getTime();
       const shiftEnd = new Date(timeDetail.end).getTime();
       return (
@@ -61,6 +65,8 @@ export async function checkShift(
         currentTime <= shiftEnd
       );
     });
+
+    console.log("shiftMatch", shiftMatch);
 
     if (!shiftMatch) {
       throw new AppError(
@@ -72,3 +78,19 @@ export async function checkShift(
     throw new AppError(`Shifts were not added`, 400);
   }
 }
+
+export const getDatesInMonth = (month: any, year: any) => {
+  const dates = [];
+  const daysInMonth = new Date(year, month, 0).getDate();
+  for (let i = 1; i <= daysInMonth; i++) {
+    const date = new Date(year, month - 1, i);
+    const formattedDate = date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+      })
+      .replace(/ /g, " ");
+    dates.push(formattedDate);
+  }
+  return dates;
+};

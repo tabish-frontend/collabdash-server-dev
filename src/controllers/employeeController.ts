@@ -91,15 +91,8 @@ const checkTodayStatus = async (user: any) => {
   return "Offline";
 };
 
-export const getAllEmployees = catchAsync(async (req, res, next) => {
-  // To allow for nested GET reviews on tour (hack)
-  let filter: any = {};
-
-  if (req.user.role === Roles.HR) {
-    filter.role = { $nin: [Roles.HR, Roles.Admin] }; // Exclude HR and Admin
-  } else if (req.user.role === Roles.Admin) {
-    filter.role = { $ne: Roles.Admin }; // Exclude only Admin
-  }
+export const getAllEmployees = catchAsync(async (req: any, res, next) => {
+  let filter: any = { role: { $nin: req.excludedRoles } };
 
   const total_counts = await UserModel.find();
   const features = new APIFeatures(UserModel.find(filter), req.query)

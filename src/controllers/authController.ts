@@ -51,7 +51,6 @@ export const signup = catchAsync(
 
     const newUser = await UserModel.create(req.body);
 
-    console.log("password", req.body.password);
     await send_email({
       to: req.body.email,
       subject: `Action Required: Update Your ${TUITION_HIGHWAY} Password`,

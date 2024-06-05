@@ -62,7 +62,7 @@ export const updateOne = (Model: any, hideFields: string) =>
   catchAsync(async (req, res, next) => {
     const { _id, username } = req.params;
 
-    const document = Model.findByIdAndUpdate(
+    const document = await Model.findOneAndUpdate(
       {
         $or: [{ username }, { _id }],
       },

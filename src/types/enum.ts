@@ -1,7 +1,8 @@
 export enum AccountStatus {
   Active = "active",
-  Inactive = "inactive",
-  Blocked = "blocked",
+  Pending = "pending",
+  Suspend = "suspend",
+  Terminate = "terminate",
   Deleted = "deleted",
 }
 

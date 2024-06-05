@@ -50,12 +50,9 @@ export const getAllUserHolidays = catchAsync(async (req, res) => {
 export const getUserHolidays = catchAsync(async (req, res) => {
   const { _id } = req.params;
 
-  console.log("_id", _id);
   const year = req.query.year
     ? parseInt(req.query.year as string)
     : new Date().getFullYear();
-
-  console.log("year", year);
 
   // Calculate the start and end dates of the specified year
   const startDate = new Date(`${year}-01-01T00:00:00Z`);
@@ -69,8 +66,6 @@ export const getUserHolidays = catchAsync(async (req, res) => {
       $lte: endDate,
     },
   }).select("-users");
-
-  console.log("userHolidays", userHolidays);
 
   return res
     .status(200)

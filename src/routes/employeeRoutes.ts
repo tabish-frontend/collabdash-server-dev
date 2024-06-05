@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { Protect, restrictTo, generatePassword } from "../middlewares";
+import {
+  Protect,
+  restrictTo,
+  generatePassword,
+  excludeRolesMiddleware,
+} from "../middlewares";
 import {
   signup,
   getAllEmployees,
@@ -15,7 +20,10 @@ const router = Router();
 router.use(Protect);
 router.use(restrictTo("hr", "admin"));
 
-router.route("/").get(getAllEmployees).post(generatePassword, signup);
+router
+  .route("/")
+  .get(excludeRolesMiddleware, getAllEmployees)
+  .post(generatePassword, signup);
 
 router
   .route("/:username")
