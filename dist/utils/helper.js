@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkShift = exports.checkLeave = exports.checkHoliday = exports.isFilesObject = void 0;
+exports.getDatesInMonth = exports.checkShift = exports.checkLeave = exports.checkHoliday = exports.isFilesObject = void 0;
 const models_1 = require("../models");
 const utils_1 = require("../utils");
 const isFilesObject = (files) => {
@@ -50,12 +50,16 @@ function checkShift(userId, currentDay, currentTime) {
                 throw new utils_1.AppError(`Cannot mark attendance on a weekend (${currentDay})`, 400);
             }
             const shiftMatch = shift.times.some((timeDetail) => {
+                console.log("currentTime", currentTime);
+                console.log("shiftStart", new Date(timeDetail.start).getTime());
+                console.log("shiftEnd", new Date(timeDetail.end).getTime());
                 const shiftStart = new Date(timeDetail.start).getTime();
                 const shiftEnd = new Date(timeDetail.end).getTime();
                 return (timeDetail.days.includes(currentDay) &&
                     currentTime >= shiftStart &&
                     currentTime <= shiftEnd);
             });
+            console.log("shiftMatch", shiftMatch);
             if (!shiftMatch) {
                 throw new utils_1.AppError("Current time does not match your shift schedule", 400);
             }
@@ -66,4 +70,20 @@ function checkShift(userId, currentDay, currentTime) {
     });
 }
 exports.checkShift = checkShift;
+const getDatesInMonth = (month, year) => {
+    const dates = [];
+    const daysInMonth = new Date(year, month, 0).getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(year, month - 1, i);
+        const formattedDate = date
+            .toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+        })
+            .replace(/ /g, " ");
+        dates.push(formattedDate);
+    }
+    return dates;
+};
+exports.getDatesInMonth = getDatesInMonth;
 //# sourceMappingURL=helper.js.map

@@ -19,4 +19,5 @@ __exportStar(require("./generateRandomPasswordMiddleware"), exports);
 __exportStar(require("./getUserIdMiddleware"), exports);
 __exportStar(require("./multer"), exports);
 __exportStar(require("./filterAttendanceMiddleware"), exports);
+__exportStar(require("./excludeRolesMiddleware"), exports);
 //# sourceMappingURL=index.js.map

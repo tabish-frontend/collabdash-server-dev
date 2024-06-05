@@ -7,7 +7,10 @@ const router = (0, express_1.Router)();
 // PROTECTED ROUTES ONLY USE FOR HR
 router.use(middlewares_1.Protect);
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
-router.route("/").get(controllers_1.getAllEmployees).post(middlewares_1.generatePassword, controllers_1.signup);
+router
+    .route("/")
+    .get(middlewares_1.excludeRolesMiddleware, controllers_1.getAllEmployees)
+    .post(middlewares_1.generatePassword, controllers_1.signup);
 router
     .route("/:username")
     .get(controllers_1.getEmployee)

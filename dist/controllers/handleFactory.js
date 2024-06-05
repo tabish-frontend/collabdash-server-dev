@@ -47,7 +47,7 @@ const getAll = (Model, excludeCurrentUser = false, hideFields) => (0, utils_1.ca
 exports.getAll = getAll;
 const updateOne = (Model, hideFields) => (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id, username } = req.params;
-    const document = Model.findByIdAndUpdate({
+    const document = yield Model.findOneAndUpdate({
         $or: [{ username }, { _id }],
     }, req.body, {
         new: true,

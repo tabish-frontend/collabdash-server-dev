@@ -4,8 +4,9 @@ exports.Roles = exports.AccountStatus = void 0;
 var AccountStatus;
 (function (AccountStatus) {
     AccountStatus["Active"] = "active";
-    AccountStatus["Inactive"] = "inactive";
-    AccountStatus["Blocked"] = "blocked";
+    AccountStatus["Pending"] = "pending";
+    AccountStatus["Suspend"] = "suspend";
+    AccountStatus["Terminate"] = "terminate";
     AccountStatus["Deleted"] = "deleted";
 })(AccountStatus || (exports.AccountStatus = AccountStatus = {}));
 var Roles;

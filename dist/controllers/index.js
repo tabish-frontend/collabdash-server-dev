@@ -22,4 +22,5 @@ __exportStar(require("./employeeController"), exports);
 __exportStar(require("./holidayControllers"), exports);
 __exportStar(require("./leavesController"), exports);
 __exportStar(require("./shiftController"), exports);
+__exportStar(require("./statisticsController"), exports);
 //# sourceMappingURL=index.js.map

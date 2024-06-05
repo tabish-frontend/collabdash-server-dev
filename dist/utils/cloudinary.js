@@ -28,9 +28,6 @@ const uploadOnCloudinary = (locaLFilePath) => __awaiter(void 0, void 0, void 0, 
         const response = yield cloudinary_1.v2.uploader.upload(locaLFilePath, {
             resource_type: "auto",
         });
-        // file has been uploaded successfully
-        // console.log("File is uploaded on Cloudinary", response.url);
-        // await fs.unlink(locaLFilePath);
         return response;
     }
     catch (error) {

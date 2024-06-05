@@ -94,14 +94,7 @@ const checkTodayStatus = (user) => __awaiter(void 0, void 0, void 0, function* (
     return "Offline";
 });
 exports.getAllEmployees = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    // To allow for nested GET reviews on tour (hack)
-    let filter = {};
-    if (req.user.role === types_1.Roles.HR) {
-        filter.role = { $nin: [types_1.Roles.HR, types_1.Roles.Admin] }; // Exclude HR and Admin
-    }
-    else if (req.user.role === types_1.Roles.Admin) {
-        filter.role = { $ne: types_1.Roles.Admin }; // Exclude only Admin
-    }
+    let filter = { role: { $nin: req.excludedRoles } };
     const total_counts = yield models_1.UserModel.find();
     const features = new utils_1.APIFeatures(models_1.UserModel.find(filter), req.query)
         .filter()
