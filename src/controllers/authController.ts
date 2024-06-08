@@ -197,8 +197,6 @@ export const resetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const incomingAccessToken = req.params.token;
 
-    console.log("incomingRefreshToken", incomingAccessToken);
-
     if (!incomingAccessToken) {
       throw new AppError("Unauthorized request", 401);
     }

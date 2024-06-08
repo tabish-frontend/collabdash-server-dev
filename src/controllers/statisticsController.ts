@@ -1,5 +1,5 @@
 import { AccountStatus, Roles } from "../types";
-import { AttendanceModel, LeavesModel, UserModel } from "../models";
+import { AttendanceModel, LeavesModel, ShiftModel, UserModel } from "../models";
 import {
   AppError,
   AppResponse,
@@ -8,6 +8,32 @@ import {
   catchAsync,
   getDatesInMonth,
 } from "../utils";
+
+export const getAllUserStatistics = catchAsync(async (req: any, res) => {
+  // Count male users excluding HR and Admin
+  const maleUsers = await UserModel.countDocuments({
+    gender: "male",
+    role: { $nin: req.excludedRoles },
+  });
+
+  // Count female users excluding HR and Admin
+  const femaleUsers = await UserModel.countDocuments({
+    gender: "female",
+    role: { $nin: req.excludedRoles },
+  });
+
+  return res.status(200).json(
+    new AppResponse(
+      200,
+      {
+        man: maleUsers,
+        women: femaleUsers,
+      },
+      "",
+      ResponseStatus.SUCCESS
+    )
+  );
+});
 
 export const getAllUserAttendanceStatistics = catchAsync(
   async (req: any, res) => {
@@ -81,67 +107,79 @@ export const getAllUserAttendanceStatistics = catchAsync(
   }
 );
 
-export const allUserTodayAttendanceStatus = catchAsync(
+export const allUserTodayAttendanceStatistics = catchAsync(
   async (req: any, res) => {
     const currentDate = new Date();
-    const startOfDay = new Date(
-      Date.UTC(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        currentDate.getDate() - 1,
-        0,
-        0,
-        0,
-        0
-      )
-    );
 
-    const endOfDay = new Date(
-      Date.UTC(
-        currentDate.getUTCFullYear(),
-        currentDate.getUTCMonth(),
-        currentDate.getUTCDate() - 1,
-        23,
-        59,
-        59,
-        999
-      )
-    );
+    const startOfDay = new Date(currentDate.setUTCHours(0, 0, 0, 0));
+    const endOfDay = new Date(currentDate.setUTCHours(23, 59, 59, 999));
 
     const totalEmployees = await UserModel.countDocuments({
       account_status: AccountStatus.Active,
       role: { $nin: req.excludedRoles },
     });
 
-    console.log("totalEmployees", totalEmployees);
-
     const employeeIds = await UserModel.find({
       account_status: AccountStatus.Active,
       role: { $nin: req.excludedRoles },
     }).distinct("_id");
 
-    const leaveUsers = await LeavesModel.find({
+    const leaveUsers = await LeavesModel.countDocuments({
       user: employeeIds,
       status: LeavesStatus.Approved,
       startDate: { $lte: endOfDay },
       endDate: { $gte: startOfDay },
     });
 
-    console.log("leaveUsers", leaveUsers);
-
-    console.log("startOfDay", startOfDay);
-
-    const attendanceData = await AttendanceModel.find({
-      date: {
-        $gte: startOfDay,
-        $lt: endOfDay,
-      },
+    const attendanceRecords = await AttendanceModel.find({
+      user: { $in: employeeIds },
+      date: { $gte: startOfDay, $lt: endOfDay },
     });
 
-    console.log("attendanceData", attendanceData);
+    let presentUsers = 0;
+    let lateUsers = 0;
 
-    return res
-      .status(200)
-      .json(new AppResponse(200, {}, "", ResponseStatus.SUCCESS));
+    const shiftRecords = await ShiftModel.find({
+      user: { $in: employeeIds },
+      shift_type: "Fixed",
+    });
+
+    const shiftMap = new Map();
+    shiftRecords.forEach((shift) => {
+      shiftMap.set(shift.user.toString(), shift);
+    });
+
+    attendanceRecords.forEach((attendance) => {
+      const userShift = shiftMap.get(attendance.user.toString());
+      if (userShift) {
+        const userShiftTime = userShift.times.find(
+          (time: { days: string | string[] }) =>
+            time.days.includes(
+              currentDate.toLocaleDateString("en-US", { weekday: "long" })
+            )
+        );
+
+        if (userShiftTime) {
+          if (attendance.timeIn > userShiftTime.start) {
+            lateUsers++;
+          }
+        }
+      }
+      presentUsers++;
+    });
+
+    return res.status(200).json(
+      new AppResponse(
+        200,
+        {
+          present: presentUsers,
+          leave: leaveUsers,
+          absent: totalEmployees - presentUsers - leaveUsers,
+          on_late: lateUsers,
+        },
+        "",
+        ResponseStatus.SUCCESS
+      )
+    );
   }
 );

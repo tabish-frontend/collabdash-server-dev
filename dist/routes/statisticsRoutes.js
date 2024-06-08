@@ -9,6 +9,7 @@ router.use(middlewares_1.Protect);
 // RESTRICTED ROUTES
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
 router.get("/employeesMonthlyAttendance", middlewares_1.excludeRolesMiddleware, controllers_1.getAllUserAttendanceStatistics);
-router.get("/todayAttendanceStatus", middlewares_1.excludeRolesMiddleware, controllers_1.allUserTodayAttendanceStatus);
+router.get("/todayAttendanceStatus", middlewares_1.excludeRolesMiddleware, controllers_1.allUserTodayAttendanceStatistics);
+router.get("/calculateUsers", middlewares_1.excludeRolesMiddleware, controllers_1.getAllUserStatistics);
 exports.default = router;
 //# sourceMappingURL=statisticsRoutes.js.map

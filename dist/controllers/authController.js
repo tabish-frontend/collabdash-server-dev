@@ -117,7 +117,6 @@ exports.forgotPassword = (0, utils_1.catchAsync)((req, res, next) => __awaiter(v
 // RESET PASSWORD
 exports.resetPassword = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const incomingAccessToken = req.params.token;
-    console.log("incomingRefreshToken", incomingAccessToken);
     if (!incomingAccessToken) {
         throw new utils_1.AppError("Unauthorized request", 401);
     }

@@ -11,6 +11,8 @@ const timeDetailsSchema: Schema<timeDetails> = new Schema<timeDetails>({
 const shiftSchema: Schema<Shift> = new Schema<Shift>(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    shift_type: { type: String, required: true },
+    hours: { type: Number },
     times: { type: [timeDetailsSchema], required: true },
     weekends: { type: [String], required: true },
   },

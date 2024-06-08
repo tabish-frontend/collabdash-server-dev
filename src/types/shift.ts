@@ -8,6 +8,8 @@ export interface timeDetails {
 
 export interface Shift {
   user: Types.ObjectId;
+  shift_type: string;
+  hours: number;
   times: timeDetails[];
   weekends: string[];
 }

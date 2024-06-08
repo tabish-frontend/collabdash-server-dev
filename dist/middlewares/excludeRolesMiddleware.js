@@ -9,10 +9,10 @@ const excludeRolesMiddleware = (req, res, next) => {
         req.excludedRoles = [types_1.Roles.HR, types_1.Roles.Admin];
     }
     else if (userRole === types_1.Roles.Admin) {
-        req.excludedRoles = [];
+        req.excludedRoles = [types_1.Roles.Admin];
     }
     else {
-        req.excludedRoles = [types_1.Roles.Admin];
+        req.excludedRoles = [];
     }
     next();
 };

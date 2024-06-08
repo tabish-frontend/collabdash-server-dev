@@ -50,16 +50,12 @@ function checkShift(userId, currentDay, currentTime) {
                 throw new utils_1.AppError(`Cannot mark attendance on a weekend (${currentDay})`, 400);
             }
             const shiftMatch = shift.times.some((timeDetail) => {
-                console.log("currentTime", currentTime);
-                console.log("shiftStart", new Date(timeDetail.start).getTime());
-                console.log("shiftEnd", new Date(timeDetail.end).getTime());
                 const shiftStart = new Date(timeDetail.start).getTime();
                 const shiftEnd = new Date(timeDetail.end).getTime();
                 return (timeDetail.days.includes(currentDay) &&
                     currentTime >= shiftStart &&
                     currentTime <= shiftEnd);
             });
-            console.log("shiftMatch", shiftMatch);
             if (!shiftMatch) {
                 throw new utils_1.AppError("Current time does not match your shift schedule", 400);
             }

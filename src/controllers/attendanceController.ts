@@ -74,11 +74,6 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
         throw new AppError("Cannot clock out without clocking in first", 400);
       }
 
-      // Check holiday, leave, and shift
-      await checkHoliday(userId, startOfDay, endOfDay);
-      await checkLeave(userId, startOfDay, endOfDay);
-      await checkShift(userId, currentDay, currentTime);
-
       attendance = new AttendanceModel({
         user: userId,
         date: new Date(),

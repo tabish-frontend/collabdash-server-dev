@@ -42,10 +42,6 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             if (action === "clockOut") {
                 throw new utils_1.AppError("Cannot clock out without clocking in first", 400);
             }
-            // Check holiday, leave, and shift
-            yield (0, utils_1.checkHoliday)(userId, startOfDay, endOfDay);
-            yield (0, utils_1.checkLeave)(userId, startOfDay, endOfDay);
-            yield (0, utils_1.checkShift)(userId, currentDay, currentTime);
             attendance = new models_1.AttendanceModel({
                 user: userId,
                 date: new Date(),

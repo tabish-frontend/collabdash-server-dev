@@ -14,7 +14,7 @@ const mongoose_1 = require("mongoose");
 const models_1 = require("../models");
 const utils_1 = require("../utils");
 exports.addShift = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { times, weekends, user } = req.body;
+    const { times, weekends, user, shift_type, hours } = req.body;
     // Validate user existence
     const employee = yield models_1.UserModel.findById(user);
     if (!employee) {
@@ -28,6 +28,8 @@ exports.addShift = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
         user: new mongoose_1.Types.ObjectId(user),
         times,
         weekends,
+        shift_type,
+        hours,
     });
     // Update user with shiftId
     employee.shift = newShift._id;
@@ -38,15 +40,17 @@ exports.addShift = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
 }));
 exports.updateShift = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { shift_id } = req.params;
-    const { times, weekends } = req.body;
+    const { times, weekends, shift_type, hours } = req.body;
     // Validate shift existence
     const shift = yield models_1.ShiftModel.findById(shift_id);
     if (!shift) {
         throw new utils_1.AppError("Shift not found", 404);
     }
     // Update the shift details
-    shift.times = times || shift.times;
-    shift.weekends = weekends || shift.weekends;
+    shift.times = times;
+    shift.weekends = weekends;
+    shift.shift_type = shift_type;
+    shift.hours = hours;
     // Save the updated shift
     const updatedShift = yield shift.save();
     return res

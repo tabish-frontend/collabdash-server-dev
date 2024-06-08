@@ -53,10 +53,6 @@ export async function checkShift(
     }
 
     const shiftMatch = shift.times.some((timeDetail) => {
-      console.log("currentTime", currentTime);
-      console.log("shiftStart", new Date(timeDetail.start).getTime());
-      console.log("shiftEnd", new Date(timeDetail.end).getTime());
-
       const shiftStart = new Date(timeDetail.start).getTime();
       const shiftEnd = new Date(timeDetail.end).getTime();
       return (
@@ -65,8 +61,6 @@ export async function checkShift(
         currentTime <= shiftEnd
       );
     });
-
-    console.log("shiftMatch", shiftMatch);
 
     if (!shiftMatch) {
       throw new AppError(

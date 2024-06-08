@@ -3,7 +3,7 @@ import { ShiftModel, UserModel } from "../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../utils";
 
 export const addShift = catchAsync(async (req, res) => {
-  const { times, weekends, user } = req.body;
+  const { times, weekends, user, shift_type, hours } = req.body;
 
   // Validate user existence
   const employee = await UserModel.findById(user);
@@ -20,6 +20,8 @@ export const addShift = catchAsync(async (req, res) => {
     user: new Types.ObjectId(user),
     times,
     weekends,
+    shift_type,
+    hours,
   });
 
   // Update user with shiftId
@@ -35,7 +37,7 @@ export const addShift = catchAsync(async (req, res) => {
 
 export const updateShift = catchAsync(async (req, res) => {
   const { shift_id } = req.params;
-  const { times, weekends } = req.body;
+  const { times, weekends, shift_type, hours } = req.body;
 
   // Validate shift existence
   const shift = await ShiftModel.findById(shift_id);
@@ -44,8 +46,10 @@ export const updateShift = catchAsync(async (req, res) => {
   }
 
   // Update the shift details
-  shift.times = times || shift.times;
-  shift.weekends = weekends || shift.weekends;
+  shift.times = times;
+  shift.weekends = weekends;
+  shift.shift_type = shift_type;
+  shift.hours = hours;
 
   // Save the updated shift
   const updatedShift = await shift.save();

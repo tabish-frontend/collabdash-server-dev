@@ -9,10 +9,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.allUserTodayAttendanceStatus = exports.getAllUserAttendanceStatistics = void 0;
+exports.allUserTodayAttendanceStatistics = exports.getAllUserAttendanceStatistics = exports.getAllUserStatistics = void 0;
 const types_1 = require("../types");
 const models_1 = require("../models");
 const utils_1 = require("../utils");
+exports.getAllUserStatistics = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // Count male users excluding HR and Admin
+    const maleUsers = yield models_1.UserModel.countDocuments({
+        gender: "male",
+        role: { $nin: req.excludedRoles },
+    });
+    // Count female users excluding HR and Admin
+    const femaleUsers = yield models_1.UserModel.countDocuments({
+        gender: "female",
+        role: { $nin: req.excludedRoles },
+    });
+    return res.status(200).json(new utils_1.AppResponse(200, {
+        man: maleUsers,
+        women: femaleUsers,
+    }, "", utils_1.ResponseStatus.SUCCESS));
+}));
 exports.getAllUserAttendanceStatistics = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { month, year } = req.query;
     const monthNumber = parseInt(month, 10);
@@ -73,36 +89,55 @@ exports.getAllUserAttendanceStatistics = (0, utils_1.catchAsync)((req, res) => _
         throw new utils_1.AppError("Error Fetching Attendance Statistics", 500);
     }
 }));
-exports.allUserTodayAttendanceStatus = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.allUserTodayAttendanceStatistics = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const currentDate = new Date();
-    const startOfDay = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 1, 0, 0, 0, 0));
-    const endOfDay = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate() - 1, 23, 59, 59, 999));
+    const startOfDay = new Date(currentDate.setUTCHours(0, 0, 0, 0));
+    const endOfDay = new Date(currentDate.setUTCHours(23, 59, 59, 999));
     const totalEmployees = yield models_1.UserModel.countDocuments({
         account_status: types_1.AccountStatus.Active,
         role: { $nin: req.excludedRoles },
     });
-    console.log("totalEmployees", totalEmployees);
     const employeeIds = yield models_1.UserModel.find({
         account_status: types_1.AccountStatus.Active,
         role: { $nin: req.excludedRoles },
     }).distinct("_id");
-    const leaveUsers = yield models_1.LeavesModel.find({
+    const leaveUsers = yield models_1.LeavesModel.countDocuments({
         user: employeeIds,
         status: utils_1.LeavesStatus.Approved,
         startDate: { $lte: endOfDay },
         endDate: { $gte: startOfDay },
     });
-    console.log("leaveUsers", leaveUsers);
-    console.log("startOfDay", startOfDay);
-    const attendanceData = yield models_1.AttendanceModel.find({
-        date: {
-            $gte: startOfDay,
-            $lt: endOfDay,
-        },
+    const attendanceRecords = yield models_1.AttendanceModel.find({
+        user: { $in: employeeIds },
+        date: { $gte: startOfDay, $lt: endOfDay },
     });
-    console.log("attendanceData", attendanceData);
-    return res
-        .status(200)
-        .json(new utils_1.AppResponse(200, {}, "", utils_1.ResponseStatus.SUCCESS));
+    let presentUsers = 0;
+    let lateUsers = 0;
+    const shiftRecords = yield models_1.ShiftModel.find({
+        user: { $in: employeeIds },
+        shift_type: "Fixed",
+    });
+    const shiftMap = new Map();
+    shiftRecords.forEach((shift) => {
+        shiftMap.set(shift.user.toString(), shift);
+    });
+    attendanceRecords.forEach((attendance) => {
+        const userShift = shiftMap.get(attendance.user.toString());
+        if (userShift) {
+            const userShiftTime = userShift.times.find((time) => time.days.includes(currentDate.toLocaleDateString("en-US", { weekday: "long" })));
+            if (userShiftTime) {
+                if (attendance.timeIn > userShiftTime.start) {
+                    lateUsers++;
+                }
+            }
+        }
+        presentUsers++;
+    });
+    return res.status(200).json(new utils_1.AppResponse(200, {
+        present: presentUsers,
+        leave: leaveUsers,
+        absent: totalEmployees - presentUsers - leaveUsers,
+        on_late: lateUsers,
+    }, "", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=statisticsController.js.map

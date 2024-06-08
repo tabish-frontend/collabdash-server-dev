@@ -1,7 +1,8 @@
 import { Router } from "express";
 import {
-  allUserTodayAttendanceStatus,
+  allUserTodayAttendanceStatistics,
   getAllUserAttendanceStatistics,
+  getAllUserStatistics,
 } from "../controllers";
 import { Protect, excludeRolesMiddleware, restrictTo } from "../middlewares";
 
@@ -24,7 +25,9 @@ router.get(
 router.get(
   "/todayAttendanceStatus",
   excludeRolesMiddleware,
-  allUserTodayAttendanceStatus
+  allUserTodayAttendanceStatistics
 );
+
+router.get("/calculateUsers", excludeRolesMiddleware, getAllUserStatistics);
 
 export default router;
