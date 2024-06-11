@@ -40,7 +40,7 @@ exports.getAllUserHolidays = (0, utils_1.catchAsync)((req, res) => __awaiter(voi
         .populate("users", "full_name username avatar")
         .sort({ date: 1 });
     if (!holidays.length) {
-        throw new utils_1.AppError("No holidays found for the specified year", 409);
+        throw new utils_1.AppError("", 409);
     }
     return res
         .status(200)

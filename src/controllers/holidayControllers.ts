@@ -39,7 +39,7 @@ export const getAllUserHolidays = catchAsync(async (req, res) => {
     .sort({ date: 1 });
 
   if (!holidays.length) {
-    throw new AppError("No holidays found for the specified year", 409);
+    throw new AppError("", 409);
   }
 
   return res

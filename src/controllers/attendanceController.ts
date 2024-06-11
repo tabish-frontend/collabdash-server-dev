@@ -37,7 +37,7 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
       Date.UTC(
         currentDate.getFullYear(),
         currentDate.getMonth(),
-        currentDate.getDate() - 1,
+        currentDate.getDate(),
         0,
         0,
         0,
@@ -49,7 +49,7 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
       Date.UTC(
         currentDate.getUTCFullYear(),
         currentDate.getUTCMonth(),
-        currentDate.getUTCDate() - 1,
+        currentDate.getUTCDate(),
         23,
         59,
         59,
