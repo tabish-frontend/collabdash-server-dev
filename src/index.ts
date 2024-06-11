@@ -22,7 +22,6 @@ import { AppError, xssMiddleware } from "./utils";
 // CORS configuration to allow requests from specified origins
 const corsOptions = {
   origin: [process.env.ORIGIN_CLIENT_LOCAL, process.env.ORIGIN_CLIENT_LIVE],
-  credentials: true,
 };
 const corsMiddleware = cors(corsOptions);
 
