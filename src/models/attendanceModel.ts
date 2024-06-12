@@ -2,6 +2,12 @@ import mongoose, { Schema } from "mongoose";
 import { Attendance } from "../types";
 import { AttendanceStatus } from "../utils";
 
+const breakSchema = new Schema({
+  start: { type: Date, required: false },
+  end: { type: Date, required: false },
+  duration: { type: Number, required: false, default: 0 },
+});
+
 const attendanceSchema: Schema<Attendance> = new Schema<Attendance>(
   {
     user: { type: mongoose.Schema.ObjectId, ref: "User", required: true },
@@ -20,6 +26,7 @@ const attendanceSchema: Schema<Attendance> = new Schema<Attendance>(
     timeIn: { type: Date, required: false },
     timeOut: { type: Date, default: "", required: false },
     duration: { type: Number, default: 0 },
+    breaks: { type: [breakSchema], default: [] },
     notes: { type: String, required: false },
   },
   {

@@ -26,6 +26,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AttendanceModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const utils_1 = require("../utils");
+const breakSchema = new mongoose_1.Schema({
+    start: { type: Date, required: false },
+    end: { type: Date, required: false },
+    duration: { type: Number, required: false, default: 0 },
+});
 const attendanceSchema = new mongoose_1.Schema({
     user: { type: mongoose_1.default.Schema.ObjectId, ref: "User", required: true },
     date: { type: Date, required: true },
@@ -43,6 +48,7 @@ const attendanceSchema = new mongoose_1.Schema({
     timeIn: { type: Date, required: false },
     timeOut: { type: Date, default: "", required: false },
     duration: { type: Number, default: 0 },
+    breaks: { type: [breakSchema], default: [] },
     notes: { type: String, required: false },
 }, {
     timestamps: true,

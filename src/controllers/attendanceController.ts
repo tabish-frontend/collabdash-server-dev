@@ -6,18 +6,14 @@ import {
   AppResponse,
   ResponseStatus,
   AttendanceStatus,
-  LeavesStatus,
-  checkHoliday,
-  checkLeave,
-  checkShift,
+  validateUser,
+  findAttendance,
+  handleClockIn,
+  handleClockOut,
+  handleBreak,
+  handleResume,
 } from "../utils";
-import {
-  UserModel,
-  AttendanceModel,
-  HolidayModel,
-  LeavesModel,
-  ShiftModel,
-} from "../models";
+import { UserModel, AttendanceModel } from "../models";
 import {
   lookupAttendance,
   lookupHolidays,
@@ -27,83 +23,31 @@ import {
 
 export const manageAttendanceLogs = catchAsync(async (req, res) => {
   try {
-    const { notes } = req.body;
     const userId = req.user._id;
     const action = req.params.action;
+
     const currentDate = new Date();
-    const currentDay = currentDate.toLocaleString("en-US", { weekday: "long" });
-    const currentTime = currentDate.getTime();
-    const startOfDay = new Date(
-      Date.UTC(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        currentDate.getDate(),
-        0,
-        0,
-        0,
-        0
-      )
-    );
+    const startOfDay = new Date(currentDate.setUTCHours(0, 0, 0, 0));
+    const endOfDay = new Date(currentDate.setUTCHours(23, 59, 59, 999));
 
-    const endOfDay = new Date(
-      Date.UTC(
-        currentDate.getUTCFullYear(),
-        currentDate.getUTCMonth(),
-        currentDate.getUTCDate(),
-        23,
-        59,
-        59,
-        999
-      )
-    );
+    await validateUser(userId);
+    let attendance = await findAttendance(userId, startOfDay, endOfDay);
 
-    // Validate if user exists
-    const existingUser = await UserModel.findById(userId);
-    if (!existingUser) {
-      throw new AppError("User not found", 404);
-    }
-
-    // Check if an attendance record for the same user and date already exists
-    let attendance = await AttendanceModel.findOne({
-      user: userId,
-      date: { $gte: startOfDay, $lte: endOfDay },
-    });
-
-    if (!attendance) {
-      if (action === "clockOut") {
-        throw new AppError("Cannot clock out without clocking in first", 400);
-      }
-
-      attendance = new AttendanceModel({
-        user: userId,
-        date: new Date(),
-        status: AttendanceStatus.ONLINE,
-        timeIn: new Date(),
-        notes,
-      });
-    } else {
-      if (action === "clockIn") {
-        throw new AppError("You are already clocked in today", 400);
-      } else if (action === "clockOut") {
-        if (attendance.timeOut) {
-          throw new AppError("You are already clocked out today", 400);
-        }
-
-        const timeOut: any = new Date();
-        const timeIn: any = attendance.timeIn;
-        const duration = (timeOut - timeIn) / (1000 * 60 * 60);
-
-        if (duration < 4) {
-          attendance.status = AttendanceStatus.SHORT_ATTENDANCE;
-        } else if (duration >= 4 && duration < 8) {
-          attendance.status = AttendanceStatus.HALF_DAY_PRESENT;
-        } else {
-          attendance.status = AttendanceStatus.FULL_DAY_PRESENT;
-        }
-
-        attendance.duration = duration;
-        attendance.timeOut = timeOut;
-      }
+    switch (action) {
+      case "clockIn":
+        attendance = handleClockIn(attendance, userId);
+        break;
+      case "clockOut":
+        attendance = handleClockOut(attendance);
+        break;
+      case "break":
+        attendance = handleBreak(attendance);
+        break;
+      case "resume":
+        attendance = handleResume(attendance);
+        break;
+      default:
+        throw new AppError("Invalid action", 401);
     }
 
     await attendance.save();

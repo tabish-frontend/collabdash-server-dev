@@ -20,15 +20,30 @@ import statisticsRoutes from "./routes/statisticsRoutes";
 import { AppError, xssMiddleware } from "./utils";
 
 // CORS configuration to allow requests from specified origins
+const allowedOrigins = [
+  process.env.ORIGIN_CLIENT_LOCAL,
+  process.env.ORIGIN_CLIENT_LIVE,
+];
+
+// CORS configuration to allow requests from specified origins
 const corsOptions = {
-  origin: [process.env.ORIGIN_CLIENT_LOCAL, process.env.ORIGIN_CLIENT_LIVE],
+  origin: (origin: any, callback: any) => {
+    // Allow requests with no origin like mobile apps or curl requests
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg =
+        "The CORS policy for this site does not allow access from the specified Origin.";
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
 };
-const corsMiddleware = cors(corsOptions);
 
 const app: Express = express();
 
 // Apply CORS middleware to enable cross-origin requests
-app.use(corsMiddleware);
+app.use(cors(corsOptions));
 
 // Set various HTTP headers to secure the app
 app.use(helmet());

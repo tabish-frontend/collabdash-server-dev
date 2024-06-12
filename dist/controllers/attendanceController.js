@@ -20,59 +20,28 @@ const models_1 = require("../models");
 const lookups_1 = require("../lookups");
 exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { notes } = req.body;
         const userId = req.user._id;
         const action = req.params.action;
         const currentDate = new Date();
-        const currentDay = currentDate.toLocaleString("en-US", { weekday: "long" });
-        const currentTime = currentDate.getTime();
-        const startOfDay = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0));
-        const endOfDay = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate(), 23, 59, 59, 999));
-        // Validate if user exists
-        const existingUser = yield models_1.UserModel.findById(userId);
-        if (!existingUser) {
-            throw new utils_1.AppError("User not found", 404);
-        }
-        // Check if an attendance record for the same user and date already exists
-        let attendance = yield models_1.AttendanceModel.findOne({
-            user: userId,
-            date: { $gte: startOfDay, $lte: endOfDay },
-        });
-        if (!attendance) {
-            if (action === "clockOut") {
-                throw new utils_1.AppError("Cannot clock out without clocking in first", 400);
-            }
-            attendance = new models_1.AttendanceModel({
-                user: userId,
-                date: new Date(),
-                status: utils_1.AttendanceStatus.ONLINE,
-                timeIn: new Date(),
-                notes,
-            });
-        }
-        else {
-            if (action === "clockIn") {
-                throw new utils_1.AppError("You are already clocked in today", 400);
-            }
-            else if (action === "clockOut") {
-                if (attendance.timeOut) {
-                    throw new utils_1.AppError("You are already clocked out today", 400);
-                }
-                const timeOut = new Date();
-                const timeIn = attendance.timeIn;
-                const duration = (timeOut - timeIn) / (1000 * 60 * 60);
-                if (duration < 4) {
-                    attendance.status = utils_1.AttendanceStatus.SHORT_ATTENDANCE;
-                }
-                else if (duration >= 4 && duration < 8) {
-                    attendance.status = utils_1.AttendanceStatus.HALF_DAY_PRESENT;
-                }
-                else {
-                    attendance.status = utils_1.AttendanceStatus.FULL_DAY_PRESENT;
-                }
-                attendance.duration = duration;
-                attendance.timeOut = timeOut;
-            }
+        const startOfDay = new Date(currentDate.setUTCHours(0, 0, 0, 0));
+        const endOfDay = new Date(currentDate.setUTCHours(23, 59, 59, 999));
+        yield (0, utils_1.validateUser)(userId);
+        let attendance = yield (0, utils_1.findAttendance)(userId, startOfDay, endOfDay);
+        switch (action) {
+            case "clockIn":
+                attendance = (0, utils_1.handleClockIn)(attendance, userId);
+                break;
+            case "clockOut":
+                attendance = (0, utils_1.handleClockOut)(attendance);
+                break;
+            case "break":
+                attendance = (0, utils_1.handleBreak)(attendance);
+                break;
+            case "resume":
+                attendance = (0, utils_1.handleResume)(attendance);
+                break;
+            default:
+                throw new utils_1.AppError("Invalid action", 401);
         }
         yield attendance.save();
         res

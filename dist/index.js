@@ -22,14 +22,28 @@ const shiftRoutes_1 = __importDefault(require("./routes/shiftRoutes"));
 const statisticsRoutes_1 = __importDefault(require("./routes/statisticsRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
+const allowedOrigins = [
+    process.env.ORIGIN_CLIENT_LOCAL,
+    process.env.ORIGIN_CLIENT_LIVE,
+];
+// CORS configuration to allow requests from specified origins
 const corsOptions = {
-    origin: [process.env.ORIGIN_CLIENT_LOCAL, process.env.ORIGIN_CLIENT_LIVE],
+    origin: (origin, callback) => {
+        // Allow requests with no origin like mobile apps or curl requests
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = "The CORS policy for this site does not allow access from the specified Origin.";
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true,
 };
-const corsMiddleware = (0, cors_1.default)(corsOptions);
 const app = (0, express_1.default)();
 exports.app = app;
 // Apply CORS middleware to enable cross-origin requests
-app.use(corsMiddleware);
+app.use((0, cors_1.default)(corsOptions));
 // Set various HTTP headers to secure the app
 app.use((0, helmet_1.default)());
 // Logging middleware for development environment
