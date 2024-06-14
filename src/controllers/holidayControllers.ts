@@ -38,8 +38,8 @@ export const getAllUserHolidays = catchAsync(async (req, res) => {
     .populate("users", "full_name username avatar")
     .sort({ date: 1 });
 
-  if (!holidays.length) {
-    throw new AppError("", 409);
+  if (!holidays) {
+    throw new AppError("No Holidays found", 409);
   }
 
   return res

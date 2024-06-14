@@ -57,6 +57,11 @@ const userSchema: Schema<User> = new Schema<User>(
       minlength: [3, validationMessages.minLength(3)],
       maxlength: [40, validationMessages.maxLength(40)],
     },
+    department: {
+      type: String,
+      default: "",
+      required: [true, validationMessages.required],
+    },
     role: {
       type: String,
       trim: true,

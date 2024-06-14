@@ -17,6 +17,7 @@ export interface User {
   mobile: string;
   company: string;
   avatar: string;
+  department: string;
   designation: string;
   bio: string;
   dob: Date | string;

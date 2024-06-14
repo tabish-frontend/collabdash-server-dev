@@ -92,6 +92,11 @@ const userSchema = new mongoose_1.Schema({
         minlength: [3, utils_1.validationMessages.minLength(3)],
         maxlength: [40, utils_1.validationMessages.maxLength(40)],
     },
+    department: {
+        type: String,
+        default: "",
+        required: [true, utils_1.validationMessages.required],
+    },
     role: {
         type: String,
         trim: true,
