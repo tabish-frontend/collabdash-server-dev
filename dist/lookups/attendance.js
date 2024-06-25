@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.lookupAttendance = void 0;
-const lookupAttendance = (yearNumber, monthNumber) => ({
+const lookupAttendance = (year, month, view, specificDate) => ({
     $lookup: {
         from: "attendances",
         let: { userId: "$_id" },
@@ -11,8 +11,33 @@ const lookupAttendance = (yearNumber, monthNumber) => ({
                     $expr: {
                         $and: [
                             { $eq: ["$user", "$$userId"] },
-                            { $gte: ["$date", new Date(yearNumber, monthNumber - 1, 1)] },
-                            { $lt: ["$date", new Date(yearNumber, monthNumber, 0)] },
+                            ...(view === "month"
+                                ? [
+                                    {
+                                        $gte: ["$date", new Date(year, month - 1, 1)],
+                                    },
+                                    { $lt: ["$date", new Date(year, month, 0)] },
+                                ]
+                                : specificDate
+                                    ? [
+                                        {
+                                            $eq: [
+                                                {
+                                                    $dateToString: {
+                                                        format: "%Y-%m-%d",
+                                                        date: "$date",
+                                                    },
+                                                },
+                                                {
+                                                    $dateToString: {
+                                                        format: "%Y-%m-%d",
+                                                        date: specificDate,
+                                                    },
+                                                },
+                                            ],
+                                        },
+                                    ]
+                                    : []),
                         ],
                     },
                 },

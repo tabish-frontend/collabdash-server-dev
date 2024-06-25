@@ -1,4 +1,9 @@
-export const lookupLeaves = (yearNumber: number, monthNumber: number) => ({
+export const lookupLeaves = (
+  yearNumber: number,
+  monthNumber: number,
+  view: string,
+  specificDate: Date | null
+) => ({
   $lookup: {
     from: "leaves",
     let: { userId: "$_id" },
@@ -8,39 +13,55 @@ export const lookupLeaves = (yearNumber: number, monthNumber: number) => ({
           $expr: {
             $and: [
               { $eq: ["$user", "$$userId"] },
-              {
-                $or: [
-                  {
-                    $and: [
+              ...(view === "month"
+                ? [
+                    {
+                      $or: [
+                        {
+                          $and: [
+                            {
+                              $gte: [
+                                "$startDate",
+                                new Date(yearNumber, monthNumber - 1, 1),
+                              ],
+                            },
+                            {
+                              $lt: [
+                                "$endDate",
+                                new Date(yearNumber, monthNumber, 1),
+                              ],
+                            },
+                          ],
+                        },
+                        // {
+                        //   $and: [
+                        //     {
+                        //       $gte: [
+                        //         "$endDate",
+                        //         new Date(yearNumber, monthNumber - 1, 1),
+                        //       ],
+                        //     },
+                        //     {
+                        //       $lt: [
+                        //         "$endDate",
+                        //         new Date(yearNumber, monthNumber, 1),
+                        //       ],
+                        //     },
+                        //   ],
+                        // },
+                      ],
+                    },
+                  ]
+                : specificDate
+                  ? [
                       {
-                        $gte: [
-                          "$startDate",
-                          new Date(yearNumber, monthNumber - 1, 1),
+                        $or: [
+                          { $eq: ["$startDate", specificDate] },
+                          { $eq: ["$endDate", specificDate] },
                         ],
                       },
-                      {
-                        $lt: [
-                          "$startDate",
-                          new Date(yearNumber, monthNumber, 1),
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    $and: [
-                      {
-                        $gte: [
-                          "$endDate",
-                          new Date(yearNumber, monthNumber - 1, 1),
-                        ],
-                      },
-                      {
-                        $lt: ["$endDate", new Date(yearNumber, monthNumber, 1)],
-                      },
-                    ],
-                  },
-                ],
-              },
+                    ]
+                  : []),
             ],
           },
         },

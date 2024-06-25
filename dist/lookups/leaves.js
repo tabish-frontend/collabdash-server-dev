@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.lookupLeaves = void 0;
-const lookupLeaves = (yearNumber, monthNumber) => ({
+const lookupLeaves = (yearNumber, monthNumber, view, specificDate) => ({
     $lookup: {
         from: "leaves",
         let: { userId: "$_id" },
@@ -11,39 +11,55 @@ const lookupLeaves = (yearNumber, monthNumber) => ({
                     $expr: {
                         $and: [
                             { $eq: ["$user", "$$userId"] },
-                            {
-                                $or: [
+                            ...(view === "month"
+                                ? [
                                     {
-                                        $and: [
+                                        $or: [
                                             {
-                                                $gte: [
-                                                    "$startDate",
-                                                    new Date(yearNumber, monthNumber - 1, 1),
+                                                $and: [
+                                                    {
+                                                        $gte: [
+                                                            "$startDate",
+                                                            new Date(yearNumber, monthNumber - 1, 1),
+                                                        ],
+                                                    },
+                                                    {
+                                                        $lt: [
+                                                            "$endDate",
+                                                            new Date(yearNumber, monthNumber, 1),
+                                                        ],
+                                                    },
                                                 ],
                                             },
-                                            {
-                                                $lt: [
-                                                    "$startDate",
-                                                    new Date(yearNumber, monthNumber, 1),
-                                                ],
-                                            },
+                                            // {
+                                            //   $and: [
+                                            //     {
+                                            //       $gte: [
+                                            //         "$endDate",
+                                            //         new Date(yearNumber, monthNumber - 1, 1),
+                                            //       ],
+                                            //     },
+                                            //     {
+                                            //       $lt: [
+                                            //         "$endDate",
+                                            //         new Date(yearNumber, monthNumber, 1),
+                                            //       ],
+                                            //     },
+                                            //   ],
+                                            // },
                                         ],
                                     },
-                                    {
-                                        $and: [
-                                            {
-                                                $gte: [
-                                                    "$endDate",
-                                                    new Date(yearNumber, monthNumber - 1, 1),
-                                                ],
-                                            },
-                                            {
-                                                $lt: ["$endDate", new Date(yearNumber, monthNumber, 1)],
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
+                                ]
+                                : specificDate
+                                    ? [
+                                        {
+                                            $or: [
+                                                { $eq: ["$startDate", specificDate] },
+                                                { $eq: ["$endDate", specificDate] },
+                                            ],
+                                        },
+                                    ]
+                                    : []),
                         ],
                     },
                 },

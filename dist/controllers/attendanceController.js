@@ -77,14 +77,14 @@ exports.getTodayAttendanceOfUser = (0, utils_1.catchAsync)((req, res) => __await
 }));
 exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { month, year } = req.query;
-        if (!month || !year) {
+        const { month, year, view, date } = req.query;
+        if (!month || !year || !view) {
             return res
                 .status(400)
-                .json({ error: "Month and year are required parameters" });
+                .json({ error: "Month, year, and view are required parameters" });
         }
-        const monthNumber = parseInt(month, 10);
-        const yearNumber = parseInt(year, 10);
+        console.log("month", month);
+        const specificDate = date ? new Date(date) : null;
         const userExcludedFields = {
             password: 0,
             bio: 0,
@@ -99,9 +99,9 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __aw
         };
         const usersWithAttendance = yield models_1.UserModel.aggregate([
             ...req.pipelineModification,
-            (0, lookups_1.lookupAttendance)(yearNumber, monthNumber),
-            (0, lookups_1.lookupHolidays)(yearNumber, monthNumber),
-            (0, lookups_1.lookupLeaves)(yearNumber, monthNumber),
+            (0, lookups_1.lookupAttendance)(year, month, view, specificDate),
+            (0, lookups_1.lookupHolidays)(year, month, view, specificDate),
+            (0, lookups_1.lookupLeaves)(year, month, view, specificDate),
             (0, lookups_1.lookupShift)(),
             {
                 $unwind: {
@@ -113,6 +113,7 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __aw
                 $project: userExcludedFields,
             },
         ]);
+        console.log("usersWithAttendance", usersWithAttendance);
         return res
             .status(200)
             .json(new utils_1.AppResponse(200, usersWithAttendance, "", utils_1.ResponseStatus.SUCCESS));

@@ -1,4 +1,9 @@
-export const lookupAttendance = (yearNumber: number, monthNumber: number) => ({
+export const lookupAttendance = (
+  year: number,
+  month: number,
+  view: string,
+  specificDate: Date | null
+) => ({
   $lookup: {
     from: "attendances",
     let: { userId: "$_id" },
@@ -8,8 +13,33 @@ export const lookupAttendance = (yearNumber: number, monthNumber: number) => ({
           $expr: {
             $and: [
               { $eq: ["$user", "$$userId"] },
-              { $gte: ["$date", new Date(yearNumber, monthNumber - 1, 1)] },
-              { $lt: ["$date", new Date(yearNumber, monthNumber, 0)] },
+              ...(view === "month"
+                ? [
+                    {
+                      $gte: ["$date", new Date(year, month - 1, 1)],
+                    },
+                    { $lt: ["$date", new Date(year, month, 0)] },
+                  ]
+                : specificDate
+                  ? [
+                      {
+                        $eq: [
+                          {
+                            $dateToString: {
+                              format: "%Y-%m-%d",
+                              date: "$date",
+                            },
+                          },
+                          {
+                            $dateToString: {
+                              format: "%Y-%m-%d",
+                              date: specificDate,
+                            },
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
             ],
           },
         },

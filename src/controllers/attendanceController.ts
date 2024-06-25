@@ -92,58 +92,63 @@ export const getTodayAttendanceOfUser = catchAsync(async (req, res) => {
   }
 });
 
-export const getAllUsersAttendance = catchAsync(async (req: any, res, next) => {
-  try {
-    const { month, year } = req.query;
+export const getAllUsersAttendance = catchAsync(
+  async (req: any, res: any, next: any) => {
+    try {
+      const { month, year, view, date } = req.query;
 
-    if (!month || !year) {
-      return res
-        .status(400)
-        .json({ error: "Month and year are required parameters" });
-    }
+      if (!month || !year || !view) {
+        return res
+          .status(400)
+          .json({ error: "Month, year, and view are required parameters" });
+      }
 
-    const monthNumber = parseInt(month as string, 10);
-    const yearNumber = parseInt(year as string, 10);
+      console.log("month", month);
 
-    const userExcludedFields = {
-      password: 0,
-      bio: 0,
-      dob: 0,
-      languages: 0,
-      gender: 0,
-      national_identity_number: 0,
-      refresh_token: 0,
-      __v: 0,
-      createdAt: 0,
-      updatedAt: 0,
-    };
+      const specificDate = date ? new Date(date as string) : null;
 
-    const usersWithAttendance = await UserModel.aggregate([
-      ...req.pipelineModification,
-      lookupAttendance(yearNumber, monthNumber),
-      lookupHolidays(yearNumber, monthNumber),
-      lookupLeaves(yearNumber, monthNumber),
-      lookupShift(),
-      {
-        $unwind: {
-          path: "$shift",
-          preserveNullAndEmptyArrays: true,
+      const userExcludedFields = {
+        password: 0,
+        bio: 0,
+        dob: 0,
+        languages: 0,
+        gender: 0,
+        national_identity_number: 0,
+        refresh_token: 0,
+        __v: 0,
+        createdAt: 0,
+        updatedAt: 0,
+      };
+
+      const usersWithAttendance = await UserModel.aggregate([
+        ...req.pipelineModification,
+        lookupAttendance(year, month, view as string, specificDate),
+        lookupHolidays(year, month, view as string, specificDate),
+        lookupLeaves(year, month, view as string, specificDate),
+        lookupShift(),
+        {
+          $unwind: {
+            path: "$shift",
+            preserveNullAndEmptyArrays: true,
+          },
         },
-      },
-      {
-        $project: userExcludedFields,
-      },
-    ]);
+        {
+          $project: userExcludedFields,
+        },
+      ]);
 
-    return res
-      .status(200)
-      .json(
-        new AppResponse(200, usersWithAttendance, "", ResponseStatus.SUCCESS)
-      );
-  } catch (error) {
-    return next(new AppError("Error fetching users attendance", 500));
+      console.log("usersWithAttendance", usersWithAttendance);
+
+      return res
+        .status(200)
+        .json(
+          new AppResponse(200, usersWithAttendance, "", ResponseStatus.SUCCESS)
+        );
+    } catch (error) {
+      return next(new AppError("Error fetching users attendance", 500));
+    }
   }
-});
+);
 
 export const getUserAttendance = catchAsync(async (req, res) => {
   try {
