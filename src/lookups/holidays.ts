@@ -4,7 +4,6 @@ export const lookupHolidays = (
   view: string,
   specificDate: Date | null
 ) => {
-  console.log("specificDate", specificDate);
   return {
     $lookup: {
       from: "holidays",

@@ -83,7 +83,6 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __aw
                 .status(400)
                 .json({ error: "Month, year, and view are required parameters" });
         }
-        console.log("month", month);
         const specificDate = date ? new Date(date) : null;
         const userExcludedFields = {
             password: 0,
@@ -113,7 +112,6 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __aw
                 $project: userExcludedFields,
             },
         ]);
-        console.log("usersWithAttendance", usersWithAttendance);
         return res
             .status(200)
             .json(new utils_1.AppResponse(200, usersWithAttendance, "", utils_1.ResponseStatus.SUCCESS));
@@ -122,28 +120,91 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __aw
         return next(new utils_1.AppError("Error fetching users attendance", 500));
     }
 }));
+// export const getUserAttendance = catchAsync(async (req, res) => {
+//   try {
+//     const { _id } = req.params;
+//     const { month, year } = req.query;
+//     if (!month || !year) {
+//       return res
+//         .status(400)
+//         .json({ error: "Month and year are required parameters" });
+//     }
+//     const monthNumber = parseInt(month as string, 10);
+//     const yearNumber = parseInt(year as string, 10);
+//     const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
+//     const attendanceRecords = await AttendanceModel.find({
+//       user: new mongoose.Types.ObjectId(_id),
+//       date: {
+//         $gte: new Date(yearNumber, monthNumber - 1, 1),
+//         $lt: new Date(yearNumber, monthNumber, 1),
+//       },
+//     }).select(attendanceExcludedFields);
+//     return res.status(200).json(
+//       new AppResponse(
+//         200,
+//         {
+//           attendance: attendanceRecords,
+//         },
+//         "",
+//         ResponseStatus.SUCCESS
+//       )
+//     );
+//   } catch (error) {
+//     throw new AppError("Error fetching user attendance", 500);
+//   }
+// });
 exports.getUserAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { _id } = req.params;
-        const { month, year } = req.query;
-        if (!month || !year) {
+        const { month, year, view, date } = req.query;
+        if (!month || !year || !view) {
             return res
                 .status(400)
-                .json({ error: "Month and year are required parameters" });
+                .json({ error: "Month, year, and view are required parameters" });
         }
         const monthNumber = parseInt(month, 10);
         const yearNumber = parseInt(year, 10);
-        const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
-        const attendanceRecords = yield models_1.AttendanceModel.find({
-            user: new mongoose_1.default.Types.ObjectId(_id),
-            date: {
-                $gte: new Date(yearNumber, monthNumber - 1, 1),
-                $lt: new Date(yearNumber, monthNumber, 1),
+        const specificDate = date ? new Date(date) : null;
+        const userExcludedFields = {
+            password: 0,
+            bio: 0,
+            dob: 0,
+            languages: 0,
+            gender: 0,
+            national_identity_number: 0,
+            refresh_token: 0,
+            __v: 0,
+            createdAt: 0,
+            updatedAt: 0,
+        };
+        const userWithAttendance = yield models_1.UserModel.aggregate([
+            {
+                $match: {
+                    _id: new mongoose_1.default.Types.ObjectId(_id),
+                },
             },
-        }).select(attendanceExcludedFields);
-        return res.status(200).json(new utils_1.AppResponse(200, {
-            attendance: attendanceRecords,
-        }, "", utils_1.ResponseStatus.SUCCESS));
+            (0, lookups_1.lookupAttendance)(yearNumber, monthNumber, view, specificDate),
+            (0, lookups_1.lookupHolidays)(yearNumber, monthNumber, view, specificDate),
+            (0, lookups_1.lookupLeaves)(yearNumber, monthNumber, view, specificDate),
+            (0, lookups_1.lookupShift)(),
+            {
+                $unwind: {
+                    path: "$shift",
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            {
+                $project: userExcludedFields,
+            },
+        ]);
+        if (!userWithAttendance.length) {
+            return res
+                .status(404)
+                .json({ error: "User not found or no attendance records available" });
+        }
+        return res
+            .status(200)
+            .json(new utils_1.AppResponse(200, { data: userWithAttendance[0] }, "", utils_1.ResponseStatus.SUCCESS));
     }
     catch (error) {
         throw new utils_1.AppError("Error fetching user attendance", 500);

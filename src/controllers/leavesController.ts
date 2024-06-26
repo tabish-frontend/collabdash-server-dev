@@ -8,30 +8,52 @@ import {
 } from "../utils";
 
 export const getAllUserLeaves = catchAsync(async (req, res) => {
-  // Find all leaves and populate the user information
-  const allUserLeaves = await LeavesModel.find().populate(
-    "user",
-    "full_name username avatar"
-  );
+  const year = req.query.year
+    ? parseInt(req.query.year as string)
+    : new Date().getFullYear();
 
-  if (!allUserLeaves) {
-    throw new AppError("No leaves found", 404);
+  // Calculate the start and end dates of the specified year
+  const startDate = new Date(`${year}-01-01T00:00:00Z`);
+  const endDate = new Date(`${year}-12-31T23:59:59Z`);
+
+  // Find leaves within the date range and populate user references
+  const leaves = await LeavesModel.find({
+    startDate: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  })
+    .populate("user", "full_name username avatar")
+    .sort({ startDate: 1 });
+
+  if (!leaves) {
+    throw new AppError("No Leaves found", 409);
   }
 
   return res
     .status(200)
-    .json(new AppResponse(200, allUserLeaves, "", ResponseStatus.SUCCESS));
+    .json(new AppResponse(200, leaves, "", ResponseStatus.SUCCESS));
 });
 
 export const getUserLeaves = catchAsync(async (req, res) => {
   const { _id } = req.params;
 
-  // Find all leaves for the specified user
-  const userLeaves = await LeavesModel.find({ user: _id });
+  const year = req.query.year
+    ? parseInt(req.query.year as string)
+    : new Date().getFullYear();
 
-  if (!userLeaves) {
-    throw new AppError("No leaves found for the specified user", 404);
-  }
+  // Calculate the start and end dates of the specified year
+  const startDate = new Date(`${year}-01-01T00:00:00Z`);
+  const endDate = new Date(`${year}-12-31T23:59:59Z`);
+
+  // Find all holidays for the specified user
+  const userLeaves = await LeavesModel.find({
+    user: _id,
+    startDate: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  }).select("-users");
 
   return res
     .status(200)

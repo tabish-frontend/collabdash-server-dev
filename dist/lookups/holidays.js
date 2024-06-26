@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.lookupHolidays = void 0;
 const lookupHolidays = (yearNumber, monthNumber, view, specificDate) => {
-    console.log("specificDate", specificDate);
     return {
         $lookup: {
             from: "holidays",

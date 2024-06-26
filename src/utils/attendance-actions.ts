@@ -54,7 +54,6 @@ export const handleClockOut = (attendance: Attendance): Attendance => {
   // Check if there is an open break
   const openBreak = attendance.breaks.some((breakItem) => !breakItem.end);
 
-  console.log("openBreak", openBreak);
   if (openBreak) {
     throw new AppError("Cannot clock out while a break is open", 400);
   }

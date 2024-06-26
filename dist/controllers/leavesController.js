@@ -13,22 +13,44 @@ exports.updateLeaveStatus = exports.deleteLeave = exports.updateLeave = exports.
 const models_1 = require("../models");
 const utils_1 = require("../utils");
 exports.getAllUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Find all leaves and populate the user information
-    const allUserLeaves = yield models_1.LeavesModel.find().populate("user", "full_name username avatar");
-    if (!allUserLeaves) {
-        throw new utils_1.AppError("No leaves found", 404);
+    const year = req.query.year
+        ? parseInt(req.query.year)
+        : new Date().getFullYear();
+    // Calculate the start and end dates of the specified year
+    const startDate = new Date(`${year}-01-01T00:00:00Z`);
+    const endDate = new Date(`${year}-12-31T23:59:59Z`);
+    // Find leaves within the date range and populate user references
+    const leaves = yield models_1.LeavesModel.find({
+        startDate: {
+            $gte: startDate,
+            $lte: endDate,
+        },
+    })
+        .populate("user", "full_name username avatar")
+        .sort({ startDate: 1 });
+    if (!leaves) {
+        throw new utils_1.AppError("No Leaves found", 409);
     }
     return res
         .status(200)
-        .json(new utils_1.AppResponse(200, allUserLeaves, "", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, leaves, "", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.getUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id } = req.params;
-    // Find all leaves for the specified user
-    const userLeaves = yield models_1.LeavesModel.find({ user: _id });
-    if (!userLeaves) {
-        throw new utils_1.AppError("No leaves found for the specified user", 404);
-    }
+    const year = req.query.year
+        ? parseInt(req.query.year)
+        : new Date().getFullYear();
+    // Calculate the start and end dates of the specified year
+    const startDate = new Date(`${year}-01-01T00:00:00Z`);
+    const endDate = new Date(`${year}-12-31T23:59:59Z`);
+    // Find all holidays for the specified user
+    const userLeaves = yield models_1.LeavesModel.find({
+        user: _id,
+        startDate: {
+            $gte: startDate,
+            $lte: endDate,
+        },
+    }).select("-users");
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, userLeaves, "", utils_1.ResponseStatus.SUCCESS));
