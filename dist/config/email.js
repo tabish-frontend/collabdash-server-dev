@@ -22,7 +22,7 @@ const send_email = (options) => __awaiter(void 0, void 0, void 0, function* () {
     // Initialize mail transporter
     const transporter = nodemailer_1.default.createTransport({
         host: process.env.EMAIL_HOST,
-        port: 2525,
+        port: Number(process.env.EMAIL_PORT),
         auth: {
             user: process.env.EMAIL_USERNAME,
             pass: process.env.EMAIL_PASSWORD,

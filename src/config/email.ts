@@ -18,7 +18,7 @@ export const send_email = async (options: ISendEmailOptions): Promise<void> => {
   // Initialize mail transporter
   const transporter: Transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: 2525,
+    port: Number(process.env.EMAIL_PORT),
     auth: {
       user: process.env.EMAIL_USERNAME,
       pass: process.env.EMAIL_PASSWORD,
