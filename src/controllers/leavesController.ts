@@ -8,13 +8,13 @@ import {
 } from "../utils";
 
 export const getAllUserLeaves = catchAsync(async (req, res) => {
-  const year = req.query.year
-    ? parseInt(req.query.year as string)
-    : new Date().getFullYear();
+  const { month, year } = req.query;
 
-  // Calculate the start and end dates of the specified year
-  const startDate = new Date(`${year}-01-01T00:00:00Z`);
-  const endDate = new Date(`${year}-12-31T23:59:59Z`);
+  const monthNumber = parseInt(month as string, 10);
+  const yearNumber = parseInt(year as string, 10);
+
+  const startDate = new Date(yearNumber, monthNumber - 1, 1);
+  const endDate = new Date(yearNumber, monthNumber, 0);
 
   // Find leaves within the date range and populate user references
   const leaves = await LeavesModel.find({
@@ -38,13 +38,13 @@ export const getAllUserLeaves = catchAsync(async (req, res) => {
 export const getUserLeaves = catchAsync(async (req, res) => {
   const { _id } = req.params;
 
-  const year = req.query.year
-    ? parseInt(req.query.year as string)
-    : new Date().getFullYear();
+  const { month, year } = req.query;
 
-  // Calculate the start and end dates of the specified year
-  const startDate = new Date(`${year}-01-01T00:00:00Z`);
-  const endDate = new Date(`${year}-12-31T23:59:59Z`);
+  const monthNumber = parseInt(month as string, 10);
+  const yearNumber = parseInt(year as string, 10);
+
+  const startDate = new Date(yearNumber, monthNumber - 1, 1);
+  const endDate = new Date(yearNumber, monthNumber, 0);
 
   // Find all holidays for the specified user
   const userLeaves = await LeavesModel.find({

@@ -13,12 +13,11 @@ exports.updateLeaveStatus = exports.deleteLeave = exports.updateLeave = exports.
 const models_1 = require("../models");
 const utils_1 = require("../utils");
 exports.getAllUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const year = req.query.year
-        ? parseInt(req.query.year)
-        : new Date().getFullYear();
-    // Calculate the start and end dates of the specified year
-    const startDate = new Date(`${year}-01-01T00:00:00Z`);
-    const endDate = new Date(`${year}-12-31T23:59:59Z`);
+    const { month, year } = req.query;
+    const monthNumber = parseInt(month, 10);
+    const yearNumber = parseInt(year, 10);
+    const startDate = new Date(yearNumber, monthNumber - 1, 1);
+    const endDate = new Date(yearNumber, monthNumber, 0);
     // Find leaves within the date range and populate user references
     const leaves = yield models_1.LeavesModel.find({
         startDate: {
@@ -37,12 +36,11 @@ exports.getAllUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
 }));
 exports.getUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id } = req.params;
-    const year = req.query.year
-        ? parseInt(req.query.year)
-        : new Date().getFullYear();
-    // Calculate the start and end dates of the specified year
-    const startDate = new Date(`${year}-01-01T00:00:00Z`);
-    const endDate = new Date(`${year}-12-31T23:59:59Z`);
+    const { month, year } = req.query;
+    const monthNumber = parseInt(month, 10);
+    const yearNumber = parseInt(year, 10);
+    const startDate = new Date(yearNumber, monthNumber - 1, 1);
+    const endDate = new Date(yearNumber, monthNumber, 0);
     // Find all holidays for the specified user
     const userLeaves = yield models_1.LeavesModel.find({
         user: _id,
