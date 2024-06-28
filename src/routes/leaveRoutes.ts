@@ -5,6 +5,7 @@ import {
   addLeave,
   deleteLeave,
   getAllUserLeaves,
+  getUserLeaves,
   updateLeave,
   updateLeaveStatus,
 } from "../controllers";
@@ -16,6 +17,8 @@ const router = Router();
 router.use(Protect);
 
 router.route("/:leave_id").patch(updateLeave).delete(deleteLeave);
+
+router.route("/:_id").get(getUserLeaves);
 
 router.use(restrictTo("hr", "admin"));
 
