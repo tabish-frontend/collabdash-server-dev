@@ -5,7 +5,6 @@ import {
   catchAsync,
   AppResponse,
   ResponseStatus,
-  AttendanceStatus,
   validateUser,
   findAttendance,
   handleClockIn,
@@ -88,7 +87,7 @@ export const getTodayAttendanceOfUser = catchAsync(async (req, res) => {
       .status(200)
       .json(new AppResponse(200, { attendance }, "", ResponseStatus.SUCCESS));
   } catch (error) {
-    throw new AppError(error?.message || "Something went wrong", 401);
+    throw new AppError(error?.message || "Something went wrong", 404);
   }
 });
 
@@ -145,45 +144,6 @@ export const getAllUsersAttendance = catchAsync(
     }
   }
 );
-
-// export const getUserAttendance = catchAsync(async (req, res) => {
-//   try {
-//     const { _id } = req.params;
-//     const { month, year } = req.query;
-
-//     if (!month || !year) {
-//       return res
-//         .status(400)
-//         .json({ error: "Month and year are required parameters" });
-//     }
-
-//     const monthNumber = parseInt(month as string, 10);
-//     const yearNumber = parseInt(year as string, 10);
-
-//     const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
-
-//     const attendanceRecords = await AttendanceModel.find({
-//       user: new mongoose.Types.ObjectId(_id),
-//       date: {
-//         $gte: new Date(yearNumber, monthNumber - 1, 1),
-//         $lt: new Date(yearNumber, monthNumber, 1),
-//       },
-//     }).select(attendanceExcludedFields);
-
-//     return res.status(200).json(
-//       new AppResponse(
-//         200,
-//         {
-//           attendance: attendanceRecords,
-//         },
-//         "",
-//         ResponseStatus.SUCCESS
-//       )
-//     );
-//   } catch (error) {
-//     throw new AppError("Error fetching user attendance", 500);
-//   }
-// });
 
 export const getUserAttendance = catchAsync(async (req, res) => {
   try {

@@ -72,7 +72,7 @@ exports.getTodayAttendanceOfUser = (0, utils_1.catchAsync)((req, res) => __await
             .json(new utils_1.AppResponse(200, { attendance }, "", utils_1.ResponseStatus.SUCCESS));
     }
     catch (error) {
-        throw new utils_1.AppError((error === null || error === void 0 ? void 0 : error.message) || "Something went wrong", 401);
+        throw new utils_1.AppError((error === null || error === void 0 ? void 0 : error.message) || "Something went wrong", 404);
     }
 }));
 exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -120,39 +120,6 @@ exports.getAllUsersAttendance = (0, utils_1.catchAsync)((req, res, next) => __aw
         return next(new utils_1.AppError("Error fetching users attendance", 500));
     }
 }));
-// export const getUserAttendance = catchAsync(async (req, res) => {
-//   try {
-//     const { _id } = req.params;
-//     const { month, year } = req.query;
-//     if (!month || !year) {
-//       return res
-//         .status(400)
-//         .json({ error: "Month and year are required parameters" });
-//     }
-//     const monthNumber = parseInt(month as string, 10);
-//     const yearNumber = parseInt(year as string, 10);
-//     const attendanceExcludedFields = { createdAt: 0, updatedAt: 0, __v: 0 };
-//     const attendanceRecords = await AttendanceModel.find({
-//       user: new mongoose.Types.ObjectId(_id),
-//       date: {
-//         $gte: new Date(yearNumber, monthNumber - 1, 1),
-//         $lt: new Date(yearNumber, monthNumber, 1),
-//       },
-//     }).select(attendanceExcludedFields);
-//     return res.status(200).json(
-//       new AppResponse(
-//         200,
-//         {
-//           attendance: attendanceRecords,
-//         },
-//         "",
-//         ResponseStatus.SUCCESS
-//       )
-//     );
-//   } catch (error) {
-//     throw new AppError("Error fetching user attendance", 500);
-//   }
-// });
 exports.getUserAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { _id } = req.params;

@@ -16,11 +16,13 @@ const utils_1 = require("../utils");
 exports.getAllUserStatistics = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Count male users excluding HR and Admin
     const maleUsers = yield models_1.UserModel.countDocuments({
+        account_status: "active",
         gender: "male",
         role: { $nin: req.excludedRoles },
     });
     // Count female users excluding HR and Admin
     const femaleUsers = yield models_1.UserModel.countDocuments({
+        account_status: "active",
         gender: "female",
         role: { $nin: req.excludedRoles },
     });

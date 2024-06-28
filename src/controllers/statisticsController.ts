@@ -12,12 +12,14 @@ import {
 export const getAllUserStatistics = catchAsync(async (req: any, res) => {
   // Count male users excluding HR and Admin
   const maleUsers = await UserModel.countDocuments({
+    account_status: "active",
     gender: "male",
     role: { $nin: req.excludedRoles },
   });
 
   // Count female users excluding HR and Admin
   const femaleUsers = await UserModel.countDocuments({
+    account_status: "active",
     gender: "female",
     role: { $nin: req.excludedRoles },
   });
