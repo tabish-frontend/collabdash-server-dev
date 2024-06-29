@@ -57,12 +57,10 @@ const bankDetailsSchema = new mongoose_1.Schema({
         type: Number,
         required: [true, "Please provide the account number"],
         trim: true,
-        unique: true,
     },
     iban_number: {
         type: Number,
         trim: true,
-        unique: true,
     },
     city: {
         type: String,

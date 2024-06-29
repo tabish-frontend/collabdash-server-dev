@@ -20,12 +20,10 @@ const bankDetailsSchema: Schema<BankDetails> = new Schema<BankDetails>({
     type: Number,
     required: [true, "Please provide the account number"],
     trim: true,
-    unique: true,
   },
   iban_number: {
     type: Number,
     trim: true,
-    unique: true,
   },
   city: {
     type: String,
