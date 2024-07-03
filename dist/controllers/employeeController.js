@@ -98,10 +98,10 @@ exports.getAllEmployees = (0, utils_1.catchAsync)((req, res, next) => __awaiter(
     const total_counts = yield models_1.UserModel.find();
     const features = new utils_1.APIFeatures(models_1.UserModel.find(filter), req.query)
         .filter()
+        .search()
         .sort()
         .limitFields()
         .paginate();
-    // const document = await features.query.explain();
     const document = yield features.query.select(utils_1.ExcludedFields);
     const populatedDocuments = yield models_1.UserModel.populate(document, {
         path: "shift",

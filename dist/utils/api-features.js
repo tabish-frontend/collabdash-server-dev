@@ -8,7 +8,7 @@ class APIFeatures {
     }
     filter() {
         const queryObj = Object.assign({}, this.queryString);
-        const excludedFields = ["page", "limit", "sort", "fields"];
+        const excludedFields = ["page", "limit", "sort", "fields", "search"];
         excludedFields.forEach((el) => delete queryObj[el]);
         let queryStr = JSON.stringify(queryObj);
         queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
@@ -27,18 +27,15 @@ class APIFeatures {
     }
     search() {
         if (this.queryString.search) {
+            console.log("queryString", this.queryString.search);
             const searchBy = {};
             searchBy.$or = [
-                { first_name: { $regex: new RegExp(this.queryString.search, "i") } },
-                { last_name: { $regex: new RegExp(this.queryString.search, "i") } },
+                { username: { $regex: new RegExp(this.queryString.search, "i") } },
                 { full_name: { $regex: new RegExp(this.queryString.search, "i") } },
-                { email: { $regex: new RegExp(this.queryString.search, "i") } },
-                { mobile_1: { $regex: new RegExp(this.queryString.search, "i") } },
-                {
-                    name_on_invoice: { $regex: new RegExp(this.queryString.search, "i") },
-                },
-                { title: { $regex: new RegExp(this.queryString.search, "i") } }, // search field for "Feedbacks"
+                { designation: { $regex: new RegExp(this.queryString.search, "i") } },
+                { department: { $regex: new RegExp(this.queryString.search, "i") } },
             ];
+            console.log("searchBy", searchBy);
             this.query = this.query.find(searchBy);
         }
         return this;

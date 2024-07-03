@@ -97,10 +97,11 @@ export const getAllEmployees = catchAsync(async (req: any, res, next) => {
   const total_counts = await UserModel.find();
   const features = new APIFeatures(UserModel.find(filter), req.query)
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
-  // const document = await features.query.explain();
+
   const document = await features.query.select(ExcludedFields);
 
   const populatedDocuments: any = await UserModel.populate(document, {
