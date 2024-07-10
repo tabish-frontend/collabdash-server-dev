@@ -3,6 +3,7 @@ import {
   getAllUsersAttendance,
   getUserAttendance,
   manageAttendanceLogs,
+  updateAttendance,
 } from "../controllers";
 import {
   Protect,
@@ -26,5 +27,7 @@ router.use(restrictTo("hr", "admin"));
 router.get("/:_id", getUserAttendance);
 
 router.get("/", filterAttendanceByRole, getAllUsersAttendance);
+
+router.patch("/:attendanceId", updateAttendance);
 
 export default router;

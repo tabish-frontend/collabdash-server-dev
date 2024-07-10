@@ -11,5 +11,6 @@ router.post("/:action", controllers_1.manageAttendanceLogs);
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
 router.get("/:_id", controllers_1.getUserAttendance);
 router.get("/", middlewares_1.filterAttendanceByRole, controllers_1.getAllUsersAttendance);
+router.patch("/:attendanceId", controllers_1.updateAttendance);
 exports.default = router;
 //# sourceMappingURL=attendanceRoutes.js.map

@@ -11,6 +11,7 @@ import {
   handleClockOut,
   handleBreak,
   handleResume,
+  AttendanceStatus,
 } from "../utils";
 import { UserModel, AttendanceModel } from "../models";
 import {
@@ -213,4 +214,57 @@ export const getUserAttendance = catchAsync(async (req, res) => {
   } catch (error) {
     throw new AppError("Error fetching user attendance", 500);
   }
+});
+
+export const updateAttendance = catchAsync(async (req, res) => {
+  const { attendanceId } = req.params;
+  const { timeIn, timeOut } = req.body;
+
+  if (!attendanceId) {
+    throw new AppError("Attendance ID is required'", 400);
+  }
+
+  if (!timeIn) {
+    throw new AppError("TimeIn value is required", 400);
+  }
+
+  let status;
+  let duration = 0;
+
+  if (timeIn && timeOut) {
+    duration = new Date(timeOut).getTime() - new Date(timeIn).getTime();
+
+    const DurationHours = duration / (1000 * 60 * 60);
+
+    if (DurationHours < 4) {
+      status = AttendanceStatus.SHORT_ATTENDANCE;
+    } else if (DurationHours >= 4 && DurationHours < 8) {
+      status = AttendanceStatus.HALF_DAY_PRESENT;
+    } else {
+      status = AttendanceStatus.FULL_DAY_PRESENT;
+    }
+  } else {
+    status = AttendanceStatus.ONLINE;
+  }
+
+  const updatedAttendance = await AttendanceModel.findByIdAndUpdate(
+    attendanceId,
+    {
+      timeIn: new Date(timeIn),
+      timeOut: timeOut ? new Date(timeOut) : null,
+      status,
+      duration,
+    }
+  );
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        updatedAttendance,
+        "Attendance updated successfully",
+        ResponseStatus.SUCCESS
+      )
+    );
 });

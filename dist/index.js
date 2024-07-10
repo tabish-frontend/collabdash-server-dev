@@ -22,6 +22,11 @@ const shiftRoutes_1 = __importDefault(require("./routes/shiftRoutes"));
 const statisticsRoutes_1 = __importDefault(require("./routes/statisticsRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
+// const allowedOrigins = [
+//   process.env.ORIGIN_CLIENT_LOCAL,
+//   process.env.ORIGIN_CLIENT_LOCAL_IP,
+//   process.env.ORIGIN_CLIENT_LIVE,
+// ];
 const allowedOrigins = [
     process.env.ORIGIN_CLIENT_LOCAL,
     process.env.ORIGIN_CLIENT_LIVE,

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserAttendance = exports.getAllUsersAttendance = exports.getTodayAttendanceOfUser = exports.manageAttendanceLogs = void 0;
+exports.updateAttendance = exports.getUserAttendance = exports.getAllUsersAttendance = exports.getTodayAttendanceOfUser = exports.manageAttendanceLogs = void 0;
 // import AppError from "../utils/app-error";
 const mongoose_1 = __importDefault(require("mongoose"));
 const utils_1 = require("../utils");
@@ -176,5 +176,42 @@ exports.getUserAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void
     catch (error) {
         throw new utils_1.AppError("Error fetching user attendance", 500);
     }
+}));
+exports.updateAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { attendanceId } = req.params;
+    const { timeIn, timeOut } = req.body;
+    if (!attendanceId) {
+        throw new utils_1.AppError("Attendance ID is required'", 400);
+    }
+    if (!timeIn) {
+        throw new utils_1.AppError("TimeIn value is required", 400);
+    }
+    let status;
+    let duration = 0;
+    if (timeIn && timeOut) {
+        duration = new Date(timeOut).getTime() - new Date(timeIn).getTime();
+        const DurationHours = duration / (1000 * 60 * 60);
+        if (DurationHours < 4) {
+            status = utils_1.AttendanceStatus.SHORT_ATTENDANCE;
+        }
+        else if (DurationHours >= 4 && DurationHours < 8) {
+            status = utils_1.AttendanceStatus.HALF_DAY_PRESENT;
+        }
+        else {
+            status = utils_1.AttendanceStatus.FULL_DAY_PRESENT;
+        }
+    }
+    else {
+        status = utils_1.AttendanceStatus.ONLINE;
+    }
+    const updatedAttendance = yield models_1.AttendanceModel.findByIdAndUpdate(attendanceId, {
+        timeIn: new Date(timeIn),
+        timeOut: timeOut ? new Date(timeOut) : null,
+        status,
+        duration,
+    });
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, updatedAttendance, "Attendance updated successfully", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=attendanceController.js.map
