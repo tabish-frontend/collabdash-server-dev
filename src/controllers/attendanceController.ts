@@ -13,7 +13,7 @@ import {
   handleResume,
   AttendanceStatus,
 } from "../utils";
-import { UserModel, AttendanceModel } from "../models";
+import { UserModel, AttendanceModel, ShiftModel } from "../models";
 import {
   lookupAttendance,
   lookupHolidays,
@@ -27,18 +27,39 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
     const action = req.params.action;
 
     const currentDate = new Date();
-    const startOfDay = new Date(currentDate.setUTCHours(0, 0, 0, 0));
-    const endOfDay = new Date(currentDate.setUTCHours(23, 59, 59, 999));
+    const currentDay = currentDate.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+    const startDateUTC = new Date(currentDate.setUTCHours(0, 0, 0, 0));
+    const endDateUTC = new Date(currentDate.setUTCHours(23, 59, 59, 999));
 
     await validateUser(userId);
-    let attendance = await findAttendance(userId, startOfDay, endOfDay);
+    let attendance = await findAttendance(userId, startDateUTC, endDateUTC);
+
+    const shift = await ShiftModel.findOne({ user: userId });
+
+    let shiftDuration = 9;
+    if (shift) {
+      if (shift.shift_type === "Fixed") {
+        const shiftTime = shift.times.find((time) =>
+          time.days.includes(currentDay)
+        );
+        if (shiftTime) {
+          const start = new Date(shiftTime.start).getTime();
+          const end = new Date(shiftTime.end).getTime();
+          shiftDuration = (end - start) / (1000 * 60 * 60);
+        }
+      } else if (shift.shift_type === "Flexible") {
+        shiftDuration = shift.hours;
+      }
+    }
 
     switch (action) {
       case "clockIn":
         attendance = handleClockIn(attendance, userId);
         break;
       case "clockOut":
-        attendance = handleClockOut(attendance);
+        attendance = handleClockOut(attendance, shiftDuration);
         break;
       case "break":
         attendance = handleBreak(attendance);

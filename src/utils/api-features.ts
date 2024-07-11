@@ -34,8 +34,6 @@ export class APIFeatures {
 
   search() {
     if (this.queryString.search) {
-      console.log("queryString", this.queryString.search);
-
       const searchBy: AnyObjectType = {};
       searchBy.$or = [
         { username: { $regex: new RegExp(this.queryString.search, "i") } },
@@ -44,7 +42,6 @@ export class APIFeatures {
         { department: { $regex: new RegExp(this.queryString.search, "i") } },
       ];
 
-      console.log("searchBy", searchBy);
       this.query = this.query.find(searchBy);
     }
 

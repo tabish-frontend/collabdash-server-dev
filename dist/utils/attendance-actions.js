@@ -43,7 +43,7 @@ const handleClockIn = (attendance, userId) => {
 };
 exports.handleClockIn = handleClockIn;
 // Helper function to handle clock out
-const handleClockOut = (attendance) => {
+const handleClockOut = (attendance, shiftDuration) => {
     if (!attendance) {
         throw new app_error_1.AppError("Cannot clock out without clocking in first", 400);
     }
@@ -67,7 +67,7 @@ const handleClockOut = (attendance) => {
         attendance.status = utils_1.AttendanceStatus.SHORT_ATTENDANCE;
     }
     else if (actualWorkingDurationHours >= 4 &&
-        actualWorkingDurationHours < 8) {
+        actualWorkingDurationHours < shiftDuration) {
         attendance.status = utils_1.AttendanceStatus.HALF_DAY_PRESENT;
     }
     else {

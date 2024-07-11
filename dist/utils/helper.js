@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDatesInMonth = exports.checkShift = exports.checkLeave = exports.checkHoliday = exports.isFilesObject = void 0;
+exports.formatTime = exports.getDatesInMonth = exports.checkShift = exports.checkLeave = exports.checkHoliday = exports.isFilesObject = void 0;
 const models_1 = require("../models");
 const utils_1 = require("../utils");
 const isFilesObject = (files) => {
@@ -82,4 +82,12 @@ const getDatesInMonth = (month, year) => {
     return dates;
 };
 exports.getDatesInMonth = getDatesInMonth;
+const formatTime = (date) => {
+    return new Intl.DateTimeFormat("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    }).format(date);
+};
+exports.formatTime = formatTime;
 //# sourceMappingURL=helper.js.map
