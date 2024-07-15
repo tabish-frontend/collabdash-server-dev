@@ -138,7 +138,8 @@ exports.allUserTodayAttendanceStatistics = (0, utils_1.catchAsync)((req, res) =>
     });
     const lateUserDetails = totalEmployees.filter((user) => lateUserIds.includes(user._id.toString()));
     const presentUserDetails = totalEmployees.filter((user) => presentUserIds.includes(user._id.toString()));
-    const absentUserDetails = totalEmployees.filter((user) => !leaveUserIds.includes(user._id.toString()));
+    const absentUserDetails = totalEmployees.filter((user) => !presentUserIds.includes(user._id.toString()) &&
+        !leaveUserIds.includes(user._id.toString()));
     return res.status(200).json(new utils_1.AppResponse(200, {
         present: presentUserDetails.map((user) => ({
             _id: user._id,

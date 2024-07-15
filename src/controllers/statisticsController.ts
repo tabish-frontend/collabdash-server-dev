@@ -184,7 +184,9 @@ export const allUserTodayAttendanceStatistics = catchAsync(
       presentUserIds.includes(user._id.toString())
     );
     const absentUserDetails = totalEmployees.filter(
-      (user) => !leaveUserIds.includes(user._id.toString())
+      (user) =>
+        !presentUserIds.includes(user._id.toString()) &&
+        !leaveUserIds.includes(user._id.toString())
     );
 
     return res.status(200).json(
