@@ -24,7 +24,7 @@ export const getAllUserLeaves = catchAsync(async (req, res) => {
     },
   })
     .populate("user", "full_name username avatar")
-    .sort({ startDate: 1 });
+    .sort({ created_at: -1 });
 
   if (!leaves) {
     throw new AppError("No Leaves found", 409);
@@ -53,7 +53,9 @@ export const getUserLeaves = catchAsync(async (req, res) => {
       $gte: startDate,
       $lte: endDate,
     },
-  }).select("-users");
+  })
+    .select("-users")
+    .sort({ created_at: -1 });
 
   return res
     .status(200)

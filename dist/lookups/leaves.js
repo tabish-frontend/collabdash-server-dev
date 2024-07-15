@@ -31,22 +31,6 @@ const lookupLeaves = (yearNumber, monthNumber, view, specificDate) => ({
                                                     },
                                                 ],
                                             },
-                                            // {
-                                            //   $and: [
-                                            //     {
-                                            //       $gte: [
-                                            //         "$endDate",
-                                            //         new Date(yearNumber, monthNumber - 1, 1),
-                                            //       ],
-                                            //     },
-                                            //     {
-                                            //       $lt: [
-                                            //         "$endDate",
-                                            //         new Date(yearNumber, monthNumber, 1),
-                                            //       ],
-                                            //     },
-                                            //   ],
-                                            // },
                                         ],
                                     },
                                 ]
@@ -54,8 +38,12 @@ const lookupLeaves = (yearNumber, monthNumber, view, specificDate) => ({
                                     ? [
                                         {
                                             $or: [
-                                                { $eq: ["$startDate", specificDate] },
-                                                { $eq: ["$endDate", specificDate] },
+                                                {
+                                                    $and: [
+                                                        { $lte: ["$startDate", specificDate] },
+                                                        { $gte: ["$endDate", specificDate] },
+                                                    ],
+                                                },
                                             ],
                                         },
                                     ]

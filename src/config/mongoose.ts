@@ -18,8 +18,6 @@ export const db_connect = async (): Promise<void> => {
   // Replace the placeholder in the connection string with the actual secret
   const DB_URL: string = dbConnectionUrl.replace("<PASSWORD>", dbSecret);
 
-  console.log("DB_URL", DB_URL);
-
   try {
     // Attempt to establish a connection to the MongoDB database
     await mongoose.connect(`${DB_URL}/${DB_Name}`);

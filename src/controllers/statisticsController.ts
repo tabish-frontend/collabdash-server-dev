@@ -9,6 +9,7 @@ import {
   formatTime,
   getDatesInMonth,
 } from "../utils";
+import { Types } from "mongoose";
 
 export const getAllUserStatistics = catchAsync(async (req: any, res) => {
   // Count male users excluding HR and Admin
@@ -110,90 +111,6 @@ export const getAllUserAttendanceStatistics = catchAsync(
   }
 );
 
-// export const allUserTodayAttendanceStatistics = catchAsync(
-//   async (req: any, res) => {
-//     const currentDate = new Date();
-
-//     const startOfDay = new Date(currentDate.setUTCHours(0, 0, 0, 0));
-//     const endOfDay = new Date(currentDate.setUTCHours(23, 59, 59, 999));
-
-//     const totalEmployees = await UserModel.countDocuments({
-//       account_status: AccountStatus.Active,
-//       role: { $nin: req.excludedRoles },
-//     });
-
-//     const employeeIds = await UserModel.find({
-//       account_status: AccountStatus.Active,
-//       role: { $nin: req.excludedRoles },
-//     }).distinct("_id");
-
-//     const leaveUsers = await LeavesModel.countDocuments({
-//       user: employeeIds,
-//       status: LeavesStatus.Approved,
-//       startDate: { $lte: endOfDay },
-//       endDate: { $gte: startOfDay },
-//     });
-
-//     const attendanceRecords = await AttendanceModel.find({
-//       user: { $in: employeeIds },
-//       date: { $gte: startOfDay, $lt: endOfDay },
-//     });
-
-//     let presentUsers = 0;
-//     let lateUsers = 0;
-
-//     const shiftRecords = await ShiftModel.find({
-//       user: { $in: employeeIds },
-//       shift_type: "Fixed",
-//     });
-
-//     const shiftMap = new Map();
-//     shiftRecords.forEach((shift) => {
-//       shiftMap.set(shift.user.toString(), shift);
-//     });
-
-//     attendanceRecords.forEach((attendance) => {
-//       const userShift = shiftMap.get(attendance.user.toString());
-//       if (userShift) {
-//         const userShiftTime = userShift.times.find(
-//           (time: { days: string | string[] }) =>
-//             time.days.includes(
-//               currentDate.toLocaleDateString("en-US", { weekday: "long" })
-//             )
-//         );
-
-//         if (userShiftTime) {
-//           const shiftWithGracePeriod = new Date(
-//             userShiftTime.start.getTime() + 20 * 60000
-//           );
-
-//           const shiftStartTime = formatTime(new Date(shiftWithGracePeriod));
-//           const attendanceTimeIn = formatTime(new Date(attendance.timeIn));
-
-//           if (attendanceTimeIn > shiftStartTime) {
-//             lateUsers++;
-//           }
-//         }
-//       }
-//       presentUsers++;
-//     });
-
-//     return res.status(200).json(
-//       new AppResponse(
-//         200,
-//         {
-//           present: presentUsers,
-//           leave: leaveUsers,
-//           absent: totalEmployees - presentUsers - leaveUsers,
-//           on_late: lateUsers,
-//         },
-//         "",
-//         ResponseStatus.SUCCESS
-//       )
-//     );
-//   }
-// );
-
 export const allUserTodayAttendanceStatistics = catchAsync(
   async (req: any, res) => {
     const currentDate = new Date();
@@ -215,7 +132,7 @@ export const allUserTodayAttendanceStatistics = catchAsync(
       endDate: { $gte: startOfDay },
     }).populate("user", "username full_name avatar");
 
-    const leaveUserIds = leaveUsers.map((leave) => leave.user._id);
+    const leaveUserIds = leaveUsers.map((leave) => leave.user._id).toString();
 
     const attendanceRecords = await AttendanceModel.find({
       user: { $in: totalEmployeeIds },
@@ -267,9 +184,7 @@ export const allUserTodayAttendanceStatistics = catchAsync(
       presentUserIds.includes(user._id.toString())
     );
     const absentUserDetails = totalEmployees.filter(
-      (user) =>
-        !presentUserIds.includes(user._id.toString()) &&
-        !leaveUserIds.includes(user._id)
+      (user) => !leaveUserIds.includes(user._id.toString())
     );
 
     return res.status(200).json(

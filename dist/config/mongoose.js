@@ -27,7 +27,6 @@ const db_connect = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     // Replace the placeholder in the connection string with the actual secret
     const DB_URL = dbConnectionUrl.replace("<PASSWORD>", dbSecret);
-    console.log("DB_URL", DB_URL);
     try {
         // Attempt to establish a connection to the MongoDB database
         yield mongoose_1.default.connect(`${DB_URL}/${utils_1.DB_Name}`);

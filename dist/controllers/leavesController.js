@@ -26,7 +26,7 @@ exports.getAllUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
         },
     })
         .populate("user", "full_name username avatar")
-        .sort({ startDate: 1 });
+        .sort({ created_at: -1 });
     if (!leaves) {
         throw new utils_1.AppError("No Leaves found", 409);
     }
@@ -48,7 +48,9 @@ exports.getUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
             $gte: startDate,
             $lte: endDate,
         },
-    }).select("-users");
+    })
+        .select("-users")
+        .sort({ created_at: -1 });
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, userLeaves, "", utils_1.ResponseStatus.SUCCESS));

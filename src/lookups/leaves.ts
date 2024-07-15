@@ -33,22 +33,6 @@ export const lookupLeaves = (
                             },
                           ],
                         },
-                        // {
-                        //   $and: [
-                        //     {
-                        //       $gte: [
-                        //         "$endDate",
-                        //         new Date(yearNumber, monthNumber - 1, 1),
-                        //       ],
-                        //     },
-                        //     {
-                        //       $lt: [
-                        //         "$endDate",
-                        //         new Date(yearNumber, monthNumber, 1),
-                        //       ],
-                        //     },
-                        //   ],
-                        // },
                       ],
                     },
                   ]
@@ -56,8 +40,12 @@ export const lookupLeaves = (
                   ? [
                       {
                         $or: [
-                          { $eq: ["$startDate", specificDate] },
-                          { $eq: ["$endDate", specificDate] },
+                          {
+                            $and: [
+                              { $lte: ["$startDate", specificDate] },
+                              { $gte: ["$endDate", specificDate] },
+                            ],
+                          },
                         ],
                       },
                     ]
