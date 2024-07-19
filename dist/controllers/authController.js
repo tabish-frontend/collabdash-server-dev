@@ -70,6 +70,9 @@ exports.login = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, vo
     if (user.account_status === types_1.AccountStatus.Deleted) {
         throw new utils_1.AppError("Your account has been deleted please contact with Adminitrstor to get back your account", 404);
     }
+    if (user.account_status !== types_1.AccountStatus.Active) {
+        throw new utils_1.AppError("Your account has been temporary looked, contact with Adminitrstor to activate your account", 404);
+    }
     const isPasswordValid = yield user.isPasswordCorrect(password);
     if (!isPasswordValid) {
         throw new utils_1.AppError("Invalid user credentials", 401);

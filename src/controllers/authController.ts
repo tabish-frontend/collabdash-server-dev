@@ -109,6 +109,13 @@ export const login = catchAsync(
       );
     }
 
+    if (user.account_status !== AccountStatus.Active) {
+      throw new AppError(
+        "Your account has been temporary looked, contact with Adminitrstor to activate your account",
+        404
+      );
+    }
+
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
       throw new AppError("Invalid user credentials", 401);
