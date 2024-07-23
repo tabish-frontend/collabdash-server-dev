@@ -111,7 +111,7 @@ export const login = catchAsync(
 
     if (user.account_status !== AccountStatus.Active) {
       throw new AppError(
-        "Your account has been temporary looked, contact with Adminitrstor to activate your account",
+        "Your account has been temporary locked, contact to HR to activate your account",
         404
       );
     }
