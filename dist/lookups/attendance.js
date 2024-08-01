@@ -16,7 +16,7 @@ const lookupAttendance = (year, month, view, specificDate) => ({
                                     {
                                         $gte: ["$date", new Date(year, month - 1, 1)],
                                     },
-                                    { $lt: ["$date", new Date(year, month, 0)] },
+                                    { $lt: ["$date", new Date(year, month, 1)] }, // Start of next month for exclusive upper bound
                                 ]
                                 : specificDate
                                     ? [
