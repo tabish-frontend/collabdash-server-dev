@@ -5,3 +5,7 @@ export * from "./attendance";
 export * from "./holiday";
 export * from "./leaves";
 export * from "./shift";
+export * from "./workspace";
+export * from "./column";
+export * from "./boards";
+export * from "./tasks";
