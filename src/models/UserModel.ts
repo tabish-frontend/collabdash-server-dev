@@ -159,14 +159,14 @@ const userSchema: Schema<User> = new Schema<User>(
   }
 );
 
-userSchema.pre<Query<any, any>>(/^find/, function (next) {
-  this.populate({
-    path: "shift",
-    select: "-__v",
-  });
+// userSchema.pre<Query<any, any>>(/^find/, function (next) {
+//   this.populate({
+//     path: "shift",
+//     select: "-__v",
+//   });
 
-  next();
-});
+//   next();
+// });
 
 // MIDDLEWARE == // PRE-SAVE HOOKS START
 userSchema.pre("save", async function (next) {

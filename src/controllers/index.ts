@@ -7,3 +7,4 @@ export * from "./holidayControllers";
 export * from "./leavesController";
 export * from "./shiftController";
 export * from "./statisticsController";
+export * from "./kanban";

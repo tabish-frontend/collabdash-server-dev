@@ -27,12 +27,14 @@ exports.WorkspaceModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const WorkspaceSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
+    slug: { type: String },
     owner: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "User",
         required: true,
     },
     members: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
+    boards: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "Board" }],
 }, { timestamps: true });
 exports.WorkspaceModel = mongoose_1.default.model("Workspace", WorkspaceSchema);
 //# sourceMappingURL=workspacesModel.js.map

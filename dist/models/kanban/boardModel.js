@@ -27,6 +27,7 @@ exports.BoardModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const BoardSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
+    slug: { type: String },
     description: { type: String },
     members: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
     owner: {

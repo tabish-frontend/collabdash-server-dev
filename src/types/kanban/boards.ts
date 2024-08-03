@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 export interface Board extends Document {
   name: string;
+  slug: string;
   description?: string;
   workspace: mongoose.Types.ObjectId;
   owner: mongoose.Types.ObjectId;

@@ -20,6 +20,8 @@ const holidayRoutes_1 = __importDefault(require("./routes/holidayRoutes"));
 const leaveRoutes_1 = __importDefault(require("./routes/leaveRoutes"));
 const shiftRoutes_1 = __importDefault(require("./routes/shiftRoutes"));
 const statisticsRoutes_1 = __importDefault(require("./routes/statisticsRoutes"));
+const workSpaceRoutes_1 = __importDefault(require("./routes/kanban/workSpaceRoutes"));
+const boardRoutes_1 = __importDefault(require("./routes/kanban/boardRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
 // const allowedOrigins = [
@@ -87,6 +89,8 @@ app.use("/api/v1/holidays", holidayRoutes_1.default);
 app.use("/api/v1/leaves", leaveRoutes_1.default);
 app.use("/api/v1/shifts", shiftRoutes_1.default);
 app.use("/api/v1/statistics", statisticsRoutes_1.default);
+app.use("/api/v1/workspace", workSpaceRoutes_1.default);
+app.use("/api/v1/boards", boardRoutes_1.default);
 // Catch-all for unhandled routes
 app.all("*", (req, res, next) => {
     next(new utils_1.AppError(`Can't find ${req.originalUrl} on this server!`, 404));

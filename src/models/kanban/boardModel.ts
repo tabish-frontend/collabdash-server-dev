@@ -4,6 +4,7 @@ import mongoose, { Schema, Document } from "mongoose";
 const BoardSchema: Schema<Board> = new Schema(
   {
     name: { type: String, required: true },
+    slug: { type: String },
     description: { type: String },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     owner: {
