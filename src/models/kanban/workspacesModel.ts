@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { Workspace } from "workspace";
+import { Workspace } from "kanban/workspace";
 
 const WorkspaceSchema: Schema<Workspace> = new Schema(
   {

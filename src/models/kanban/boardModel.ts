@@ -1,4 +1,4 @@
-import { Board } from "boards";
+import { Board } from "kanban/boards";
 import mongoose, { Schema, Document } from "mongoose";
 
 const BoardSchema: Schema<Board> = new Schema(

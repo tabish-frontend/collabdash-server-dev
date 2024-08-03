@@ -14,12 +14,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./shared"), exports);
-__exportStar(require("./user"), exports);
-__exportStar(require("./enum"), exports);
-__exportStar(require("./attendance"), exports);
-__exportStar(require("./holiday"), exports);
-__exportStar(require("./leaves"), exports);
-__exportStar(require("./shift"), exports);
-__exportStar(require("./kanban"), exports);
+__exportStar(require("./workspace"), exports);
+__exportStar(require("./boards"), exports);
+__exportStar(require("./column"), exports);
+__exportStar(require("./tasks"), exports);
 //# sourceMappingURL=index.js.map

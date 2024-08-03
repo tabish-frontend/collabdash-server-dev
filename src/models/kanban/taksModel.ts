@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { Task } from "tasks";
+import { Task } from "kanban/tasks";
 
 const TaskSchema: Schema<Task> = new Schema(
   {

@@ -1,4 +1,4 @@
-import { Column } from "column";
+import { Column } from "kanban/column";
 import mongoose, { Schema } from "mongoose";
 
 const ColumnSchema: Schema<Column> = new Schema(

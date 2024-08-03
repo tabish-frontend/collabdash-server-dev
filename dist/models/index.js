@@ -19,8 +19,5 @@ __exportStar(require("./attendanceModel"), exports);
 __exportStar(require("./holidayModel"), exports);
 __exportStar(require("./leaveModel"), exports);
 __exportStar(require("./shiftModel"), exports);
-__exportStar(require("./workspacesModel"), exports);
-// export * from "./columnModel";
-__exportStar(require("./boardModel"), exports);
-__exportStar(require("./taksModel"), exports);
+__exportStar(require("./kanban"), exports);
 //# sourceMappingURL=index.js.map
