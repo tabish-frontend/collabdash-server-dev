@@ -35,3 +35,65 @@ export const addBoard = catchAsync(async (req: any, res: any) => {
       )
     );
 });
+
+export const getAllBoards = catchAsync(async (req: any, res: any) => {
+  const boards = await BoardModel.find()
+    .populate("owner", "username full_name")
+    .populate("members", "username full_name")
+    .populate("workspace", "name");
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        boards,
+        "Boards fetched successfully",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
+
+export const updateBoard = catchAsync(async (req: any, res: any) => {
+  const { id } = req.params;
+
+  const updatedBoard = await BoardModel.findByIdAndUpdate(id, req.body, {
+    new: true,
+  })
+    .populate("owner", "username full_name")
+    .populate("members", "username full_name")
+    .populate("workspace", "name");
+
+  if (!updatedBoard) {
+    throw new AppError("Board not found", 404);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        updatedBoard,
+        "Board Updated",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
+
+export const deleteBoard = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const deletedBoard = await BoardModel.findByIdAndDelete(id);
+
+  await WorkspaceModel.findByIdAndUpdate(deletedBoard.workspace, {
+    $pull: { boards: id },
+  });
+
+  if (!deletedBoard) {
+    throw new AppError("No Board found with that ID", 400);
+  }
+
+  return res
+    .status(200)
+    .json(new AppResponse(200, null, "Board Deleted", ResponseStatus.SUCCESS));
+});
