@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addBoard = void 0;
+exports.deleteBoard = exports.updateBoard = exports.getAllBoards = exports.addBoard = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -33,5 +33,42 @@ exports.addBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, populatedBoard, "Board Added Successfully", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.getAllBoards = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const boards = yield models_1.BoardModel.find()
+        .populate("owner", "username full_name")
+        .populate("members", "username full_name")
+        .populate("workspace", "name");
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, boards, "Boards fetched successfully", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.updateBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const updatedBoard = yield models_1.BoardModel.findByIdAndUpdate(id, req.body, {
+        new: true,
+    })
+        .populate("owner", "username full_name")
+        .populate("members", "username full_name")
+        .populate("workspace", "name");
+    if (!updatedBoard) {
+        throw new utils_1.AppError("Board not found", 404);
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, updatedBoard, "Board Updated", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.deleteBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const deletedBoard = yield models_1.BoardModel.findByIdAndDelete(id);
+    yield models_1.WorkspaceModel.findByIdAndUpdate(deletedBoard.workspace, {
+        $pull: { boards: id },
+    });
+    if (!deletedBoard) {
+        throw new utils_1.AppError("No Board found with that ID", 400);
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, null, "Board Deleted", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=boardsController.js.map
