@@ -41,6 +41,7 @@ export const getAllWorkspaces = catchAsync(async (req, res) => {
       populate: [
         { path: "owner", select: "full_name username avatar" },
         { path: "members", select: "full_name username avatar" },
+        { path: "columns" },
       ],
     });
 

@@ -27,6 +27,11 @@ exports.ColumnModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const ColumnSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
+    owner: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
     board: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "Board",

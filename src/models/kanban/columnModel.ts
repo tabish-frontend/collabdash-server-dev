@@ -4,6 +4,11 @@ import mongoose, { Schema } from "mongoose";
 const ColumnSchema: Schema<Column> = new Schema(
   {
     name: { type: String, required: true },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     board: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Board",

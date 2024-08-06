@@ -16,6 +16,7 @@ exports.addBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
     const { name, description, members, workspace } = req.body;
     const owner = req.user._id;
     const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
+    // Create the new board
     const newBoard = yield models_1.BoardModel.create({
         name,
         slug,
@@ -24,12 +25,24 @@ exports.addBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
         owner,
         workspace,
     });
+    // Create the columns
+    const columnNames = ["To Do", "Review", "Done"];
+    const columnPromises = columnNames.map((name) => models_1.ColumnModel.create({ name, owner, board: newBoard._id }));
+    const columns = yield Promise.all(columnPromises);
+    // Get the column IDs
+    const columnIds = columns.map((column) => column._id);
+    // Update the board with the column IDs
+    newBoard.columns = columnIds;
+    yield newBoard.save();
+    // Update the workspace with the new board ID
     yield models_1.WorkspaceModel.findByIdAndUpdate(workspace, {
         $push: { boards: newBoard._id },
     });
+    // Populate the board details
     const populatedBoard = yield models_1.BoardModel.findById(newBoard._id)
         .populate("owner", "full_name username avatar")
-        .populate("members", "full_name username avatar");
+        .populate("members", "full_name username avatar")
+        .populate("columns");
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, populatedBoard, "Board Added Successfully", utils_1.ResponseStatus.SUCCESS));
@@ -49,8 +62,7 @@ exports.updateBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
         new: true,
     })
         .populate("owner", "username full_name")
-        .populate("members", "username full_name")
-        .populate("workspace", "name");
+        .populate("members", "username full_name");
     if (!updatedBoard) {
         throw new utils_1.AppError("Board not found", 404);
     }

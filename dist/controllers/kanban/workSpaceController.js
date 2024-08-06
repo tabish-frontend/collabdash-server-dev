@@ -39,6 +39,7 @@ exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
         populate: [
             { path: "owner", select: "full_name username avatar" },
             { path: "members", select: "full_name username avatar" },
+            { path: "columns" },
         ],
     });
     if (!workspaces) {
