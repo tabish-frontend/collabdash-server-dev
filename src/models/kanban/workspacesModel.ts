@@ -3,8 +3,8 @@ import { Workspace } from "kanban/workspace";
 
 const WorkspaceSchema: Schema<Workspace> = new Schema(
   {
-    name: { type: String, required: true },
-    slug: { type: String },
+    name: { type: String, required: true, unique: true },
+    slug: { type: String, unique: true },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -26,8 +26,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkspaceModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const WorkspaceSchema = new mongoose_1.Schema({
-    name: { type: String, required: true },
-    slug: { type: String },
+    name: { type: String, required: true, unique: true },
+    slug: { type: String, unique: true },
     owner: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "User",
