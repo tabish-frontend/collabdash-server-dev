@@ -43,5 +43,15 @@ const BoardSchema = new mongoose_1.Schema({
         required: true,
     },
 }, { timestamps: true });
+// Middleware to delete columns and tasks when a board is deleted
+// BoardSchema.pre('findOneAndDelete', async function(next) {
+//   const board = await this.model.findOne(this.getQuery());
+//   if (!board) return next();
+//   // Delete all tasks related to the board
+//   await TaskModel.deleteMany({ column: { $in: board.columns } });
+//   // Delete all columns
+//   await ColumnModel.deleteMany({ _id: { $in: board.columns } });
+//   next();
+// });
 exports.BoardModel = mongoose_1.default.model("Board", BoardSchema);
 //# sourceMappingURL=boardModel.js.map

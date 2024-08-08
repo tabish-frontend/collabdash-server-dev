@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addTask = void 0;
+exports.deleteTask = exports.addTask = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -36,6 +36,24 @@ exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0
         .populate("assignedTo", "full_name username avatar");
     return res
         .status(201)
-        .json(new utils_1.AppResponse(201, populatedTask, "Task created successfully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(201, populatedTask, "Task created", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.deleteTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const deletedTask = yield models_1.TaskModel.findByIdAndDelete(id);
+    if (!deletedTask) {
+        return res
+            .status(404)
+            .json(new utils_1.AppResponse(404, null, "Task not found", utils_1.ResponseStatus.ERROR));
+    }
+    yield models_1.ColumnModel.findByIdAndUpdate(deletedTask.column, {
+        $pull: { tasks: id },
+    });
+    yield models_1.BoardModel.findByIdAndUpdate(deletedTask.board, {
+        $pull: { tasks: id },
+    });
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, null, "Task Deleted", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=taskController.js.map

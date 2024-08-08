@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllWorkspaces = exports.addWorkspace = void 0;
+exports.deleteWorkSpace = exports.updateWorkspace = exports.getAllWorkspaces = exports.addWorkspace = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -58,5 +58,54 @@ exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, workspaces, "", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.updateWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { name, members } = req.body;
+    const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
+    const updatedWorkspace = yield models_1.WorkspaceModel.findByIdAndUpdate(id, { name, members, slug }, {
+        new: true,
+    })
+        .populate("owner", "full_name username avatar")
+        .populate("members", "full_name username avatar")
+        .populate({
+        path: "boards",
+        populate: [
+            { path: "owner", select: "full_name username avatar" },
+            { path: "members", select: "full_name username avatar" },
+            {
+                path: "columns",
+                populate: {
+                    path: "tasks",
+                    select: "title description column assignedTo owner",
+                    populate: [
+                        { path: "assignedTo", select: "full_name username avatar" },
+                        { path: "owner", select: "full_name username avatar" },
+                    ],
+                },
+            },
+        ],
+    });
+    if (!updatedWorkspace) {
+        return res
+            .status(404)
+            .json(new utils_1.AppResponse(404, null, "Workspace not found", utils_1.ResponseStatus.ERROR));
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, updatedWorkspace, "Workspace Updated", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.deleteWorkSpace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    // Trigger the middleware by using `findOneAndDelete`
+    const deletedWorkspace = yield models_1.WorkspaceModel.findOneAndDelete({ _id: id });
+    if (!deletedWorkspace) {
+        return res
+            .status(404)
+            .json(new utils_1.AppResponse(404, null, "Workspace not found", utils_1.ResponseStatus.ERROR));
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, deletedWorkspace, "Workspace and all related entities deleted successfully", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=workSpaceController.js.map

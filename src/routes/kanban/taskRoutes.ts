@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Protect, restrictTo } from "../../middlewares";
-import { addTask } from "../../controllers";
+import { addTask, deleteTask } from "../../controllers";
 
 const router = Router();
 
@@ -12,7 +12,7 @@ router.use(restrictTo("hr", "admin"));
 
 router.route("/").post(addTask);
 
-// router.route("/:id").patch(updateColumn).delete(deleteColumn);
+router.route("/:id").delete(deleteTask);
 
 // router.route("/move/:boardID").patch(moveColumn);
 

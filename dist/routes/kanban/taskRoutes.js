@@ -8,7 +8,7 @@ const router = (0, express_1.Router)();
 router.use(middlewares_1.Protect);
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
 router.route("/").post(controllers_1.addTask);
-// router.route("/:id").patch(updateColumn).delete(deleteColumn);
+router.route("/:id").delete(controllers_1.deleteTask);
 // router.route("/move/:boardID").patch(moveColumn);
 exports.default = router;
 //# sourceMappingURL=taskRoutes.js.map

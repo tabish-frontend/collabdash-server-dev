@@ -1,4 +1,4 @@
-import { WorkspaceModel } from "../../models";
+import { BoardModel, WorkspaceModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
 
 export const addWorkspace = catchAsync(async (req: any, res: any) => {
@@ -62,4 +62,82 @@ export const getAllWorkspaces = catchAsync(async (req, res) => {
   return res
     .status(200)
     .json(new AppResponse(200, workspaces, "", ResponseStatus.SUCCESS));
+});
+
+export const updateWorkspace = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { name, members } = req.body;
+
+  const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
+  const updatedWorkspace = await WorkspaceModel.findByIdAndUpdate(
+    id,
+    { name, members, slug },
+    {
+      new: true,
+    }
+  )
+    .populate("owner", "full_name username avatar")
+    .populate("members", "full_name username avatar")
+    .populate({
+      path: "boards",
+      populate: [
+        { path: "owner", select: "full_name username avatar" },
+        { path: "members", select: "full_name username avatar" },
+        {
+          path: "columns",
+          populate: {
+            path: "tasks",
+            select: "title description column assignedTo owner",
+            populate: [
+              { path: "assignedTo", select: "full_name username avatar" },
+              { path: "owner", select: "full_name username avatar" },
+            ],
+          },
+        },
+      ],
+    });
+
+  if (!updatedWorkspace) {
+    return res
+      .status(404)
+      .json(
+        new AppResponse(404, null, "Workspace not found", ResponseStatus.ERROR)
+      );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        updatedWorkspace,
+        "Workspace Updated",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
+
+export const deleteWorkSpace = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  // Trigger the middleware by using `findOneAndDelete`
+  const deletedWorkspace = await WorkspaceModel.findOneAndDelete({ _id: id });
+
+  if (!deletedWorkspace) {
+    return res
+      .status(404)
+      .json(
+        new AppResponse(404, null, "Workspace not found", ResponseStatus.ERROR)
+      );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        deletedWorkspace,
+        "Workspace and all related entities deleted successfully",
+        ResponseStatus.SUCCESS
+      )
+    );
 });

@@ -34,8 +34,32 @@ export const addTask = catchAsync(async (req: any, res: any) => {
       new AppResponse(
         201,
         populatedTask,
-        "Task created successfully",
+        "Task created",
         ResponseStatus.SUCCESS
       )
     );
+});
+
+export const deleteTask = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const deletedTask = await TaskModel.findByIdAndDelete(id);
+
+  if (!deletedTask) {
+    return res
+      .status(404)
+      .json(new AppResponse(404, null, "Task not found", ResponseStatus.ERROR));
+  }
+
+  await ColumnModel.findByIdAndUpdate(deletedTask.column, {
+    $pull: { tasks: id },
+  });
+
+  await BoardModel.findByIdAndUpdate(deletedTask.board, {
+    $pull: { tasks: id },
+  });
+
+  return res
+    .status(200)
+    .json(new AppResponse(200, null, "Task Deleted", ResponseStatus.SUCCESS));
 });
