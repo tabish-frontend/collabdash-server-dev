@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteTask = exports.addTask = void 0;
+exports.moveTask = exports.deleteTask = exports.addTask = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -55,5 +55,33 @@ exports.deleteTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, null, "Task Deleted", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { task_id, column_id, index } = req.body;
+    const task = yield models_1.TaskModel.findById(task_id).orFail(() => new utils_1.AppError("Task not found", 404));
+    if (column_id) {
+        yield models_1.ColumnModel.findByIdAndUpdate(task.column, {
+            $pull: { tasks: task_id },
+        });
+        yield models_1.ColumnModel.findByIdAndUpdate(column_id, {
+            $push: { tasks: { $each: [task_id], $position: index } },
+        });
+        task.column = column_id;
+        yield task.save();
+    }
+    else {
+        const column = yield models_1.ColumnModel.findById(task.column).orFail(() => new utils_1.AppError("Column not found", 404));
+        const currentIndex = column.tasks.indexOf(task_id);
+        column.tasks.splice(currentIndex, 1);
+        column.tasks.splice(index, 0, task_id);
+        yield column.save();
+    }
+    const populatedTask = yield models_1.TaskModel.findById(task_id)
+        .populate("board", "name")
+        .populate("column", "name")
+        .populate("assignedTo", "full_name username");
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, populatedTask, "Task moved", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=taskController.js.map

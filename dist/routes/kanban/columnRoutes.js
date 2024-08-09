@@ -8,7 +8,7 @@ const router = (0, express_1.Router)();
 router.use(middlewares_1.Protect);
 router.use((0, middlewares_1.restrictTo)("hr", "admin"));
 router.route("/").post(controllers_1.addColumn);
-router.route("/:id").patch(controllers_1.updateColumn).delete(controllers_1.deleteColumn);
-router.route("/move/:boardID").patch(controllers_1.moveColumn);
+router.route("/:id").patch(controllers_1.updateColumn).delete(controllers_1.clearAnddeleteColumn);
+router.route("/move").post(controllers_1.moveColumn);
 exports.default = router;
 //# sourceMappingURL=columnRoutes.js.map

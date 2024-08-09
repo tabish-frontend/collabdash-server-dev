@@ -63,3 +63,46 @@ export const deleteTask = catchAsync(async (req, res) => {
     .status(200)
     .json(new AppResponse(200, null, "Task Deleted", ResponseStatus.SUCCESS));
 });
+
+export const moveTask = catchAsync(async (req, res) => {
+  const { task_id, column_id, index } = req.body;
+
+  const task = await TaskModel.findById(task_id).orFail(
+    () => new AppError("Task not found", 404)
+  );
+
+  if (column_id) {
+    await ColumnModel.findByIdAndUpdate(task.column, {
+      $pull: { tasks: task_id },
+    });
+
+    await ColumnModel.findByIdAndUpdate(column_id, {
+      $push: { tasks: { $each: [task_id], $position: index } },
+    });
+
+    task.column = column_id;
+
+    await task.save();
+  } else {
+    const column = await ColumnModel.findById(task.column).orFail(
+      () => new AppError("Column not found", 404)
+    );
+
+    const currentIndex = column.tasks.indexOf(task_id);
+    column.tasks.splice(currentIndex, 1);
+    column.tasks.splice(index, 0, task_id);
+
+    await column.save();
+  }
+
+  const populatedTask = await TaskModel.findById(task_id)
+    .populate("board", "name")
+    .populate("column", "name")
+    .populate("assignedTo", "full_name username");
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(200, populatedTask, "Task moved", ResponseStatus.SUCCESS)
+    );
+});

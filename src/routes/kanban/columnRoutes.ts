@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Protect, restrictTo } from "../../middlewares";
 import {
   addColumn,
-  deleteColumn,
+  clearAnddeleteColumn,
   moveColumn,
   updateColumn,
 } from "../../controllers";
@@ -17,8 +17,8 @@ router.use(restrictTo("hr", "admin"));
 
 router.route("/").post(addColumn);
 
-router.route("/:id").patch(updateColumn).delete(deleteColumn);
+router.route("/:id").patch(updateColumn).delete(clearAnddeleteColumn);
 
-router.route("/move/:boardID").patch(moveColumn);
+router.route("/move").post(moveColumn);
 
 export default router;

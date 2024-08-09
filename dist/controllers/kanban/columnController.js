@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteColumn = exports.moveColumn = exports.updateColumn = exports.addColumn = void 0;
+exports.clearAnddeleteColumn = exports.moveColumn = exports.updateColumn = exports.addColumn = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -26,7 +26,7 @@ exports.addColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void
     const populatedColumn = yield models_1.ColumnModel.findById(newColumn._id).populate("tasks");
     return res
         .status(201)
-        .json(new utils_1.AppResponse(201, populatedColumn, "Column created successfully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(201, populatedColumn, "Column created", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.updateColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
@@ -40,11 +40,9 @@ exports.updateColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, v
         .json(new utils_1.AppResponse(200, updatedColumn, "Column Updated", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.moveColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { boardID } = req.params;
-    const { column_id, index } = req.body;
-    console.log("move boardID", boardID);
+    const { board_id, column_id, index } = req.body;
     // Find the board by ID
-    const board = yield models_1.BoardModel.findById(boardID);
+    const board = yield models_1.BoardModel.findById(board_id);
     if (!board) {
         throw new utils_1.AppError("Board not found", 404);
     }
@@ -59,7 +57,7 @@ exports.moveColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     board.columns.splice(index, 0, column_id);
     // Save the updated board
     yield board.save();
-    const populatedBoard = yield models_1.BoardModel.findById(boardID)
+    const populatedBoard = yield models_1.BoardModel.findById(board_id)
         .populate("owner", "full_name username avatar")
         .populate("members", "full_name username avatar")
         .populate({
@@ -71,19 +69,33 @@ exports.moveColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     });
     return res
         .status(200)
-        .json(new utils_1.AppResponse(200, populatedBoard, "Column moved successfully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, populatedBoard, "Column moved", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.deleteColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.clearAnddeleteColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const deletedColumn = yield models_1.ColumnModel.findByIdAndDelete(id);
-    yield models_1.BoardModel.findByIdAndUpdate(deletedColumn.board, {
-        $pull: { columns: id },
-    });
-    if (!deletedColumn) {
+    const { type } = req.query;
+    const column = yield models_1.ColumnModel.findById(id);
+    if (!column) {
         throw new utils_1.AppError("No Column found with that ID", 400);
+    }
+    // Step 1: Delete all tasks related to the column
+    yield models_1.TaskModel.deleteMany({ _id: { $in: column.tasks } });
+    // Step 2: Remove task IDs from BoardModel and ColumnModel
+    yield models_1.ColumnModel.findByIdAndUpdate(id, {
+        $set: { tasks: [] },
+    });
+    yield models_1.BoardModel.findByIdAndUpdate(column.board, {
+        $pull: { tasks: { $in: column.tasks } },
+    });
+    // Step 3: If the type is "delete", remove the column ID from BoardModel and delete the column
+    if (type === "delete") {
+        yield models_1.ColumnModel.findByIdAndDelete(id);
+        yield models_1.BoardModel.findByIdAndUpdate(column.board, {
+            $pull: { columns: id },
+        });
     }
     return res
         .status(200)
-        .json(new utils_1.AppResponse(200, null, "Column Deleted", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, null, type === "delete" ? "Column deleted" : "Column  cleared", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=columnController.js.map

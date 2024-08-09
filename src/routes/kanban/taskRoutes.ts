@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Protect, restrictTo } from "../../middlewares";
-import { addTask, deleteTask } from "../../controllers";
+import { addTask, deleteTask, moveTask } from "../../controllers";
 
 const router = Router();
 
@@ -14,6 +14,6 @@ router.route("/").post(addTask);
 
 router.route("/:id").delete(deleteTask);
 
-// router.route("/move/:boardID").patch(moveColumn);
+router.route("/move").post(moveTask);
 
 export default router;

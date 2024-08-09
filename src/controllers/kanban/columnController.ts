@@ -1,4 +1,4 @@
-import { ColumnModel, BoardModel } from "../../models";
+import { ColumnModel, BoardModel, TaskModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
 
 export const addColumn = catchAsync(async (req: any, res: any) => {
@@ -26,7 +26,7 @@ export const addColumn = catchAsync(async (req: any, res: any) => {
       new AppResponse(
         201,
         populatedColumn,
-        "Column created successfully",
+        "Column created",
         ResponseStatus.SUCCESS
       )
     );
@@ -59,13 +59,10 @@ export const updateColumn = catchAsync(async (req: any, res: any) => {
 });
 
 export const moveColumn = catchAsync(async (req: any, res: any) => {
-  const { boardID } = req.params;
-  const { column_id, index } = req.body;
-
-  console.log("move boardID", boardID);
+  const { board_id, column_id, index } = req.body;
 
   // Find the board by ID
-  const board = await BoardModel.findById(boardID);
+  const board = await BoardModel.findById(board_id);
   if (!board) {
     throw new AppError("Board not found", 404);
   }
@@ -85,7 +82,7 @@ export const moveColumn = catchAsync(async (req: any, res: any) => {
   // Save the updated board
   await board.save();
 
-  const populatedBoard = await BoardModel.findById(boardID)
+  const populatedBoard = await BoardModel.findById(board_id)
     .populate("owner", "full_name username avatar")
     .populate("members", "full_name username avatar")
     .populate({
@@ -102,26 +99,52 @@ export const moveColumn = catchAsync(async (req: any, res: any) => {
       new AppResponse(
         200,
         populatedBoard,
-        "Column moved successfully",
+        "Column moved",
         ResponseStatus.SUCCESS
       )
     );
 });
 
-export const deleteColumn = catchAsync(async (req, res) => {
+export const clearAnddeleteColumn = catchAsync(async (req, res) => {
   const { id } = req.params;
+  const { type } = req.query;
 
-  const deletedColumn = await ColumnModel.findByIdAndDelete(id);
+  const column = await ColumnModel.findById(id);
 
-  await BoardModel.findByIdAndUpdate(deletedColumn.board, {
-    $pull: { columns: id },
+  if (!column) {
+    throw new AppError("No Column found with that ID", 400);
+  }
+
+  // Step 1: Delete all tasks related to the column
+  await TaskModel.deleteMany({ _id: { $in: column.tasks } });
+
+  // Step 2: Remove task IDs from BoardModel and ColumnModel
+
+  await ColumnModel.findByIdAndUpdate(id, {
+    $set: { tasks: [] },
   });
 
-  if (!deletedColumn) {
-    throw new AppError("No Column found with that ID", 400);
+  await BoardModel.findByIdAndUpdate(column.board, {
+    $pull: { tasks: { $in: column.tasks } },
+  });
+
+  // Step 3: If the type is "delete", remove the column ID from BoardModel and delete the column
+  if (type === "delete") {
+    await ColumnModel.findByIdAndDelete(id);
+
+    await BoardModel.findByIdAndUpdate(column.board, {
+      $pull: { columns: id },
+    });
   }
 
   return res
     .status(200)
-    .json(new AppResponse(200, null, "Column Deleted", ResponseStatus.SUCCESS));
+    .json(
+      new AppResponse(
+        200,
+        null,
+        type === "delete" ? "Column deleted" : "Column  cleared",
+        ResponseStatus.SUCCESS
+      )
+    );
 });
