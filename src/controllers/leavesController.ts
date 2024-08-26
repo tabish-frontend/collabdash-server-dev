@@ -17,17 +17,22 @@ export const getAllUserLeaves = catchAsync(async (req, res) => {
   const endDate = new Date(yearNumber, monthNumber, 0);
 
   // Find leaves within the date range and populate user references
-  const leaves = await LeavesModel.find({
+  let leaves = await LeavesModel.find({
     startDate: {
       $gte: startDate,
       $lte: endDate,
     },
   })
-    .populate("user", "full_name username avatar")
+    .populate("user", "full_name username avatar role")
     .sort({ createdAt: -1 });
 
   if (!leaves) {
     throw new AppError("No Leaves found", 409);
+  }
+
+  // If the current user is an HR, filter out HR users' leaves
+  if (req.user.role === "hr") {
+    leaves = leaves.filter((leave: any) => leave.user.role !== "hr");
   }
 
   return res

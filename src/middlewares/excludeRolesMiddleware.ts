@@ -1,7 +1,11 @@
 import { Roles } from "../types";
 
 export const excludeRolesMiddleware = (req: any, res: any, next: any) => {
-  const userRole = req.user.role;
+  const { role, ...restQuery } = req.query;
+
+  req.query = restQuery;
+
+  const userRole = role || req.user.role;
 
   // Modify the query to exclude HR and admin info based on the user's role
   if (userRole === Roles.HR) {
