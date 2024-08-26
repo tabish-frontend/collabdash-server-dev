@@ -19,16 +19,20 @@ exports.getAllUserLeaves = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
     const startDate = new Date(yearNumber, monthNumber - 1, 1);
     const endDate = new Date(yearNumber, monthNumber, 0);
     // Find leaves within the date range and populate user references
-    const leaves = yield models_1.LeavesModel.find({
+    let leaves = yield models_1.LeavesModel.find({
         startDate: {
             $gte: startDate,
             $lte: endDate,
         },
     })
-        .populate("user", "full_name username avatar")
+        .populate("user", "full_name username avatar role")
         .sort({ createdAt: -1 });
     if (!leaves) {
         throw new utils_1.AppError("No Leaves found", 409);
+    }
+    // If the current user is an HR, filter out HR users' leaves
+    if (req.user.role === "hr") {
+        leaves = leaves.filter((leave) => leave.user.role !== "hr");
     }
     return res
         .status(200)
