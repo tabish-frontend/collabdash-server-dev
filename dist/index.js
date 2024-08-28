@@ -26,13 +26,9 @@ const columnRoutes_1 = __importDefault(require("./routes/kanban/columnRoutes"));
 const taskRoutes_1 = __importDefault(require("./routes/kanban/taskRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
-// const allowedOrigins = [
-//   process.env.ORIGIN_CLIENT_LOCAL,
-//   process.env.ORIGIN_CLIENT_LOCAL_IP,
-//   process.env.ORIGIN_CLIENT_LIVE,
-// ];
 const allowedOrigins = [
     process.env.ORIGIN_CLIENT_LOCAL,
+    process.env.ORIGIN_CLIENT_LOCAL_IP,
     process.env.ORIGIN_CLIENT_LIVE,
 ];
 // CORS configuration to allow requests from specified origins

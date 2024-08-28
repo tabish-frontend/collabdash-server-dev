@@ -14,7 +14,7 @@ const storage = multer_1.default.diskStorage({
 const upload = (0, multer_1.default)({ storage });
 exports.uploadUserPhoto = upload.fields([
     {
-        name: "avatar",
+        name: "attachment",
         maxCount: 1,
     },
 ]);

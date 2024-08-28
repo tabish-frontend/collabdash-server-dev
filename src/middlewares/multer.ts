@@ -1,5 +1,4 @@
 import multer from "multer";
-import { AppError } from "../utils";
 
 const storage = multer.diskStorage({
   filename: (req, file, cb) => {
@@ -12,7 +11,7 @@ const upload = multer({ storage });
 
 export const uploadUserPhoto = upload.fields([
   {
-    name: "avatar",
+    name: "attachment",
     maxCount: 1,
   },
 ]);

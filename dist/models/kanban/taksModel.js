@@ -25,9 +25,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const AttachmentSchema = new mongoose_1.Schema({
+    name: { type: String },
+    type: { type: String },
+    url: { type: String },
+});
 const TaskSchema = new mongoose_1.Schema({
     title: { type: String, required: true },
     description: { type: String },
+    dueDate: { type: Date, default: new Date() },
+    priority: {
+        type: String,
+        trim: true,
+        enum: ["low", "moderate", "high"],
+        default: "moderate",
+    },
     board: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "Board",
@@ -44,7 +56,7 @@ const TaskSchema = new mongoose_1.Schema({
         ref: "User",
         required: true,
     },
-    attachments: [{ type: String }],
+    attachments: { type: [AttachmentSchema], default: [] }, // Default empty arra
 }, { timestamps: true });
 exports.TaskModel = mongoose_1.default.model("Task", TaskSchema);
 //# sourceMappingURL=taksModel.js.map

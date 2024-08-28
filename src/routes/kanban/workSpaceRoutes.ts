@@ -14,10 +14,19 @@ const router = Router();
 
 router.use(Protect);
 
-router.use(restrictTo("hr", "admin"));
+router
+  .route("/")
+  .get(getAllWorkspaces)
+  .post(restrictTo("hr", "admin"), addWorkspace);
 
-router.route("/").get(getAllWorkspaces).post(addWorkspace);
+router.use(restrictTo("hr", "admin"));
 
 router.route("/:id").patch(updateWorkspace).delete(deleteWorkSpace);
 
 export default router;
+
+// router.route("/").get(getAllWorkspaces);
+
+// router.use(restrictTo("hr", "admin"));
+
+// router.route("/").post(addWorkspace);

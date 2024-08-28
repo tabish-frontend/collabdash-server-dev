@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.moveTask = exports.deleteTask = exports.addTask = void 0;
+exports.updateTask = exports.deleteAttachment = exports.uploadAttachment = exports.moveTask = exports.deleteTask = exports.addTask = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -83,5 +83,38 @@ exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, populatedTask, "Task moved", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.uploadAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let attachment = "";
+    if ((0, utils_1.isFilesObject)(req.files)) {
+        const file = yield (0, utils_1.uploadOnCloudinary)(req.files.attachment[0].path);
+        console.log("File", file);
+        attachment = file.url;
+        console.log("attachment", attachment);
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, attachment, "Attachment Uploaded", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.deleteAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    yield (0, utils_1.deleteFromCloudinary)(id);
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, null, "Attachment Deleted", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const updatedTask = yield models_1.TaskModel.findByIdAndUpdate(id, req.body, {
+        new: true,
+    })
+        .populate("owner", "username full_name avatar")
+        .populate("assignedTo", "username full_name avatar");
+    if (!updatedTask) {
+        throw new utils_1.AppError("Board not found", 404);
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, updatedTask, "Task Updated", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=taskController.js.map

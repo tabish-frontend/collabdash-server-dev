@@ -1,5 +1,13 @@
 import { ColumnModel, BoardModel, TaskModel } from "../../models";
-import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
+import {
+  AppError,
+  AppResponse,
+  ResponseStatus,
+  catchAsync,
+  deleteFromCloudinary,
+  isFilesObject,
+  uploadOnCloudinary,
+} from "../../utils";
 
 export const addTask = catchAsync(async (req: any, res: any) => {
   const { title, board, column } = req.body;
@@ -104,5 +112,60 @@ export const moveTask = catchAsync(async (req, res) => {
     .status(200)
     .json(
       new AppResponse(200, populatedTask, "Task moved", ResponseStatus.SUCCESS)
+    );
+});
+
+export const uploadAttachment = catchAsync(async (req, res) => {
+  let attachment = "";
+  if (isFilesObject(req.files)) {
+    const file = await uploadOnCloudinary(req.files.attachment[0].path);
+
+    console.log("File", file);
+    attachment = file.url;
+
+    console.log("attachment", attachment);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        attachment,
+        "Attachment Uploaded",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
+
+export const deleteAttachment = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  await deleteFromCloudinary(id);
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(200, null, "Attachment Deleted", ResponseStatus.SUCCESS)
+    );
+});
+
+export const updateTask = catchAsync(async (req: any, res: any) => {
+  const { id } = req.params;
+
+  const updatedTask = await TaskModel.findByIdAndUpdate(id, req.body, {
+    new: true,
+  })
+    .populate("owner", "username full_name avatar")
+    .populate("assignedTo", "username full_name avatar");
+
+  if (!updatedTask) {
+    throw new AppError("Board not found", 404);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(200, updatedTask, "Task Updated", ResponseStatus.SUCCESS)
     );
 });

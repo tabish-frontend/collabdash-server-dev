@@ -22,8 +22,10 @@ export const updateMe = catchAsync(async (req, res) => {
     );
   }
 
+  // console.log("req.files", req.files);
+
   if (isFilesObject(req.files)) {
-    const avatar = await uploadOnCloudinary(req.files.avatar[0].path);
+    const avatar = await uploadOnCloudinary(req.files.attachment[0].path);
     req.body.avatar = avatar.url;
   }
 

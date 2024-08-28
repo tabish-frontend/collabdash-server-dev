@@ -14,6 +14,7 @@ export const uploadOnCloudinary = async (locaLFilePath: string | null) => {
     // upload the file on cloudinary
     const response = await cloudinary.uploader.upload(locaLFilePath, {
       resource_type: "auto",
+      allowed_formats: ["jpg", "png", "pdf"],
     });
 
     return response;
@@ -21,4 +22,8 @@ export const uploadOnCloudinary = async (locaLFilePath: string | null) => {
     fs.unlinkSync(locaLFilePath); // remove the locally save temporary file as the uplad operation got failed
     return null;
   }
+};
+
+export const deleteFromCloudinary = async (id: string) => {
+  await cloudinary.uploader.destroy(id);
 };

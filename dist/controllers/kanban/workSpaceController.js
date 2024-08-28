@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteWorkSpace = exports.updateWorkspace = exports.getAllWorkspaces = exports.addWorkspace = void 0;
+const enum_1 = require("../../types/enum");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -29,13 +30,53 @@ exports.addWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, v
         .status(201)
         .json(new utils_1.AppResponse(201, populatedWorkSpace, "WorkSpace Added Successfully", utils_1.ResponseStatus.SUCCESS));
 }));
+// export const getAllWorkspaces = catchAsync(async (req, res) => {
+//   // Find workSpace within the date range and populate members and owner references
+//   const workspaces = await WorkspaceModel.find()
+//     .populate("owner", "full_name username avatar")
+//     .populate("members", "full_name username avatar")
+//     .populate({
+//       path: "boards",
+//       populate: [
+//         { path: "owner", select: "full_name username avatar" },
+//         { path: "members", select: "full_name username avatar" },
+//         {
+//           path: "columns",
+//           populate: {
+//             path: "tasks",
+//             select: "title description column assignedTo owner",
+//             populate: [
+//               { path: "assignedTo", select: "full_name username avatar" },
+//               { path: "owner", select: "full_name username avatar" },
+//             ],
+//           },
+//         },
+//       ],
+//     });
+//   if (!workspaces) {
+//     throw new AppError("No WorkSpace found", 409);
+//   }
+//   return res
+//     .status(200)
+//     .json(new AppResponse(200, workspaces, "", ResponseStatus.SUCCESS));
+// });
 exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Find workSpace within the date range and populate members and owner references
-    const workspaces = yield models_1.WorkspaceModel.find()
+    let workspacesQuery;
+    // If user is Admin or HR, retrieve all workspaces; otherwise, filter by user membership
+    if (req.user.role === enum_1.Roles.Employee) {
+        workspacesQuery = models_1.WorkspaceModel.find({ members: req.user._id });
+    }
+    else {
+        workspacesQuery = models_1.WorkspaceModel.find(); // Fetch all workspaces
+    }
+    const workspaces = yield workspacesQuery
         .populate("owner", "full_name username avatar")
         .populate("members", "full_name username avatar")
         .populate({
         path: "boards",
+        match: req.user.role === enum_1.Roles.Employee
+            ? { members: req.user._id } // Filter boards by user membership
+            : {},
         populate: [
             { path: "owner", select: "full_name username avatar" },
             { path: "members", select: "full_name username avatar" },
@@ -43,7 +84,7 @@ exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
                 path: "columns",
                 populate: {
                     path: "tasks",
-                    select: "title description column assignedTo owner",
+                    select: "title description column assignedTo owner attachments priority dueDate",
                     populate: [
                         { path: "assignedTo", select: "full_name username avatar" },
                         { path: "owner", select: "full_name username avatar" },
@@ -52,9 +93,6 @@ exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
             },
         ],
     });
-    if (!workspaces) {
-        throw new utils_1.AppError("No WorkSpace found", 409);
-    }
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, workspaces, "", utils_1.ResponseStatus.SUCCESS));

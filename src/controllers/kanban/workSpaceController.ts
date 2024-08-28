@@ -1,3 +1,4 @@
+import { Roles } from "../../types/enum";
 import { BoardModel, WorkspaceModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
 
@@ -30,14 +31,59 @@ export const addWorkspace = catchAsync(async (req: any, res: any) => {
     );
 });
 
-export const getAllWorkspaces = catchAsync(async (req, res) => {
-  // Find workSpace within the date range and populate members and owner references
+// export const getAllWorkspaces = catchAsync(async (req, res) => {
+//   // Find workSpace within the date range and populate members and owner references
 
-  const workspaces = await WorkspaceModel.find()
+//   const workspaces = await WorkspaceModel.find()
+//     .populate("owner", "full_name username avatar")
+//     .populate("members", "full_name username avatar")
+//     .populate({
+//       path: "boards",
+//       populate: [
+//         { path: "owner", select: "full_name username avatar" },
+//         { path: "members", select: "full_name username avatar" },
+//         {
+//           path: "columns",
+//           populate: {
+//             path: "tasks",
+//             select: "title description column assignedTo owner",
+//             populate: [
+//               { path: "assignedTo", select: "full_name username avatar" },
+//               { path: "owner", select: "full_name username avatar" },
+//             ],
+//           },
+//         },
+//       ],
+//     });
+
+//   if (!workspaces) {
+//     throw new AppError("No WorkSpace found", 409);
+//   }
+
+//   return res
+//     .status(200)
+//     .json(new AppResponse(200, workspaces, "", ResponseStatus.SUCCESS));
+// });
+
+export const getAllWorkspaces = catchAsync(async (req, res) => {
+  let workspacesQuery;
+
+  // If user is Admin or HR, retrieve all workspaces; otherwise, filter by user membership
+  if (req.user.role === Roles.Employee) {
+    workspacesQuery = WorkspaceModel.find({ members: req.user._id });
+  } else {
+    workspacesQuery = WorkspaceModel.find(); // Fetch all workspaces
+  }
+
+  const workspaces = await workspacesQuery
     .populate("owner", "full_name username avatar")
     .populate("members", "full_name username avatar")
     .populate({
       path: "boards",
+      match:
+        req.user.role === Roles.Employee
+          ? { members: req.user._id } // Filter boards by user membership
+          : {}, // No filtering on boards for Admin or HR
       populate: [
         { path: "owner", select: "full_name username avatar" },
         { path: "members", select: "full_name username avatar" },
@@ -45,7 +91,8 @@ export const getAllWorkspaces = catchAsync(async (req, res) => {
           path: "columns",
           populate: {
             path: "tasks",
-            select: "title description column assignedTo owner",
+            select:
+              "title description column assignedTo owner attachments priority dueDate",
             populate: [
               { path: "assignedTo", select: "full_name username avatar" },
               { path: "owner", select: "full_name username avatar" },
@@ -54,10 +101,6 @@ export const getAllWorkspaces = catchAsync(async (req, res) => {
         },
       ],
     });
-
-  if (!workspaces) {
-    throw new AppError("No WorkSpace found", 409);
-  }
 
   return res
     .status(200)
