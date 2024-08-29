@@ -135,7 +135,7 @@ export const getAllEmployees = catchAsync(async (req: any, res, next) => {
   );
 });
 
-export const getEmployee = getOne(UserModel, ExcludedFields);
+export const getEmployee = getOne(UserModel, ExcludedFields, "shift");
 
 export const updateEmployee = updateOne(UserModel, ExcludedFields);
 
