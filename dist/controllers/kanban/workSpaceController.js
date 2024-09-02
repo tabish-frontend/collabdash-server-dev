@@ -30,36 +30,6 @@ exports.addWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, v
         .status(201)
         .json(new utils_1.AppResponse(201, populatedWorkSpace, "WorkSpace Added Successfully", utils_1.ResponseStatus.SUCCESS));
 }));
-// export const getAllWorkspaces = catchAsync(async (req, res) => {
-//   // Find workSpace within the date range and populate members and owner references
-//   const workspaces = await WorkspaceModel.find()
-//     .populate("owner", "full_name username avatar")
-//     .populate("members", "full_name username avatar")
-//     .populate({
-//       path: "boards",
-//       populate: [
-//         { path: "owner", select: "full_name username avatar" },
-//         { path: "members", select: "full_name username avatar" },
-//         {
-//           path: "columns",
-//           populate: {
-//             path: "tasks",
-//             select: "title description column assignedTo owner",
-//             populate: [
-//               { path: "assignedTo", select: "full_name username avatar" },
-//               { path: "owner", select: "full_name username avatar" },
-//             ],
-//           },
-//         },
-//       ],
-//     });
-//   if (!workspaces) {
-//     throw new AppError("No WorkSpace found", 409);
-//   }
-//   return res
-//     .status(200)
-//     .json(new AppResponse(200, workspaces, "", ResponseStatus.SUCCESS));
-// });
 exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let workspacesQuery;
     // If user is Admin or HR, retrieve all workspaces; otherwise, filter by user membership

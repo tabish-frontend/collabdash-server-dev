@@ -1,5 +1,7 @@
 import { Board } from "kanban/boards";
 import mongoose, { Schema, Document } from "mongoose";
+import { TaskModel } from "./taksModel";
+import { ColumnModel } from "./columnModel";
 
 const BoardSchema: Schema<Board> = new Schema(
   {
@@ -24,18 +26,18 @@ const BoardSchema: Schema<Board> = new Schema(
 );
 
 // Middleware to delete columns and tasks when a board is deleted
-// BoardSchema.pre('findOneAndDelete', async function(next) {
-//   const board = await this.model.findOne(this.getQuery());
+BoardSchema.pre("findOneAndDelete", async function (next) {
+  const board = await this.model.findOne(this.getQuery());
 
-//   if (!board) return next();
+  if (!board) return next();
 
-//   // Delete all tasks related to the board
-//   await TaskModel.deleteMany({ column: { $in: board.columns } });
+  // Delete all tasks related to the board
+  await TaskModel.deleteMany({ column: { $in: board.columns } });
 
-//   // Delete all columns
-//   await ColumnModel.deleteMany({ _id: { $in: board.columns } });
+  // Delete all columns
+  await ColumnModel.deleteMany({ _id: { $in: board.columns } });
 
-//   next();
-// });
+  next();
+});
 
 export const BoardModel = mongoose.model("Board", BoardSchema);

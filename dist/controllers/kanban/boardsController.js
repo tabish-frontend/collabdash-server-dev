@@ -72,7 +72,7 @@ exports.updateBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
 }));
 exports.deleteBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const deletedBoard = yield models_1.BoardModel.findByIdAndDelete(id);
+    const deletedBoard = yield models_1.BoardModel.findOneAndDelete({ _id: id });
     yield models_1.WorkspaceModel.findByIdAndUpdate(deletedBoard.workspace, {
         $pull: { boards: id },
     });

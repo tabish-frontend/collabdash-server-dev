@@ -100,7 +100,7 @@ export const updateBoard = catchAsync(async (req: any, res: any) => {
 export const deleteBoard = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  const deletedBoard = await BoardModel.findByIdAndDelete(id);
+  const deletedBoard = await BoardModel.findOneAndDelete({ _id: id });
 
   await WorkspaceModel.findByIdAndUpdate(deletedBoard.workspace, {
     $pull: { boards: id },

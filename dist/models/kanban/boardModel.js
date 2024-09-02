@@ -22,9 +22,20 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BoardModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const taksModel_1 = require("./taksModel");
+const columnModel_1 = require("./columnModel");
 const BoardSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     slug: { type: String },
@@ -44,14 +55,17 @@ const BoardSchema = new mongoose_1.Schema({
     },
 }, { timestamps: true });
 // Middleware to delete columns and tasks when a board is deleted
-// BoardSchema.pre('findOneAndDelete', async function(next) {
-//   const board = await this.model.findOne(this.getQuery());
-//   if (!board) return next();
-//   // Delete all tasks related to the board
-//   await TaskModel.deleteMany({ column: { $in: board.columns } });
-//   // Delete all columns
-//   await ColumnModel.deleteMany({ _id: { $in: board.columns } });
-//   next();
-// });
+BoardSchema.pre("findOneAndDelete", function (next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const board = yield this.model.findOne(this.getQuery());
+        if (!board)
+            return next();
+        // Delete all tasks related to the board
+        yield taksModel_1.TaskModel.deleteMany({ column: { $in: board.columns } });
+        // Delete all columns
+        yield columnModel_1.ColumnModel.deleteMany({ _id: { $in: board.columns } });
+        next();
+    });
+});
 exports.BoardModel = mongoose_1.default.model("Board", BoardSchema);
 //# sourceMappingURL=boardModel.js.map
