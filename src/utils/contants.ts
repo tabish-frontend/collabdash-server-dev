@@ -23,6 +23,11 @@ export const LeavesStatus = {
   Rejected: "rejected",
 };
 
+export const ChatType = {
+  ONE_TO_ONE: "ONE_TO_ONE",
+  GROUP: "GROUP",
+};
+
 export const LeavesTypes = {
   Sick: "sick",
   Casual: "casual",

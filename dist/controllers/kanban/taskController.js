@@ -105,6 +105,7 @@ exports.deleteAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
 }));
 exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
+    console.log("req.body", req.body);
     const updatedTask = yield models_1.TaskModel.findByIdAndUpdate(id, req.body, {
         new: true,
     })

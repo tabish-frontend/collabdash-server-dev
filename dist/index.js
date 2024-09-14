@@ -7,10 +7,11 @@ exports.app = void 0;
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const express_mongo_sanitize_1 = __importDefault(require("express-mongo-sanitize"));
-// import { rateLimit } from 'express-rate-limit';
 const helmet_1 = __importDefault(require("helmet"));
 const hpp_1 = __importDefault(require("hpp"));
 const morgan_1 = __importDefault(require("morgan"));
+const http_1 = require("http"); // Import the HTTP server
+const socket_io_1 = require("socket.io"); // Import Socket.IO server
 const controllers_1 = require("./controllers");
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
@@ -24,6 +25,7 @@ const workSpaceRoutes_1 = __importDefault(require("./routes/kanban/workSpaceRout
 const boardRoutes_1 = __importDefault(require("./routes/kanban/boardRoutes"));
 const columnRoutes_1 = __importDefault(require("./routes/kanban/columnRoutes"));
 const taskRoutes_1 = __importDefault(require("./routes/kanban/taskRoutes"));
+const messageRoutes_1 = __importDefault(require("./routes/chat/messageRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
 const allowedOrigins = [
@@ -46,7 +48,6 @@ const corsOptions = {
     credentials: true,
 };
 const app = (0, express_1.default)();
-exports.app = app;
 // Apply CORS middleware to enable cross-origin requests
 app.use((0, cors_1.default)(corsOptions));
 // Set various HTTP headers to secure the app
@@ -91,8 +92,37 @@ app.use("/api/v1/workspace", workSpaceRoutes_1.default);
 app.use("/api/v1/boards", boardRoutes_1.default);
 app.use("/api/v1/column", columnRoutes_1.default);
 app.use("/api/v1/task", taskRoutes_1.default);
+app.use("/api/v1/messages", messageRoutes_1.default);
 // Catch-all for unhandled routes
 app.all("*", (req, res, next) => {
     next(new utils_1.AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+// Create an HTTP server
+const httpServer = (0, http_1.createServer)(app);
+exports.app = httpServer;
+// Initialize Socket.IO
+const io = new socket_io_1.Server(httpServer, {
+    cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true,
+    },
+});
+// Socket.IO connection handler
+io.on("connection", (socket) => {
+    console.log("A user connected:", socket.id);
+    // Handle custom events from clients
+    socket.on("someEvent", (data) => {
+        console.log("Received someEvent with data:", data);
+        // Emit events to other connected clients
+        socket.broadcast.emit("someEventResponse", {
+            message: "This is a response to someEvent",
+            data: data,
+        });
+    });
+    // Handle disconnection
+    socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+    });
 });
 //# sourceMappingURL=index.js.map

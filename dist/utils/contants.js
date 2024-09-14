@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TUITION_HIGHWAY = exports.DB_Name = exports.ExcludedFields = exports.LeavesTypes = exports.LeavesStatus = exports.AttendanceStatus = exports.HttpOptions = exports.ResponseStatus = void 0;
+exports.TUITION_HIGHWAY = exports.DB_Name = exports.ExcludedFields = exports.LeavesTypes = exports.ChatType = exports.LeavesStatus = exports.AttendanceStatus = exports.HttpOptions = exports.ResponseStatus = void 0;
 exports.ResponseStatus = {
     SUCCESS: "success",
     ERROR: "error",
@@ -21,6 +21,10 @@ exports.LeavesStatus = {
     Pending: "pending",
     Approved: "approved",
     Rejected: "rejected",
+};
+exports.ChatType = {
+    ONE_TO_ONE: "ONE_TO_ONE",
+    GROUP: "GROUP",
 };
 exports.LeavesTypes = {
     Sick: "sick",

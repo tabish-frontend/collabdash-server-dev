@@ -1,10 +1,11 @@
 import cors from "cors";
 import express, { Express, Request, Response, NextFunction } from "express";
 import mongoSanitize from "express-mongo-sanitize";
-// import { rateLimit } from 'express-rate-limit';
 import helmet from "helmet";
 import hpp from "hpp";
 import morgan from "morgan";
+import { createServer } from "http"; // Import the HTTP server
+import { Server as SocketIOServer } from "socket.io"; // Import Socket.IO server
 
 import { globalErrorHandler } from "./controllers";
 
@@ -20,6 +21,7 @@ import workSpaceRoutes from "./routes/kanban/workSpaceRoutes";
 import boardRoutes from "./routes/kanban/boardRoutes";
 import columnRoutes from "./routes/kanban/columnRoutes";
 import taskRoutes from "./routes/kanban/taskRoutes";
+import messageRoutes from "./routes/chat/messageRoutes";
 
 import { AppError, xssMiddleware } from "./utils";
 
@@ -103,10 +105,45 @@ app.use("/api/v1/workspace", workSpaceRoutes);
 app.use("/api/v1/boards", boardRoutes);
 app.use("/api/v1/column", columnRoutes);
 app.use("/api/v1/task", taskRoutes);
+app.use("/api/v1/messages", messageRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-export { app };
+// Create an HTTP server
+const httpServer = createServer(app);
+
+// Initialize Socket.IO
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// Socket.IO connection handler
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  // Handle custom events from clients
+  socket.on("someEvent", (data) => {
+    console.log("Received someEvent with data:", data);
+
+    // Emit events to other connected clients
+    socket.broadcast.emit("someEventResponse", {
+      message: "This is a response to someEvent",
+      data: data,
+    });
+  });
+
+  // Handle disconnection
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
+// Export the HTTP server instead of the app
+export { httpServer as app };

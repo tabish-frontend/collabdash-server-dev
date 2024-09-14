@@ -153,6 +153,8 @@ export const deleteAttachment = catchAsync(async (req, res) => {
 export const updateTask = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
 
+  console.log("req.body", req.body);
+
   const updatedTask = await TaskModel.findByIdAndUpdate(id, req.body, {
     new: true,
   })

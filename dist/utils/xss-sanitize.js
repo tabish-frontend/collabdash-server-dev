@@ -14,10 +14,10 @@ function sanitize(input) {
     return parsedContent.window.document.body.textContent || "";
 }
 function xssMiddleware(req, res, next) {
-    // Sanitize body
+    // Sanitize body, skipping the 'description' field
     if (req.body) {
         for (let key in req.body) {
-            if (typeof req.body[key] === "string") {
+            if (key !== "description" && typeof req.body[key] === "string") {
                 req.body[key] = sanitize(req.body[key]);
             }
         }
@@ -26,7 +26,7 @@ function xssMiddleware(req, res, next) {
     if (req.query) {
         for (let key in req.query) {
             if (typeof req.query[key] === "string") {
-                req.query[key] = sanitize(req.query[key]); // Type assertion here
+                req.query[key] = sanitize(req.query[key]);
             }
         }
     }

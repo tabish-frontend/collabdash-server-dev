@@ -6,3 +6,4 @@ export * from "./holiday";
 export * from "./leaves";
 export * from "./shift";
 export * from "./kanban";
+export * from "./chat";
