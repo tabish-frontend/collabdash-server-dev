@@ -11,7 +11,7 @@ export const getOne = (Model: any, hideFields: string, popOptions?: any) =>
     const { _id, username } = req.params;
 
     let query = Model.findOne({
-      $or: [{ username }, { _id: username ? username : _id }],
+      $or: [{ username }, { _id }],
     }).select(hideFields);
 
     if (popOptions) query = query.populate(popOptions);
