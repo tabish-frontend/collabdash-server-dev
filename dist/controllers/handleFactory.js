@@ -14,7 +14,7 @@ const utils_1 = require("../utils");
 const getOne = (Model, hideFields, popOptions) => (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id, username } = req.params;
     let query = Model.findOne({
-        $or: [{ username }, { _id: username ? username : _id }],
+        $or: [{ username }, { _id }],
     }).select(hideFields);
     if (popOptions)
         query = query.populate(popOptions);
