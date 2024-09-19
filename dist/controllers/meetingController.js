@@ -42,7 +42,7 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
     const meetings = yield models_1.MeetingModel.find(filter)
         .populate("owner", "full_name username avatar")
         .populate("participants", "full_name username avatar")
-        .sort({ createdAt: -1 });
+        .sort({ time: 1 });
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));

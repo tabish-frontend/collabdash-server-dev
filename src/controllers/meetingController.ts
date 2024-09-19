@@ -46,7 +46,7 @@ export const getAllMeetings = catchAsync(async (req, res) => {
   const meetings = await MeetingModel.find(filter)
     .populate("owner", "full_name username avatar")
     .populate("participants", "full_name username avatar")
-    .sort({ createdAt: -1 });
+    .sort({ time: 1 });
 
   return res
     .status(200)
