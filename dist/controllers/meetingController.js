@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMeeting = exports.getAllMeetings = exports.createMeeting = void 0;
+exports.deleteMeeting = exports.updateMeeting = exports.getMeeting = exports.getAllMeetings = exports.createMeeting = void 0;
 const models_1 = require("../models");
 const utils_1 = require("../utils");
 exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -67,5 +67,35 @@ exports.getMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.updateMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const updatedData = req.body;
+    // Find the meeting by id and update with new data
+    const updatedMeeting = yield models_1.MeetingModel.findByIdAndUpdate(id, updatedData, {
+        new: true,
+        runValidators: true, // Ensure validation rules are respected
+    })
+        .populate("owner", "full_name username avatar")
+        .populate("participants", "full_name username avatar");
+    // Check if meeting exists
+    if (!updatedMeeting) {
+        throw new utils_1.AppError("Meeting not found", 404);
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, updatedMeeting, "Meeting Updated", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.deleteMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    // Find the meeting by id and remove it
+    const meeting = yield models_1.MeetingModel.findByIdAndDelete(id);
+    // Check if meeting exists
+    if (!meeting) {
+        throw new utils_1.AppError("No Meeting found with that ID", 400);
+    }
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, null, "Meeting Deleted Successfully", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=meetingController.js.map

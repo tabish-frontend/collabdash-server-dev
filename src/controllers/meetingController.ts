@@ -81,3 +81,54 @@ export const getMeeting = catchAsync(async (req, res) => {
     .status(200)
     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));
 });
+
+export const updateMeeting = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+
+  // Find the meeting by id and update with new data
+  const updatedMeeting = await MeetingModel.findByIdAndUpdate(id, updatedData, {
+    new: true, // Return the updated document
+    runValidators: true, // Ensure validation rules are respected
+  })
+    .populate("owner", "full_name username avatar")
+    .populate("participants", "full_name username avatar");
+
+  // Check if meeting exists
+  if (!updatedMeeting) {
+    throw new AppError("Meeting not found", 404);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        updatedMeeting,
+        "Meeting Updated",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
+
+export const deleteMeeting = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  // Find the meeting by id and remove it
+  const meeting = await MeetingModel.findByIdAndDelete(id);
+
+  // Check if meeting exists
+  if (!meeting) {
+    throw new AppError("No Meeting found with that ID", 400);
+  }
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        null,
+        "Meeting Deleted Successfully",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
