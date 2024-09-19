@@ -23,4 +23,5 @@ __exportStar(require("./leaves"), exports);
 __exportStar(require("./shift"), exports);
 __exportStar(require("./kanban"), exports);
 __exportStar(require("./chat"), exports);
+__exportStar(require("./meeting"), exports);
 //# sourceMappingURL=index.js.map

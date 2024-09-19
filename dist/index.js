@@ -26,6 +26,7 @@ const boardRoutes_1 = __importDefault(require("./routes/kanban/boardRoutes"));
 const columnRoutes_1 = __importDefault(require("./routes/kanban/columnRoutes"));
 const taskRoutes_1 = __importDefault(require("./routes/kanban/taskRoutes"));
 const messageRoutes_1 = __importDefault(require("./routes/chat/messageRoutes"));
+const meetingRoutes_1 = __importDefault(require("./routes/meetingRoutes"));
 const utils_1 = require("./utils");
 // CORS configuration to allow requests from specified origins
 const allowedOrigins = [
@@ -93,6 +94,7 @@ app.use("/api/v1/boards", boardRoutes_1.default);
 app.use("/api/v1/column", columnRoutes_1.default);
 app.use("/api/v1/task", taskRoutes_1.default);
 app.use("/api/v1/messages", messageRoutes_1.default);
+app.use("/api/v1/meetings", meetingRoutes_1.default);
 // Catch-all for unhandled routes
 app.all("*", (req, res, next) => {
     next(new utils_1.AppError(`Can't find ${req.originalUrl} on this server!`, 404));

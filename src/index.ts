@@ -22,6 +22,7 @@ import boardRoutes from "./routes/kanban/boardRoutes";
 import columnRoutes from "./routes/kanban/columnRoutes";
 import taskRoutes from "./routes/kanban/taskRoutes";
 import messageRoutes from "./routes/chat/messageRoutes";
+import meetingRoutes from "./routes/meetingRoutes";
 
 import { AppError, xssMiddleware } from "./utils";
 
@@ -106,6 +107,7 @@ app.use("/api/v1/boards", boardRoutes);
 app.use("/api/v1/column", columnRoutes);
 app.use("/api/v1/task", taskRoutes);
 app.use("/api/v1/messages", messageRoutes);
+app.use("/api/v1/meetings", meetingRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

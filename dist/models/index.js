@@ -19,6 +19,7 @@ __exportStar(require("./attendanceModel"), exports);
 __exportStar(require("./holidayModel"), exports);
 __exportStar(require("./leaveModel"), exports);
 __exportStar(require("./shiftModel"), exports);
+__exportStar(require("./meetingModel"), exports);
 __exportStar(require("./kanban"), exports);
 __exportStar(require("./chat"), exports);
 //# sourceMappingURL=index.js.map

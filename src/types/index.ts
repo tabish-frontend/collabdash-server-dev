@@ -7,3 +7,4 @@ export * from "./leaves";
 export * from "./shift";
 export * from "./kanban";
 export * from "./chat";
+export * from "./meeting";

@@ -23,6 +23,7 @@ __exportStar(require("./holidayControllers"), exports);
 __exportStar(require("./leavesController"), exports);
 __exportStar(require("./shiftController"), exports);
 __exportStar(require("./statisticsController"), exports);
+__exportStar(require("./meetingController"), exports);
 __exportStar(require("./kanban"), exports);
 __exportStar(require("./chat"), exports);
 //# sourceMappingURL=index.js.map
