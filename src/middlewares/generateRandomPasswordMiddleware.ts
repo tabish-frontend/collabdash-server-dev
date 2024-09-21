@@ -5,7 +5,8 @@ export const generatePassword = (
   res: any,
   next: () => void
 ) => {
-  const tempPassword = crypto.randomBytes(8 / 2).toString("hex");
-  req.body.password = tempPassword;
+  // const tempPassword = crypto.randomBytes(8 / 2).toString("hex");
+  // req.body.password = tempPassword;
+  req.body.password = "CollabDash@1";
   next();
 };
