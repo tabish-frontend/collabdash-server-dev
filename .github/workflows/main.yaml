@@ -29,5 +29,5 @@ jobs:
         run: |
           cp package.json ./dist/
           cd dist
-          eb init --region us-east-1 --platform "Node.js 20 running on 64bit Amazon Linux 2023/6.2.1" collabdash
+          eb init --region us-east-1 --platform "Node.js 20 running on 64bit Amazon Linux 2023" collabdash
           eb deploy backend-collabdash
