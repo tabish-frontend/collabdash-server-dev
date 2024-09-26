@@ -32,12 +32,16 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
     const { status } = req.query;
     const userId = req.user._id;
     let filter = {};
+    // Get the current time and subtract 2 hours
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     // Determine filter based on the status
     if (status === "upcoming") {
-        filter = { time: { $gte: new Date() } };
+        // Set filter to get meetings that are scheduled after two hours ago, i.e., upcoming
+        filter = { time: { $gte: twoHoursAgo } };
     }
     else if (status === "completed") {
-        filter = { time: { $lt: new Date() } };
+        // Get the current time and subtract 2 hours
+        filter = { time: { $lt: twoHoursAgo } };
     }
     // Add condition to check if the user is the owner or a participant
     filter = Object.assign(Object.assign({}, filter), { $or: [
@@ -48,7 +52,7 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
     const meetings = yield models_1.MeetingModel.find(filter)
         .populate("owner", "full_name username avatar")
         .populate("participants", "full_name username avatar")
-        .sort({ time: 1 });
+        .sort({ time: status === "upcoming" ? 1 : -1 });
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));
