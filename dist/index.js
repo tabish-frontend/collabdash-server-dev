@@ -42,29 +42,12 @@ const app = (0, express_1.default)();
 // Express middleware setup
 app.use((0, cors_1.default)(corsOptions));
 app.use((0, helmet_1.default)());
+if (process.env.NODE_ENV === "dev")
+    app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.json());
 app.use((0, express_mongo_sanitize_1.default)());
 app.use(utils_1.xssMiddleware);
 app.use((0, hpp_1.default)());
-app.use((0, hpp_1.default)());
-if (process.env.NODE_ENV === "dev")
-    app.use((0, morgan_1.default)("dev"));
-// Route handlers for different parts of the application
-app.use("/api/v1/auth", authRoutes_1.default);
-app.use("/api/v1/users", userRoutes_1.default);
-app.use("/api/v1/attendance", attendanceRoutes_1.default);
-app.use("/api/v1/employees", employeeRoutes_1.default);
-app.use("/api/v1/holidays", holidayRoutes_1.default);
-app.use("/api/v1/leaves", leaveRoutes_1.default);
-app.use("/api/v1/shifts", shiftRoutes_1.default);
-app.use("/api/v1/statistics", statisticsRoutes_1.default);
-app.use("/api/v1/workspace", workSpaceRoutes_1.default);
-app.use("/api/v1/boards", boardRoutes_1.default);
-app.use("/api/v1/column", columnRoutes_1.default);
-app.use("/api/v1/task", taskRoutes_1.default);
-app.use("/api/v1/messages", messageRoutes_1.default);
-app.use("/api/v1/meetings", meetingRoutes_1.default);
-// Global error handling middleware
 app.use(controllers_1.globalErrorHandler);
 // Root route to confirm the server is running
 app.get("/", (req, res) => {
