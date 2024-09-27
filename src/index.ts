@@ -39,31 +39,19 @@ const app: Express = express();
 
 // Express middleware setup
 app.use(cors(corsOptions));
+
 app.use(helmet());
-app.use(express.json());
-app.use(mongoSanitize());
-app.use(xssMiddleware);
-app.use(hpp());
-app.use(hpp());
+
 if (process.env.NODE_ENV === "dev") app.use(morgan("dev"));
 
-// Route handlers for different parts of the application
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/users", userRouter);
-app.use("/api/v1/attendance", attendanceRoutes);
-app.use("/api/v1/employees", employeeRoutes);
-app.use("/api/v1/holidays", holidayRoutes);
-app.use("/api/v1/leaves", leaveRoutes);
-app.use("/api/v1/shifts", shiftRoutes);
-app.use("/api/v1/statistics", statisticsRoutes);
-app.use("/api/v1/workspace", workSpaceRoutes);
-app.use("/api/v1/boards", boardRoutes);
-app.use("/api/v1/column", columnRoutes);
-app.use("/api/v1/task", taskRoutes);
-app.use("/api/v1/messages", messageRoutes);
-app.use("/api/v1/meetings", meetingRoutes);
+app.use(express.json());
 
-// Global error handling middleware
+app.use(mongoSanitize());
+
+app.use(xssMiddleware);
+
+app.use(hpp());
+
 app.use(globalErrorHandler);
 
 // Root route to confirm the server is running
