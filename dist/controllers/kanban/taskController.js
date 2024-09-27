@@ -8,10 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateTask = exports.deleteAttachment = exports.uploadAttachment = exports.moveTask = exports.deleteTask = exports.addTask = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
+const models_2 = require("../../models");
+const webPushConfig_1 = __importDefault(require("../../webPushConfig"));
 exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, board, column } = req.body;
     const owner = req.user._id;
@@ -58,14 +63,51 @@ exports.deleteTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
 }));
 exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { task_id, column_id, index } = req.body;
+    const user = req.user;
     const task = yield models_1.TaskModel.findById(task_id).orFail(() => new utils_1.AppError("Task not found", 404));
     if (column_id) {
-        yield models_1.ColumnModel.findByIdAndUpdate(task.column, {
+        const previousColumn = yield models_1.ColumnModel.findByIdAndUpdate(task.column, {
             $pull: { tasks: task_id },
         });
-        yield models_1.ColumnModel.findByIdAndUpdate(column_id, {
+        const newColumn = yield models_1.ColumnModel.findByIdAndUpdate(column_id, {
             $push: { tasks: { $each: [task_id], $position: index } },
         });
+        const isOwner = user._id.toString() === task.owner.toString();
+        const Receiver = isOwner ? task.assignedTo : task.owner;
+        const notificationMessage = `has moved Task ${task.title}  from ${previousColumn.name} to ${newColumn.name} `;
+        yield models_1.NotificationModel.create({
+            sender: user._id,
+            receiver: Receiver,
+            message: notificationMessage,
+            link: task.title,
+        });
+        // if (user._id.toString() !== task.owner.toString()) {
+        //   const notificationMessage = `${task.title} from ${previousColumn.name} to ${newColumn.name} `;
+        //   const senderId =
+        //   await NotificationModel.create({
+        //     sender: user._id,
+        //     receiver: task.owner,
+        //     message: notificationMessage,
+        //     message_type: "has moved Task",
+        //   });
+        // }
+        const subscriptions = yield models_2.PushSubscriptionModel.find({
+            user: { $in: Receiver },
+        });
+        const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
+        // Send push notification
+        subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
+            const payload = JSON.stringify({
+                title: `Task Update: ${task.title}`,
+                message: pushNotificationMessage,
+                icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+                url: `/workspaces`, // URL to navigate on notification click
+            });
+            try {
+                yield webPushConfig_1.default.sendNotification(subscription, payload);
+            }
+            catch (error) { }
+        }));
         task.column = column_id;
         yield task.save();
     }
@@ -105,7 +147,9 @@ exports.deleteAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
 }));
 exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    console.log("req.body", req.body);
+    const { owner, assignedTo, title } = req.body;
+    const receiver = assignedTo.map((item) => item._id);
+    let notificationMessage = `has assigned you a Task ${title}`;
     const updatedTask = yield models_1.TaskModel.findByIdAndUpdate(id, req.body, {
         new: true,
     })
@@ -113,6 +157,38 @@ exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
         .populate("assignedTo", "username full_name avatar");
     if (!updatedTask) {
         throw new utils_1.AppError("Board not found", 404);
+    }
+    if (assignedTo.length) {
+        const getNotification = yield models_1.NotificationModel.find({
+            receiver: { $in: [assignedTo] },
+        });
+        if (getNotification.length) {
+            notificationMessage = `has made some changes in Task ${title}`;
+        }
+        yield models_1.NotificationModel.create({
+            sender: owner._id,
+            receiver,
+            message: notificationMessage,
+            link: title,
+        });
+        const subscriptions = yield models_2.PushSubscriptionModel.find({
+            user: { $in: receiver },
+        });
+        console.log("subscriptions", subscriptions);
+        const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
+        // Send push notification
+        subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
+            const payload = JSON.stringify({
+                title: `Task Update: ${title}`,
+                message: pushNotificationMessage,
+                icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+                url: `/workspaces`, // URL to navigate on notification click
+            });
+            try {
+                yield webPushConfig_1.default.sendNotification(subscription, payload);
+            }
+            catch (error) { }
+        }));
     }
     return res
         .status(200)

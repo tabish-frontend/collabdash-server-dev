@@ -6,3 +6,4 @@ export * from "./shiftModel";
 export * from "./meetingModel";
 export * from "./kanban";
 export * from "./chat";
+export * from "./notification";

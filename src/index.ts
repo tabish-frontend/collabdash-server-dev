@@ -23,7 +23,8 @@ import columnRoutes from "./routes/kanban/columnRoutes";
 import taskRoutes from "./routes/kanban/taskRoutes";
 import messageRoutes from "./routes/chat/messageRoutes";
 import meetingRoutes from "./routes/meetingRoutes";
-
+import notificationRoutes from "./routes/notification/notificationRoutes";
+import subscriptionRoutes from "./routes/notification/subscriptionRoutes";
 import { AppError, xssMiddleware } from "./utils";
 
 // CORS configuration to allow requests from specified origins
@@ -108,6 +109,8 @@ app.use("/api/v1/column", columnRoutes);
 app.use("/api/v1/task", taskRoutes);
 app.use("/api/v1/messages", messageRoutes);
 app.use("/api/v1/meetings", meetingRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/subscriptions", subscriptionRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

@@ -8,22 +8,55 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteMeeting = exports.updateMeeting = exports.getMeeting = exports.getAllMeetings = exports.createMeeting = void 0;
 const models_1 = require("../models");
 const utils_1 = require("../utils");
+const webPushConfig_1 = __importDefault(require("../webPushConfig"));
 exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, time, participants } = req.body;
-    const owner = req.user._id;
+    const owner = req.user;
     const newMeeting = yield models_1.MeetingModel.create({
         title,
         time,
         participants,
-        owner,
+        owner: owner._id,
     });
     const populatedMeetings = yield models_1.MeetingModel.findById(newMeeting._id)
         .populate("owner", "full_name username avatar")
         .populate("participants", "full_name username avatar");
+    console.log("Time", time);
+    console.log("participants", participants);
+    let notificationMessage = `has created a meeting ${title} at ${time}`;
+    const receiver = participants.map((item) => item._id);
+    yield models_1.NotificationModel.create({
+        sender: owner._id,
+        receiver,
+        message: notificationMessage,
+        link: title,
+        time: time,
+    });
+    const subscriptions = yield models_1.PushSubscriptionModel.find({
+        user: { $in: participants },
+    });
+    console.log("subscriptions", subscriptions);
+    const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
+    // Send push notification
+    subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
+        const payload = JSON.stringify({
+            title: `Task Update: ${title}`,
+            message: pushNotificationMessage,
+            icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+            url: `/workspaces`, // URL to navigate on notification click
+        });
+        try {
+            yield webPushConfig_1.default.sendNotification(subscription, payload);
+        }
+        catch (error) { }
+    }));
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, populatedMeetings, "Meeting Created Successfully", utils_1.ResponseStatus.SUCCESS));

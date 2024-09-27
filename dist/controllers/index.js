@@ -26,4 +26,5 @@ __exportStar(require("./statisticsController"), exports);
 __exportStar(require("./meetingController"), exports);
 __exportStar(require("./kanban"), exports);
 __exportStar(require("./chat"), exports);
+__exportStar(require("./notification"), exports);
 //# sourceMappingURL=index.js.map
