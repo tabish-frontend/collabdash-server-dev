@@ -4,8 +4,7 @@
   "description": "Human resourse management system",
   "main": "index.ts",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "dev": "nodemon -r dotenv/config src/server.ts",
     "build": "rimraf dist && tsc",
     "ts.check": "tsc --project tsconfig.json",
     "add-build": "git add dist",
