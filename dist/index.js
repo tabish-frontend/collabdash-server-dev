@@ -110,6 +110,10 @@ io.on("connection", (socket) => {
     console.log("a user connected", socket.id);
     // Extract userId from the query
     const userId = socket.handshake.query.userId;
+    if (!userId) {
+        console.log("Missing userId in socket connection query");
+        return socket.disconnect();
+    }
     if (userId)
         userSocketMap[userId] = socket.id;
     // Emit online users to all connected clients
