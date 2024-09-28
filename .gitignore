@@ -9,6 +9,7 @@
 .env.dev
 .env.qa
 .env.prod
+.github
 
 # IDE and editor files
 .vscode
