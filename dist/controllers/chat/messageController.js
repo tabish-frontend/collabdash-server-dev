@@ -9,28 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendMessage = exports.getParticipitantsByThreadKey = exports.getThreadByKey = exports.getThreads = exports.getContacts = void 0;
+exports.sendMessage = exports.getParticipitantsByThreadKey = exports.getThreadByKey = exports.getThreads = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const index_1 = require("../../index"); // Adjust the path based on your project structure
-exports.getContacts = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Always filter out the current user and ensure account_status is "active"
-    let filter = {
-        _id: { $nin: req.user._id },
-        account_status: "active", // default filter
-    };
-    // Initialize the APIFeatures class with the default filter and query params from req.query
-    const features = new utils_1.APIFeatures(models_1.UserModel.find(filter), req.query)
-        .filter()
-        .search(); // Apply search if provided
-    // Bypass the APIFeatures limitFields method and manually set the fields to full_name and avatar
-    const contacts = yield features.query.select("full_name avatar");
-    return res.status(200).json({
-        status: "success",
-        results: contacts.length,
-        data: contacts,
-    });
-}));
 exports.getThreads = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
     // Find threads where the current user is a participant

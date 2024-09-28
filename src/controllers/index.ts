@@ -10,3 +10,5 @@ export * from "./statisticsController";
 export * from "./meetingController";
 export * from "./kanban";
 export * from "./chat";
+export * from "./notification";
+export * from "./contacts";

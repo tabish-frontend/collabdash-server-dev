@@ -15,7 +15,6 @@ const meetingSchema: Schema<Meeting> = new Schema<Meeting>(
       {
         type: Schema.Types.ObjectId,
         ref: "User",
-        required: true,
       },
     ],
     owner: {

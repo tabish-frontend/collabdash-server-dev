@@ -1,22 +1,61 @@
-import { Roles } from "../types/enum";
-import { MeetingModel } from "../models";
+import {
+  MeetingModel,
+  NotificationModel,
+  PushSubscriptionModel,
+} from "../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../utils";
+import webPush from "../config/webPushConfig";
 
 export const createMeeting = catchAsync(async (req: any, res: any) => {
   const { title, time, participants } = req.body;
 
-  const owner = req.user._id;
+  const owner = req.user;
 
   const newMeeting = await MeetingModel.create({
     title,
     time,
     participants,
-    owner,
+    owner: owner._id,
   });
 
   const populatedMeetings = await MeetingModel.findById(newMeeting._id)
     .populate("owner", "full_name username avatar")
     .populate("participants", "full_name username avatar");
+
+  let notificationMessage = `invited you in a ${title} meeting at ${time}`;
+
+  const receiver = participants.map((item: any) => item._id);
+
+  await NotificationModel.create({
+    sender: owner._id,
+    receiver,
+    message: notificationMessage,
+    link: title,
+    time: time,
+  });
+
+  const subscriptions = await PushSubscriptionModel.find({
+    user: { $in: participants },
+  });
+
+  const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
+
+  // Send push notification
+
+  subscriptions.forEach(async (subscription: any) => {
+    const payload = JSON.stringify({
+      title: `Meeting: ${title}`,
+      message: pushNotificationMessage,
+      icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
+      url: `/meetings`, // URL to navigate on notification click
+    });
+
+    try {
+      await webPush.sendNotification(subscription, payload);
+    } catch (error: any) {
+      console.log("error", error);
+    }
+  });
 
   return res
     .status(201)

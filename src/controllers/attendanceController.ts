@@ -275,7 +275,8 @@ export const updateAttendance = catchAsync(async (req, res) => {
       timeOut: timeOut ? new Date(timeOut) : null,
       status,
       duration,
-    }
+    },
+    { new: true } // This option returns the updated document
   );
 
   return res

@@ -1,4 +1,9 @@
-import { ColumnModel, BoardModel, TaskModel } from "../../models";
+import {
+  ColumnModel,
+  BoardModel,
+  TaskModel,
+  NotificationModel,
+} from "../../models";
 import {
   AppError,
   AppResponse,
@@ -8,6 +13,8 @@ import {
   isFilesObject,
   uploadOnCloudinary,
 } from "../../utils";
+import { PushSubscriptionModel } from "../../models";
+import webPush from "../../config/webPushConfig";
 
 export const addTask = catchAsync(async (req: any, res: any) => {
   const { title, board, column } = req.body;
@@ -74,18 +81,60 @@ export const deleteTask = catchAsync(async (req, res) => {
 
 export const moveTask = catchAsync(async (req, res) => {
   const { task_id, column_id, index } = req.body;
+  const user = req.user;
 
-  const task = await TaskModel.findById(task_id).orFail(
+  const task: any = await TaskModel.findById(task_id).orFail(
     () => new AppError("Task not found", 404)
   );
 
   if (column_id) {
-    await ColumnModel.findByIdAndUpdate(task.column, {
+    const previousColumn = await ColumnModel.findByIdAndUpdate(task.column, {
       $pull: { tasks: task_id },
     });
 
-    await ColumnModel.findByIdAndUpdate(column_id, {
+    const newColumn = await ColumnModel.findByIdAndUpdate(column_id, {
       $push: { tasks: { $each: [task_id], $position: index } },
+    });
+
+    const isOwner = user._id.toString() === task.owner.toString();
+
+    const remainingAssignees = task.assignedTo.filter(
+      (item: any) => item.toString() !== user._id.toString()
+    );
+
+    const Receiver = isOwner
+      ? task.assignedTo
+      : [...remainingAssignees, task.owner];
+
+    const notificationMessage = `has moved Task ${task.title} from ${previousColumn.name} to ${newColumn.name} `;
+
+    await NotificationModel.create({
+      sender: user._id,
+      receiver: Receiver,
+      message: notificationMessage,
+      link: task.title,
+    });
+
+    const subscriptions = await PushSubscriptionModel.find({
+      user: { $in: Receiver },
+    });
+
+    const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
+
+    // Send push notification
+    subscriptions.forEach(async (subscription: any) => {
+      const payload = JSON.stringify({
+        title: `Task Update: ${task.title}`,
+        message: pushNotificationMessage,
+        icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
+        url: `/workspaces`, // URL to navigate on notification click
+      });
+
+      try {
+        await webPush.sendNotification(subscription, payload);
+      } catch (error: any) {
+        console.log("error", error);
+      }
     });
 
     task.column = column_id;
@@ -153,7 +202,10 @@ export const deleteAttachment = catchAsync(async (req, res) => {
 export const updateTask = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
 
-  console.log("req.body", req.body);
+  const { owner, assignedTo, title } = req.body;
+
+  const receiver = assignedTo.map((item: any) => item._id);
+  let notificationMessage = `has assigned you a Task ${title}`;
 
   const updatedTask = await TaskModel.findByIdAndUpdate(id, req.body, {
     new: true,
@@ -163,6 +215,40 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
 
   if (!updatedTask) {
     throw new AppError("Board not found", 404);
+  }
+
+  if (assignedTo.length) {
+    const getNotification = await NotificationModel.find({
+      receiver: { $in: [assignedTo] },
+    });
+    if (getNotification.length) {
+      notificationMessage = `has made some changes in Task ${title}`;
+    }
+
+    await NotificationModel.create({
+      sender: owner._id,
+      receiver,
+      message: notificationMessage,
+      link: title,
+    });
+    const subscriptions = await PushSubscriptionModel.find({
+      user: { $in: receiver },
+    });
+    console.log("subscriptions", subscriptions);
+    const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
+    // Send push notification
+    subscriptions.forEach(async (subscription: any) => {
+      const payload = JSON.stringify({
+        title: `Task Update: ${title}`,
+        message: pushNotificationMessage,
+        icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
+        url: `/workspaces`, // URL to navigate on notification click
+      });
+
+      try {
+        await webPush.sendNotification(subscription, payload);
+      } catch (error: any) {}
+    });
   }
 
   return res

@@ -6,7 +6,6 @@ const controllers_1 = require("../../controllers");
 const router = (0, express_1.Router)();
 router.use(middlewares_1.Protect);
 router.route("/").get(controllers_1.getThreads);
-router.route("/contacts").get(controllers_1.getContacts);
 router.route("/thread/:threadkey").get(controllers_1.getThreadByKey);
 router.route("/:threadkey").get(controllers_1.getParticipitantsByThreadKey);
 router.route("/send").post(controllers_1.sendMessage);

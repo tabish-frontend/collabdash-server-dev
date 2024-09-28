@@ -2,7 +2,6 @@ import { Router } from "express";
 import { Protect } from "../../middlewares";
 
 import {
-  getContacts,
   getParticipitantsByThreadKey,
   getThreadByKey,
   getThreads,
@@ -14,8 +13,6 @@ const router = Router();
 router.use(Protect);
 
 router.route("/").get(getThreads);
-
-router.route("/contacts").get(getContacts);
 
 router.route("/thread/:threadkey").get(getThreadByKey);
 

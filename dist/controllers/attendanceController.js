@@ -227,7 +227,8 @@ exports.updateAttendance = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
         timeOut: timeOut ? new Date(timeOut) : null,
         status,
         duration,
-    });
+    }, { new: true } // This option returns the updated document
+    );
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, updatedAttendance, "Attendance updated successfully", utils_1.ResponseStatus.SUCCESS));

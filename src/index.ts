@@ -19,6 +19,10 @@ import columnRoutes from "./routes/kanban/columnRoutes";
 import taskRoutes from "./routes/kanban/taskRoutes";
 import messageRoutes from "./routes/chat/messageRoutes";
 import meetingRoutes from "./routes/meetingRoutes";
+import notificationRoutes from "./routes/notification/notificationRoutes";
+import subscriptionRoutes from "./routes/notification/subscriptionRoutes";
+import contactRoutes from "./routes/contactsRoutes";
+
 import { AppError, xssMiddleware } from "./utils";
 import { createServer } from "http"; // Import the HTTP server
 import { Server as SocketIOServer } from "socket.io"; // Import Socket.IO server
@@ -74,6 +78,9 @@ app.use("/api/v1/column", columnRoutes);
 app.use("/api/v1/task", taskRoutes);
 app.use("/api/v1/messages", messageRoutes);
 app.use("/api/v1/meetings", meetingRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/subscriptions", subscriptionRoutes);
+app.use("/api/v1/contacts", contactRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

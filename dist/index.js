@@ -25,6 +25,9 @@ const columnRoutes_1 = __importDefault(require("./routes/kanban/columnRoutes"));
 const taskRoutes_1 = __importDefault(require("./routes/kanban/taskRoutes"));
 const messageRoutes_1 = __importDefault(require("./routes/chat/messageRoutes"));
 const meetingRoutes_1 = __importDefault(require("./routes/meetingRoutes"));
+const notificationRoutes_1 = __importDefault(require("./routes/notification/notificationRoutes"));
+const subscriptionRoutes_1 = __importDefault(require("./routes/notification/subscriptionRoutes"));
+const contactsRoutes_1 = __importDefault(require("./routes/contactsRoutes"));
 const utils_1 = require("./utils");
 const http_1 = require("http"); // Import the HTTP server
 const socket_io_1 = require("socket.io"); // Import Socket.IO server
@@ -68,6 +71,9 @@ app.use("/api/v1/column", columnRoutes_1.default);
 app.use("/api/v1/task", taskRoutes_1.default);
 app.use("/api/v1/messages", messageRoutes_1.default);
 app.use("/api/v1/meetings", meetingRoutes_1.default);
+app.use("/api/v1/notifications", notificationRoutes_1.default);
+app.use("/api/v1/subscriptions", subscriptionRoutes_1.default);
+app.use("/api/v1/contacts", contactsRoutes_1.default);
 // Catch-all for unhandled routes
 app.all("*", (req, res, next) => {
     next(new utils_1.AppError(`Can't find ${req.originalUrl} on this server!`, 404));

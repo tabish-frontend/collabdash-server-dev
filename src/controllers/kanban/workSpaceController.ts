@@ -1,12 +1,11 @@
 import { Roles } from "../../types/enum";
-import { BoardModel, WorkspaceModel } from "../../models";
-import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
+import { WorkspaceModel } from "../../models";
+import { AppResponse, ResponseStatus, catchAsync } from "../../utils";
 
 export const addWorkspace = catchAsync(async (req: any, res: any) => {
-  const { name, members } = req.body;
+  const { name, slug, members } = req.body;
 
   const owner = req.user._id;
-  const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
 
   const newWorkSpace = await WorkspaceModel.create({
     name,
@@ -75,12 +74,10 @@ export const getAllWorkspaces = catchAsync(async (req, res) => {
 
 export const updateWorkspace = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const { name, members } = req.body;
 
-  const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
   const updatedWorkspace = await WorkspaceModel.findByIdAndUpdate(
     id,
-    { name, members, slug },
+    req.body,
     {
       new: true,
     }

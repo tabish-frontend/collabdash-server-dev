@@ -14,9 +14,8 @@ const enum_1 = require("../../types/enum");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, members } = req.body;
+    const { name, slug, members } = req.body;
     const owner = req.user._id;
-    const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
     const newWorkSpace = yield models_1.WorkspaceModel.create({
         name,
         slug,
@@ -69,9 +68,7 @@ exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
 }));
 exports.updateWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { name, members } = req.body;
-    const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
-    const updatedWorkspace = yield models_1.WorkspaceModel.findByIdAndUpdate(id, { name, members, slug }, {
+    const updatedWorkspace = yield models_1.WorkspaceModel.findByIdAndUpdate(id, req.body, {
         new: true,
     })
         .populate("owner", "full_name username avatar")

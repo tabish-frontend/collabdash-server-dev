@@ -22,4 +22,5 @@ __exportStar(require("./shiftModel"), exports);
 __exportStar(require("./meetingModel"), exports);
 __exportStar(require("./kanban"), exports);
 __exportStar(require("./chat"), exports);
+__exportStar(require("./notification"), exports);
 //# sourceMappingURL=index.js.map
