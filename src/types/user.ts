@@ -27,6 +27,10 @@ export interface User {
   national_identity_number: number;
   bank_details: BankDetails;
   account_status: string;
+  time_zone: {
+    name: string;
+    value: string;
+  };
   join_date: Date;
   leave_date: Date | string;
   qualification_certificates: string[];

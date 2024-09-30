@@ -83,6 +83,10 @@ const userSchema: Schema<User> = new Schema<User>(
       min: [7, validationMessages.minLength(7)],
       max: [12, validationMessages.minLength(12)],
     },
+    time_zone: {
+      name: String,
+      value: String,
+    },
     company: {
       type: String,
       default: "",

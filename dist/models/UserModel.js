@@ -118,6 +118,10 @@ const userSchema = new mongoose_1.Schema({
         min: [7, utils_1.validationMessages.minLength(7)],
         max: [12, utils_1.validationMessages.minLength(12)],
     },
+    time_zone: {
+        name: String,
+        value: String,
+    },
     company: {
         type: String,
         default: "",
