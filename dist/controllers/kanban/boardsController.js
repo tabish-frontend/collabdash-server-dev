@@ -13,10 +13,8 @@ exports.deleteBoard = exports.updateBoard = exports.getAllBoards = exports.addBo
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, description, members, workspace } = req.body;
+    const { name, slug, description, members, workspace } = req.body;
     const owner = req.user._id;
-    const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
-    // Create the new board
     const newBoard = yield models_1.BoardModel.create({
         name,
         slug,

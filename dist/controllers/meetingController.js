@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteMeeting = exports.updateMeeting = exports.getMeeting = exports.getAllMeetings = exports.createMeeting = void 0;
 const models_1 = require("../models");
 const utils_1 = require("../utils");
-const webPushConfig_1 = __importDefault(require("../webPushConfig"));
+const webPushConfig_1 = __importDefault(require("../config/webPushConfig"));
 exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, time, participants } = req.body;
     const owner = req.user;
@@ -28,9 +28,7 @@ exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
     const populatedMeetings = yield models_1.MeetingModel.findById(newMeeting._id)
         .populate("owner", "full_name username avatar")
         .populate("participants", "full_name username avatar");
-    console.log("Time", time);
-    console.log("participants", participants);
-    let notificationMessage = `has created a meeting ${title} at ${time}`;
+    let notificationMessage = `invited you in a ${title} meeting at ${time}`;
     const receiver = participants.map((item) => item._id);
     yield models_1.NotificationModel.create({
         sender: owner._id,
@@ -42,20 +40,21 @@ exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
     const subscriptions = yield models_1.PushSubscriptionModel.find({
         user: { $in: participants },
     });
-    console.log("subscriptions", subscriptions);
     const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
     // Send push notification
     subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
         const payload = JSON.stringify({
-            title: `Task Update: ${title}`,
+            title: `Meeting: ${title}`,
             message: pushNotificationMessage,
             icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
-            url: `/workspaces`, // URL to navigate on notification click
+            url: `/meetings`, // URL to navigate on notification click
         });
         try {
             yield webPushConfig_1.default.sendNotification(subscription, payload);
         }
-        catch (error) { }
+        catch (error) {
+            console.log("error", error);
+        }
     }));
     return res
         .status(201)
@@ -65,12 +64,16 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
     const { status } = req.query;
     const userId = req.user._id;
     let filter = {};
+    // Get the current time and subtract 2 hours
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     // Determine filter based on the status
     if (status === "upcoming") {
-        filter = { time: { $gte: new Date() } };
+        // Set filter to get meetings that are scheduled after two hours ago, i.e., upcoming
+        filter = { time: { $gte: twoHoursAgo } };
     }
     else if (status === "completed") {
-        filter = { time: { $lt: new Date() } };
+        // Get the current time and subtract 2 hours
+        filter = { time: { $lt: twoHoursAgo } };
     }
     // Add condition to check if the user is the owner or a participant
     filter = Object.assign(Object.assign({}, filter), { $or: [
@@ -81,7 +84,7 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
     const meetings = yield models_1.MeetingModel.find(filter)
         .populate("owner", "full_name username avatar")
         .populate("participants", "full_name username avatar")
-        .sort({ time: 1 });
+        .sort({ time: status === "upcoming" ? 1 : -1 });
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));

@@ -141,30 +141,33 @@ exports.allUserTodayAttendanceStatistics = (0, utils_1.catchAsync)((req, res) =>
     const absentUserDetails = totalEmployees.filter((user) => !presentUserIds.includes(user._id.toString()) &&
         !leaveUserIds.includes(user._id.toString()));
     return res.status(200).json(new utils_1.AppResponse(200, {
-        present: presentUserDetails.map((user) => ({
-            _id: user._id,
-            username: user.username,
-            full_name: user.full_name,
-            avatar: user.avatar,
-        })),
-        leave: leaveUsers.map((leave) => ({
-            _id: leave.user._id,
-            username: leave.user.username,
-            full_name: leave.user.full_name,
-            avatar: leave.user.avatar,
-        })),
-        absent: absentUserDetails.map((user) => ({
-            _id: user._id,
-            username: user.username,
-            full_name: user.full_name,
-            avatar: user.avatar,
-        })),
-        on_late: lateUserDetails.map((user) => ({
-            _id: user._id,
-            username: user.username,
-            full_name: user.full_name,
-            avatar: user.avatar,
-        })),
+        total_employees: totalEmployees.length,
+        today_availability: {
+            present: presentUserDetails.map((user) => ({
+                _id: user._id,
+                username: user.username,
+                full_name: user.full_name,
+                avatar: user.avatar,
+            })),
+            leave: leaveUsers.map((leave) => ({
+                _id: leave.user._id,
+                username: leave.user.username,
+                full_name: leave.user.full_name,
+                avatar: leave.user.avatar,
+            })),
+            absent: absentUserDetails.map((user) => ({
+                _id: user._id,
+                username: user.username,
+                full_name: user.full_name,
+                avatar: user.avatar,
+            })),
+            on_late: lateUserDetails.map((user) => ({
+                _id: user._id,
+                username: user.username,
+                full_name: user.full_name,
+                avatar: user.avatar,
+            })),
+        },
     }, "", utils_1.ResponseStatus.SUCCESS));
 }));
 //# sourceMappingURL=statisticsController.js.map

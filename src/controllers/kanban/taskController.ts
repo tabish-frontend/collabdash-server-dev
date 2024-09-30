@@ -1,4 +1,3 @@
-import { get } from "http";
 import {
   ColumnModel,
   BoardModel,
@@ -15,8 +14,8 @@ import {
   uploadOnCloudinary,
 } from "../../utils";
 import { PushSubscriptionModel } from "../../models";
-import webPush from "../../webPushConfig";
-import { removeSubscription } from "../../controllers/notification/subscriptionController";
+import webPush from "../../config/webPushConfig";
+
 export const addTask = catchAsync(async (req: any, res: any) => {
   const { title, board, column } = req.body;
   const owner = req.user._id;
@@ -99,9 +98,15 @@ export const moveTask = catchAsync(async (req, res) => {
 
     const isOwner = user._id.toString() === task.owner.toString();
 
-    const Receiver = isOwner ? task.assignedTo : task.owner;
+    const remainingAssignees = task.assignedTo.filter(
+      (item: any) => item.toString() !== user._id.toString()
+    );
 
-    const notificationMessage = `has moved Task ${task.title}  from ${previousColumn.name} to ${newColumn.name} `;
+    const Receiver = isOwner
+      ? task.assignedTo
+      : [...remainingAssignees, task.owner];
+
+    const notificationMessage = `has moved Task ${task.title} from ${previousColumn.name} to ${newColumn.name} `;
 
     await NotificationModel.create({
       sender: user._id,
@@ -110,21 +115,12 @@ export const moveTask = catchAsync(async (req, res) => {
       link: task.title,
     });
 
-    // if (user._id.toString() !== task.owner.toString()) {
-    //   const notificationMessage = `${task.title} from ${previousColumn.name} to ${newColumn.name} `;
-
-    //   const senderId =
-    //   await NotificationModel.create({
-    //     sender: user._id,
-    //     receiver: task.owner,
-    //     message: notificationMessage,
-    //     message_type: "has moved Task",
-    //   });
-    // }
     const subscriptions = await PushSubscriptionModel.find({
       user: { $in: Receiver },
     });
+
     const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
+
     // Send push notification
     subscriptions.forEach(async (subscription: any) => {
       const payload = JSON.stringify({
@@ -136,8 +132,11 @@ export const moveTask = catchAsync(async (req, res) => {
 
       try {
         await webPush.sendNotification(subscription, payload);
-      } catch (error: any) {}
+      } catch (error: any) {
+        console.log("error", error);
+      }
     });
+
     task.column = column_id;
 
     await task.save();

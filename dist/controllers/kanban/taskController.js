@@ -16,7 +16,7 @@ exports.updateTask = exports.deleteAttachment = exports.uploadAttachment = expor
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const models_2 = require("../../models");
-const webPushConfig_1 = __importDefault(require("../../webPushConfig"));
+const webPushConfig_1 = __importDefault(require("../../config/webPushConfig"));
 exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, board, column } = req.body;
     const owner = req.user._id;
@@ -73,24 +73,17 @@ exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
             $push: { tasks: { $each: [task_id], $position: index } },
         });
         const isOwner = user._id.toString() === task.owner.toString();
-        const Receiver = isOwner ? task.assignedTo : task.owner;
-        const notificationMessage = `has moved Task ${task.title}  from ${previousColumn.name} to ${newColumn.name} `;
+        const remainingAssignees = task.assignedTo.filter((item) => item.toString() !== user._id.toString());
+        const Receiver = isOwner
+            ? task.assignedTo
+            : [...remainingAssignees, task.owner];
+        const notificationMessage = `has moved Task ${task.title} from ${previousColumn.name} to ${newColumn.name} `;
         yield models_1.NotificationModel.create({
             sender: user._id,
             receiver: Receiver,
             message: notificationMessage,
             link: task.title,
         });
-        // if (user._id.toString() !== task.owner.toString()) {
-        //   const notificationMessage = `${task.title} from ${previousColumn.name} to ${newColumn.name} `;
-        //   const senderId =
-        //   await NotificationModel.create({
-        //     sender: user._id,
-        //     receiver: task.owner,
-        //     message: notificationMessage,
-        //     message_type: "has moved Task",
-        //   });
-        // }
         const subscriptions = yield models_2.PushSubscriptionModel.find({
             user: { $in: Receiver },
         });
@@ -106,7 +99,9 @@ exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
             try {
                 yield webPushConfig_1.default.sendNotification(subscription, payload);
             }
-            catch (error) { }
+            catch (error) {
+                console.log("error", error);
+            }
         }));
         task.column = column_id;
         yield task.save();

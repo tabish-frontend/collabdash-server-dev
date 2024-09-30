@@ -1,11 +1,10 @@
-import { Roles } from "../types/enum";
 import {
   MeetingModel,
   NotificationModel,
   PushSubscriptionModel,
 } from "../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../utils";
-import webPush from "../webPushConfig";
+import webPush from "../config/webPushConfig";
 
 export const createMeeting = catchAsync(async (req: any, res: any) => {
   const { title, time, participants } = req.body;
@@ -23,10 +22,7 @@ export const createMeeting = catchAsync(async (req: any, res: any) => {
     .populate("owner", "full_name username avatar")
     .populate("participants", "full_name username avatar");
 
-  console.log("Time", time);
-  console.log("participants", participants);
-
-  let notificationMessage = `has created a meeting ${title} at ${time}`;
+  let notificationMessage = `invited you in a ${title} meeting at ${time}`;
 
   const receiver = participants.map((item: any) => item._id);
 
@@ -42,22 +38,23 @@ export const createMeeting = catchAsync(async (req: any, res: any) => {
     user: { $in: participants },
   });
 
-  console.log("subscriptions", subscriptions);
-
   const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
 
   // Send push notification
+
   subscriptions.forEach(async (subscription: any) => {
     const payload = JSON.stringify({
-      title: `Task Update: ${title}`,
+      title: `Meeting: ${title}`,
       message: pushNotificationMessage,
       icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
-      url: `/workspaces`, // URL to navigate on notification click
+      url: `/meetings`, // URL to navigate on notification click
     });
 
     try {
       await webPush.sendNotification(subscription, payload);
-    } catch (error: any) {}
+    } catch (error: any) {
+      console.log("error", error);
+    }
   });
 
   return res
@@ -78,11 +75,18 @@ export const getAllMeetings = catchAsync(async (req, res) => {
 
   let filter = {};
 
+  // Get the current time and subtract 2 hours
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
   // Determine filter based on the status
   if (status === "upcoming") {
-    filter = { time: { $gte: new Date() } };
+    // Set filter to get meetings that are scheduled after two hours ago, i.e., upcoming
+
+    filter = { time: { $gte: twoHoursAgo } };
   } else if (status === "completed") {
-    filter = { time: { $lt: new Date() } };
+    // Get the current time and subtract 2 hours
+
+    filter = { time: { $lt: twoHoursAgo } };
   }
 
   // Add condition to check if the user is the owner or a participant
@@ -98,7 +102,7 @@ export const getAllMeetings = catchAsync(async (req, res) => {
   const meetings = await MeetingModel.find(filter)
     .populate("owner", "full_name username avatar")
     .populate("participants", "full_name username avatar")
-    .sort({ time: 1 });
+    .sort({ time: status === "upcoming" ? 1 : -1 });
 
   return res
     .status(200)

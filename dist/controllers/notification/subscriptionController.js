@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeSubscription = exports.sendNotification = exports.subscribe = void 0;
-const webPushConfig_1 = __importDefault(require("../../webPushConfig")); // Import web-push configuration
+const webPushConfig_1 = __importDefault(require("../../config/webPushConfig")); // Import web-push configuration
 const models_1 = require("../../models"); // Import your PushSubscription model
 const utils_1 = require("../../utils");
 // Controller for saving subscription
@@ -26,7 +26,7 @@ exports.subscribe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void
         endpoint: subscription.endpoint,
     });
     if (existingSubscription) {
-        return res.status(200).json({ message: "Subscription already exists." });
+        return res.status(200).json({ message: "" });
     }
     // Create a new subscription record
     const newSubscription = new models_1.PushSubscriptionModel({
@@ -39,7 +39,7 @@ exports.subscribe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void
     });
     try {
         yield newSubscription.save();
-        res.status(201).json({ message: "Subscription added." });
+        res.status(201).json({ message: "" });
     }
     catch (error) {
         // console.error("Error saving subscription:", error);
@@ -78,12 +78,8 @@ exports.removeSubscription = (0, utils_1.catchAsync)((req, res) => __awaiter(voi
     // Remove all subscriptions for this user
     const result = yield models_1.PushSubscriptionModel.deleteMany({ user: userId });
     if (result.deletedCount === 0) {
-        return res
-            .status(404)
-            .json({ message: "No subscriptions found for this user." });
+        return res.status(404).json({ message: "" });
     }
-    res
-        .status(200)
-        .json({ message: "All subscriptions removed successfully." });
+    res.status(200).json({ message: "" });
 }));
 //# sourceMappingURL=subscriptionController.js.map

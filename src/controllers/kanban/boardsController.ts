@@ -2,12 +2,10 @@ import { BoardModel, ColumnModel, WorkspaceModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
 
 export const addBoard = catchAsync(async (req: any, res: any) => {
-  const { name, description, members, workspace } = req.body;
+  const { name, slug, description, members, workspace } = req.body;
 
   const owner = req.user._id;
-  const slug = name.trim().toLowerCase().replace(/\s+/g, "_");
 
-  // Create the new board
   const newBoard = await BoardModel.create({
     name,
     slug,

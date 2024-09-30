@@ -1,5 +1,5 @@
 {
-  "name": "work-dock-hrms-server",
+  "name": "collabdash-server",
   "version": "1.0.0",
   "description": "Human resourse management system",
   "main": "index.ts",

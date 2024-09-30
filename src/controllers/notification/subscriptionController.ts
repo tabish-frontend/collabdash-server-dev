@@ -1,6 +1,6 @@
 // controllers/subscriptionController.ts
 import { Request, Response } from "express";
-import webPush from "../../webPushConfig"; // Import web-push configuration
+import webPush from "../../config/webPushConfig"; // Import web-push configuration
 import { PushSubscriptionModel } from "../../models"; // Import your PushSubscription model
 import { catchAsync } from "../../utils";
 
@@ -16,7 +16,7 @@ export const subscribe = catchAsync(async (req: any, res: any) => {
   });
 
   if (existingSubscription) {
-    return res.status(200).json({ message: "Subscription already exists." });
+    return res.status(200).json({ message: "" });
   }
 
   // Create a new subscription record
@@ -31,7 +31,7 @@ export const subscribe = catchAsync(async (req: any, res: any) => {
 
   try {
     await newSubscription.save();
-    res.status(201).json({ message: "Subscription added." });
+    res.status(201).json({ message: "" });
   } catch (error) {
     // console.error("Error saving subscription:", error);
     // res.sendStatus(500);
@@ -81,13 +81,9 @@ export const removeSubscription = catchAsync(
     const result = await PushSubscriptionModel.deleteMany({ user: userId });
 
     if (result.deletedCount === 0) {
-      return res
-        .status(404)
-        .json({ message: "No subscriptions found for this user." });
+      return res.status(404).json({ message: "" });
     }
 
-    res
-      .status(200)
-      .json({ message: "All subscriptions removed successfully." });
+    res.status(200).json({ message: "" });
   }
 );

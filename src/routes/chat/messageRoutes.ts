@@ -1,7 +1,12 @@
 import { Router } from "express";
 import { Protect } from "../../middlewares";
 
-import { getMessages, getThreads, sendMessage } from "../../controllers";
+import {
+  getParticipitantsByThreadKey,
+  getThreadByKey,
+  getThreads,
+  sendMessage,
+} from "../../controllers";
 
 const router = Router();
 
@@ -9,7 +14,9 @@ router.use(Protect);
 
 router.route("/").get(getThreads);
 
-router.route("/:threadId").get(getMessages);
+router.route("/thread/:threadkey").get(getThreadByKey);
+
+router.route("/:threadkey").get(getParticipitantsByThreadKey);
 
 router.route("/send").post(sendMessage);
 
