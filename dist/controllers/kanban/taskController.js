@@ -17,6 +17,7 @@ const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const models_2 = require("../../models");
 const webPushConfig_1 = __importDefault(require("../../config/webPushConfig"));
+const index_1 = require("../../index");
 exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, board, column } = req.body;
     const owner = req.user._id;
@@ -62,8 +63,9 @@ exports.deleteTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
         .json(new utils_1.AppResponse(200, null, "Task Deleted", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { task_id, column_id, index } = req.body;
+    const { task_id, column_id, index, target_link } = req.body;
     const user = req.user;
+    console.log("target_link", target_link);
     const task = yield models_1.TaskModel.findById(task_id).orFail(() => new utils_1.AppError("Task not found", 404));
     if (column_id) {
         const previousColumn = yield models_1.ColumnModel.findByIdAndUpdate(task.column, {
@@ -74,18 +76,26 @@ exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
         });
         const isOwner = user._id.toString() === task.owner.toString();
         const remainingAssignees = task.assignedTo.filter((item) => item.toString() !== user._id.toString());
-        const Receiver = isOwner
+        const receiver = isOwner
             ? task.assignedTo
             : [...remainingAssignees, task.owner];
         const notificationMessage = `has moved Task ${task.title} from ${previousColumn.name} to ${newColumn.name} `;
-        yield models_1.NotificationModel.create({
+        const newNotification = yield models_1.NotificationModel.create({
             sender: user._id,
-            receiver: Receiver,
+            receiver: receiver,
             message: notificationMessage,
             link: task.title,
+            target_link,
         });
         const subscriptions = yield models_2.PushSubscriptionModel.find({
-            user: { $in: Receiver },
+            user: { $in: receiver },
+        });
+        const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
+        receiver.forEach((recipientId) => {
+            const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
+            if (receiverSocketId) {
+                index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
+            }
         });
         const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
         // Send push notification
@@ -142,7 +152,11 @@ exports.deleteAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
 }));
 exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { owner, assignedTo, title } = req.body;
+    const { owner, assignedTo, title, target_link } = req.body;
+    const existingTask = yield models_1.TaskModel.findById(id).populate("assignedTo", "_id");
+    if (!existingTask) {
+        throw new utils_1.AppError("Task not found", 404);
+    }
     const receiver = assignedTo.map((item) => item._id);
     let notificationMessage = `has assigned you a Task ${title}`;
     const updatedTask = yield models_1.TaskModel.findByIdAndUpdate(id, req.body, {
@@ -153,38 +167,44 @@ exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     if (!updatedTask) {
         throw new utils_1.AppError("Board not found", 404);
     }
-    if (assignedTo.length) {
-        const getNotification = yield models_1.NotificationModel.find({
-            receiver: { $in: [assignedTo] },
-        });
-        if (getNotification.length) {
-            notificationMessage = `has made some changes in Task ${title}`;
-        }
-        yield models_1.NotificationModel.create({
-            sender: owner._id,
-            receiver,
-            message: notificationMessage,
-            link: title,
-        });
-        const subscriptions = yield models_2.PushSubscriptionModel.find({
-            user: { $in: receiver },
-        });
-        console.log("subscriptions", subscriptions);
-        const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
-        // Send push notification
-        subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
-            const payload = JSON.stringify({
-                title: `Task Update: ${title}`,
-                message: pushNotificationMessage,
-                icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
-                url: `/workspaces`, // URL to navigate on notification click
-            });
-            try {
-                yield webPushConfig_1.default.sendNotification(subscription, payload);
-            }
-            catch (error) { }
-        }));
+    // if (assignedTo.length) {
+    const previousAssignedIds = existingTask.assignedTo.map((item) => item._id.toString());
+    const newlyAssignedUsers = receiver.filter((recipientId) => !previousAssignedIds.includes(recipientId));
+    if (newlyAssignedUsers.length === 0) {
+        notificationMessage = `has made some changes in Task ${title}`;
     }
+    const newNotification = yield models_1.NotificationModel.create({
+        sender: owner._id,
+        receiver,
+        message: notificationMessage,
+        link: title,
+        target_link,
+    });
+    const subscriptions = yield models_2.PushSubscriptionModel.find({
+        user: { $in: receiver },
+    });
+    const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
+    receiver.forEach((recipientId) => {
+        const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
+        if (receiverSocketId) {
+            index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
+        }
+    });
+    const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
+    // Send push notification
+    subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
+        const payload = JSON.stringify({
+            title: `Task Update: ${title}`,
+            message: pushNotificationMessage,
+            icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+            url: `/workspaces`, // URL to navigate on notification click
+        });
+        try {
+            yield webPushConfig_1.default.sendNotification(subscription, payload);
+        }
+        catch (error) { }
+    }));
+    // }
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, updatedTask, "Task Updated", utils_1.ResponseStatus.SUCCESS));

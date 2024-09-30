@@ -6,5 +6,6 @@ export interface Notification {
   message: string;
   read: boolean; // Has the user read the notification
   link: string;
+  target_link: string;
   time: Date;
 }

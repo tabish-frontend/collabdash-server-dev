@@ -5,7 +5,8 @@ import {
 } from "../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../utils";
 import webPush from "../config/webPushConfig";
-
+import { io, getReceiverSocketId } from "../index";
+import moment from "moment-timezone";
 export const createMeeting = catchAsync(async (req: any, res: any) => {
   const { title, time, participants } = req.body;
 
@@ -26,12 +27,28 @@ export const createMeeting = catchAsync(async (req: any, res: any) => {
 
   const receiver = participants.map((item: any) => item._id);
 
-  await NotificationModel.create({
+  const newNotification = await NotificationModel.create({
     sender: owner._id,
     receiver,
     message: notificationMessage,
     link: title,
     time: time,
+    target_link: `/meetings`,
+  });
+
+  const populatedNotification = await NotificationModel.findById(
+    newNotification._id
+  ).populate("sender", "full_name avatar");
+
+  receiver.forEach((recipientId: string) => {
+    const receiverSocketId = getReceiverSocketId(recipientId);
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit(
+        "receiveNotification",
+        populatedNotification
+      );
+    }
   });
 
   const subscriptions = await PushSubscriptionModel.find({

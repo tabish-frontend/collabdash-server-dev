@@ -16,6 +16,7 @@ exports.deleteMeeting = exports.updateMeeting = exports.getMeeting = exports.get
 const models_1 = require("../models");
 const utils_1 = require("../utils");
 const webPushConfig_1 = __importDefault(require("../config/webPushConfig"));
+const index_1 = require("../index");
 exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, time, participants } = req.body;
     const owner = req.user;
@@ -30,12 +31,20 @@ exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
         .populate("participants", "full_name username avatar");
     let notificationMessage = `invited you in a ${title} meeting at ${time}`;
     const receiver = participants.map((item) => item._id);
-    yield models_1.NotificationModel.create({
+    const newNotification = yield models_1.NotificationModel.create({
         sender: owner._id,
         receiver,
         message: notificationMessage,
         link: title,
         time: time,
+        target_link: `/meetings`,
+    });
+    const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
+    receiver.forEach((recipientId) => {
+        const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
+        if (receiverSocketId) {
+            index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
+        }
     });
     const subscriptions = yield models_1.PushSubscriptionModel.find({
         user: { $in: participants },

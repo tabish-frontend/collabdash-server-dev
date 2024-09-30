@@ -15,6 +15,7 @@ import {
 } from "../../utils";
 import { PushSubscriptionModel } from "../../models";
 import webPush from "../../config/webPushConfig";
+import { io, getReceiverSocketId } from "../../index";
 
 export const addTask = catchAsync(async (req: any, res: any) => {
   const { title, board, column } = req.body;
@@ -80,8 +81,10 @@ export const deleteTask = catchAsync(async (req, res) => {
 });
 
 export const moveTask = catchAsync(async (req, res) => {
-  const { task_id, column_id, index } = req.body;
+  const { task_id, column_id, index, target_link } = req.body;
   const user = req.user;
+
+  console.log("target_link", target_link);
 
   const task: any = await TaskModel.findById(task_id).orFail(
     () => new AppError("Task not found", 404)
@@ -102,23 +105,37 @@ export const moveTask = catchAsync(async (req, res) => {
       (item: any) => item.toString() !== user._id.toString()
     );
 
-    const Receiver = isOwner
+    const receiver = isOwner
       ? task.assignedTo
       : [...remainingAssignees, task.owner];
 
     const notificationMessage = `has moved Task ${task.title} from ${previousColumn.name} to ${newColumn.name} `;
 
-    await NotificationModel.create({
+    const newNotification = await NotificationModel.create({
       sender: user._id,
-      receiver: Receiver,
+      receiver: receiver,
       message: notificationMessage,
       link: task.title,
+      target_link,
     });
 
     const subscriptions = await PushSubscriptionModel.find({
-      user: { $in: Receiver },
+      user: { $in: receiver },
     });
+    const populatedNotification = await NotificationModel.findById(
+      newNotification._id
+    ).populate("sender", "full_name avatar");
 
+    receiver.forEach((recipientId: string) => {
+      const receiverSocketId = getReceiverSocketId(recipientId);
+
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit(
+          "receiveNotification",
+          populatedNotification
+        );
+      }
+    });
     const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
 
     // Send push notification
@@ -202,9 +219,18 @@ export const deleteAttachment = catchAsync(async (req, res) => {
 export const updateTask = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
 
-  const { owner, assignedTo, title } = req.body;
+  const { owner, assignedTo, title, target_link } = req.body;
+  const existingTask = await TaskModel.findById(id).populate(
+    "assignedTo",
+    "_id"
+  );
+
+  if (!existingTask) {
+    throw new AppError("Task not found", 404);
+  }
 
   const receiver = assignedTo.map((item: any) => item._id);
+
   let notificationMessage = `has assigned you a Task ${title}`;
 
   const updatedTask = await TaskModel.findByIdAndUpdate(id, req.body, {
@@ -216,40 +242,56 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
   if (!updatedTask) {
     throw new AppError("Board not found", 404);
   }
+  // if (assignedTo.length) {
+  const previousAssignedIds = existingTask.assignedTo.map((item: any) =>
+    item._id.toString()
+  );
+  const newlyAssignedUsers = receiver.filter(
+    (recipientId: string) => !previousAssignedIds.includes(recipientId)
+  );
 
-  if (assignedTo.length) {
-    const getNotification = await NotificationModel.find({
-      receiver: { $in: [assignedTo] },
-    });
-    if (getNotification.length) {
-      notificationMessage = `has made some changes in Task ${title}`;
-    }
-
-    await NotificationModel.create({
-      sender: owner._id,
-      receiver,
-      message: notificationMessage,
-      link: title,
-    });
-    const subscriptions = await PushSubscriptionModel.find({
-      user: { $in: receiver },
-    });
-    console.log("subscriptions", subscriptions);
-    const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
-    // Send push notification
-    subscriptions.forEach(async (subscription: any) => {
-      const payload = JSON.stringify({
-        title: `Task Update: ${title}`,
-        message: pushNotificationMessage,
-        icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
-        url: `/workspaces`, // URL to navigate on notification click
-      });
-
-      try {
-        await webPush.sendNotification(subscription, payload);
-      } catch (error: any) {}
-    });
+  if (newlyAssignedUsers.length === 0) {
+    notificationMessage = `has made some changes in Task ${title}`;
   }
+  const newNotification = await NotificationModel.create({
+    sender: owner._id,
+    receiver,
+    message: notificationMessage,
+    link: title,
+    target_link,
+  });
+  const subscriptions = await PushSubscriptionModel.find({
+    user: { $in: receiver },
+  });
+  const populatedNotification = await NotificationModel.findById(
+    newNotification._id
+  ).populate("sender", "full_name avatar");
+
+  receiver.forEach((recipientId: string) => {
+    const receiverSocketId = getReceiverSocketId(recipientId);
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit(
+        "receiveNotification",
+        populatedNotification
+      );
+    }
+  });
+  const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
+  // Send push notification
+  subscriptions.forEach(async (subscription: any) => {
+    const payload = JSON.stringify({
+      title: `Task Update: ${title}`,
+      message: pushNotificationMessage,
+      icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
+      url: `/workspaces`, // URL to navigate on notification click
+    });
+
+    try {
+      await webPush.sendNotification(subscription, payload);
+    } catch (error: any) {}
+  });
+  // }
 
   return res
     .status(200)

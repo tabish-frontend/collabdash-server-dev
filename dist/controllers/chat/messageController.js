@@ -25,35 +25,41 @@ exports.getThreads = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
 }));
 exports.getThreadByKey = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { threadkey } = req.params;
+    const { populate } = req.query; // Extract the 'populate' query parameter
     const userId = req.user.id;
-    // If no thread ID is provided, return an error
     if (!threadkey) {
         throw new utils_1.AppError("Thread ID is required", 400);
     }
-    let thread = yield models_1.ThreadModel.findById(threadkey)
-        .populate({
-        path: "participants",
-        select: "full_name avatar", // populate relevant fields from participants
-    })
-        .populate("messages"); // if there are messages to populate
-    // If no thread found by threadId, attempt to find by participantIds
+    // Create an empty array to hold population conditions
+    const populateFields = [];
+    // Dynamically add fields to populate based on the query parameter
+    if (populate) {
+        const fieldsToPopulate = populate.split(",");
+        if (fieldsToPopulate.includes("participants")) {
+            populateFields.push({
+                path: "participants",
+                select: "full_name avatar",
+            });
+        }
+        if (fieldsToPopulate.includes("messages")) {
+            populateFields.push("messages"); // If messages need to be populated
+        }
+    }
+    // Perform the initial search by threadkey
+    let thread = yield models_1.ThreadModel.findById(threadkey).populate(populateFields);
+    // If no thread is found by threadkey, attempt to find by participants
     if (!thread) {
         thread = yield models_1.ThreadModel.findOne({
             participants: { $all: [userId, threadkey] },
-        })
-            .populate({
-            path: "participants",
-            select: "full_name avatar",
-        })
-            .populate("messages");
+            $expr: { $eq: [{ $size: "$participants" }, 2] }, // Ensure it's a one-on-one chat (exactly 2 participants)
+        }).populate(populateFields);
     }
-    // If no thread found at all, return null
     if (!thread) {
         return res
             .status(200)
             .json(new utils_1.AppResponse(200, null, "", utils_1.ResponseStatus.FAIL));
     }
-    // Return the thread with populated participants and messages
+    // Return the thread with the dynamically populated fields
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, thread, "", utils_1.ResponseStatus.SUCCESS));
