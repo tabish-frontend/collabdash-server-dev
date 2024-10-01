@@ -15,6 +15,7 @@ const notificationSchema: Schema<Notification> = new Schema<Notification>(
     link: { type: String },
     time: { type: Date },
     target_link: { type: String },
+    hide_sender_name: { type: Boolean, default: false },
     read: { type: Boolean, default: false }, // To track if the notification is read
   },
   {

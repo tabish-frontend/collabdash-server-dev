@@ -17,58 +17,226 @@ const models_1 = require("../models");
 const utils_1 = require("../utils");
 const webPushConfig_1 = __importDefault(require("../config/webPushConfig"));
 const index_1 = require("../index");
+const luxon_1 = require("luxon");
+const node_cron_1 = __importDefault(require("node-cron"));
+// export const createMeeting = catchAsync(async (req: any, res: any) => {
+//   const { title, time, participants } = req.body;
+//   const owner = req.user;
+//   const newMeeting = await MeetingModel.create({
+//     title,
+//     time,
+//     participants,
+//     owner: owner._id,
+//   });
+//   const populatedMeetings = await MeetingModel.findById(newMeeting._id)
+//     .populate("owner", "full_name username avatar")
+//     .populate("participants", "full_name username avatar time_zone");
+//   let notificationMessage = `invited you in a ${title} meeting at ${time}`;
+//   const receiver = participants.map((item: any) => item._id);
+//   const newNotification = await NotificationModel.create({
+//     sender: owner._id,
+//     receiver,
+//     message: notificationMessage,
+//     link: title,
+//     time: time,
+//     target_link: `/meetings`,
+//   });
+//   const populatedNotification = await NotificationModel.findById(
+//     newNotification._id
+//   ).populate("sender", "full_name avatar");
+//   receiver.forEach((recipientId: string) => {
+//     const receiverSocketId = getReceiverSocketId(recipientId);
+//     if (receiverSocketId) {
+//       io.to(receiverSocketId).emit(
+//         "receiveNotification",
+//         populatedNotification
+//       );
+//     }
+//   });
+//   const subscriptions = await PushSubscriptionModel.find({
+//     user: { $in: participants },
+//   });
+//   // Iterate through all subscriptions for each participant
+//   populatedMeetings.participants.forEach(async (participant: any) => {
+//     // Get all subscriptions for the current participant
+//     const userSubscriptions = subscriptions.filter((sub) =>
+//       sub.user.equals(participant._id)
+//     );
+//     // Check if the participant and their time_zone exist
+//     if (
+//       !participant ||
+//       !participant.time_zone ||
+//       !participant.time_zone.value
+//     ) {
+//       console.error(
+//         `Time zone not found for participant ID: ${participant._id}`
+//       );
+//       return; // Skip this iteration if time_zone is not available
+//     }
+//     const timeZone = participant.time_zone.value;
+//     // Convert the UTC time to the participant's time zone
+//     const utcTime = DateTime.fromISO(time);
+//     const localTime = utcTime.setZone(timeZone);
+//     // Format the time as needed
+//     const formatTime = localTime.toFormat("MMM dd EEEE, hh:mm a");
+//     const pushNotificationMessage = `${owner.full_name} invited you to a ${title} meeting at ${formatTime}`;
+//     // Prepare the payload for the push notification
+//     const payload = JSON.stringify({
+//       title: `Task Update: ${title}`,
+//       message: pushNotificationMessage,
+//       icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+//       url: `/meetings`,
+//     });
+//     // Send notification to all subscriptions for the participant
+//     for (const subscription of userSubscriptions) {
+//       try {
+//         await webPush.sendNotification(subscription, payload);
+//         console.log(
+//           `Push notification sent to subscription: ${subscription._id}`
+//         );
+//       } catch (error: any) {
+//         console.error("Error sending push notification:", error);
+//       }
+//     }
+//   });
+//   return res
+//     .status(201)
+//     .json(
+//       new AppResponse(
+//         201,
+//         populatedMeetings,
+//         "Meeting Created Successfully",
+//         ResponseStatus.SUCCESS
+//       )
+//     );
+// });
+let fromScheduler = false;
 exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, time, participants } = req.body;
     const owner = req.user;
+    const meetingTime = new Date(time);
     const newMeeting = yield models_1.MeetingModel.create({
         title,
-        time,
+        time: meetingTime,
         participants,
         owner: owner._id,
     });
     const populatedMeetings = yield models_1.MeetingModel.findById(newMeeting._id)
         .populate("owner", "full_name username avatar")
-        .populate("participants", "full_name username avatar");
-    let notificationMessage = `invited you in a ${title} meeting at ${time}`;
-    const receiver = participants.map((item) => item._id);
-    const newNotification = yield models_1.NotificationModel.create({
-        sender: owner._id,
-        receiver,
-        message: notificationMessage,
-        link: title,
-        time: time,
-        target_link: `/meetings`,
-    });
-    const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
-    receiver.forEach((recipientId) => {
-        const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
-        if (receiverSocketId) {
-            index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
-        }
-    });
-    const subscriptions = yield models_1.PushSubscriptionModel.find({
-        user: { $in: participants },
-    });
-    const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
-    // Send push notification
-    subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
-        const payload = JSON.stringify({
-            title: `Meeting: ${title}`,
-            message: pushNotificationMessage,
-            icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
-            url: `/meetings`, // URL to navigate on notification click
-        });
-        try {
-            yield webPushConfig_1.default.sendNotification(subscription, payload);
-        }
-        catch (error) {
-            console.log("error", error);
-        }
-    }));
+        .populate("participants", "full_name username avatar time_zone");
+    const message = "";
+    // Instant notification
+    yield sendNotification(owner, participants, title, meetingTime, populatedMeetings, fromScheduler, message);
+    // Schedule notifications
+    scheduleNotifications(newMeeting._id, meetingTime, participants);
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, populatedMeetings, "Meeting Created Successfully", utils_1.ResponseStatus.SUCCESS));
 }));
+function sendNotification(owner, participants, title, time, populatedMeetings, fromScheduler, message) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let notificationMessage = `invited you in a ${title} meeting at ${time}`;
+        const schedulerMessage = `Meeting Reminder: ${title} \n${message}`;
+        const receiver = participants.map((item) => item._id);
+        const newNotification = yield models_1.NotificationModel.create({
+            sender: owner._id,
+            receiver,
+            message: fromScheduler ? schedulerMessage : notificationMessage,
+            link: title,
+            time: time,
+            target_link: `/meetings`,
+            hide_sender_name: fromScheduler ? true : false,
+        });
+        const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
+        // Send socket notifications
+        receiver.forEach((recipientId) => {
+            const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
+            if (receiverSocketId) {
+                index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
+            }
+        });
+        yield sendPushNotifications(owner, participants, title, time, populatedMeetings, fromScheduler, message);
+        // Send push notifications
+    });
+}
+function sendPushNotifications(owner, participants, title, time, populatedMeetings, fromScheduler, message) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const subscriptions = yield models_1.PushSubscriptionModel.find({
+            user: { $in: participants },
+        });
+        populatedMeetings.participants.forEach((participant) => __awaiter(this, void 0, void 0, function* () {
+            const userSubscriptions = subscriptions.filter((sub) => sub.user.equals(participant._id));
+            if (!participant ||
+                !participant.time_zone ||
+                !participant.time_zone.value) {
+                console.error(`Time zone not found for participant ID: ${participant._id}`);
+                return;
+            }
+            const timeZone = participant.time_zone.value;
+            const localTime = luxon_1.DateTime.fromJSDate(time).setZone(timeZone);
+            const formatTime = localTime.toFormat("MMM dd EEEE, hh:mm a");
+            const pushNotificationMessage = `${owner.full_name} invited you to a ${title} meeting at ${formatTime}`;
+            let payload;
+            if (!fromScheduler) {
+                payload = JSON.stringify({
+                    title: `Meeting Invitation: ${title}`,
+                    message: pushNotificationMessage,
+                    icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+                    url: `/meetings`,
+                });
+            }
+            else {
+                payload = JSON.stringify({
+                    title: `Meeting Reminder: ${title}`,
+                    message: message,
+                    icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+                    url: `/meetings`,
+                });
+            }
+            for (const subscription of userSubscriptions) {
+                try {
+                    yield webPushConfig_1.default.sendNotification(subscription, payload);
+                }
+                catch (error) {
+                    console.error("Error sending push notification:", error);
+                }
+            }
+        }));
+    });
+}
+function scheduleNotifications(meetingId, meetingTime, participants) {
+    const meetingDateTime = luxon_1.DateTime.fromJSDate(meetingTime);
+    const now = luxon_1.DateTime.now();
+    const timeDiff = meetingDateTime.diff(now, "minutes").minutes;
+    if (timeDiff > 60) {
+        // Schedule 1 hour before
+        const oneHourBefore = meetingDateTime.minus({ hours: 1 });
+        scheduleNotification(meetingId, oneHourBefore.toJSDate(), participants, "Your meeting will start in 1 hour.");
+    }
+    if (timeDiff > 15) {
+        // Schedule 15 minutes before
+        const fifteenMinutesBefore = meetingDateTime.minus({ minutes: 15 });
+        scheduleNotification(meetingId, fifteenMinutesBefore.toJSDate(), participants, "Your meeting will start in 15 minutes.");
+    }
+    // Always schedule at meeting time
+    scheduleNotification(meetingId, meetingTime, participants, "Your meeting is now started.");
+}
+function scheduleNotification(meetingId, notificationTime, participants, message) {
+    const cronDateTime = luxon_1.DateTime.fromJSDate(notificationTime);
+    const cronExpression = `${cronDateTime.minute} ${cronDateTime.hour} ${cronDateTime.day} ${cronDateTime.month} *`;
+    const task = node_cron_1.default.schedule(cronExpression, () => __awaiter(this, void 0, void 0, function* () {
+        const meeting = yield models_1.MeetingModel.findById(meetingId)
+            .populate("owner", "full_name username avatar")
+            .populate("participants", "full_name username avatar time_zone");
+        if (!meeting) {
+            console.error(`Meeting not found for ID: ${meetingId}`);
+            return;
+        }
+        fromScheduler = true;
+        yield sendNotification(meeting.owner, participants, meeting.title, meeting.time, meeting, fromScheduler, message);
+        task.stop();
+    }));
+}
 exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { status } = req.query;
     const userId = req.user._id;
@@ -99,7 +267,6 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.getMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("API hitting");
     const { id } = req.params;
     // Find the meeting by its _id and populate owner and participants
     const meetings = yield models_1.MeetingModel.findById(id)

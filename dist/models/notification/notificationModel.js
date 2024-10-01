@@ -38,6 +38,7 @@ const notificationSchema = new mongoose_1.Schema({
     link: { type: String },
     time: { type: Date },
     target_link: { type: String },
+    hide_sender_name: { type: Boolean, default: false },
     read: { type: Boolean, default: false }, // To track if the notification is read
 }, {
     timestamps: true, // Automatically adds `createdAt` and `updatedAt`

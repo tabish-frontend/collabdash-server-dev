@@ -144,7 +144,7 @@ export const moveTask = catchAsync(async (req, res) => {
         title: `Task Update: ${task.title}`,
         message: pushNotificationMessage,
         icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
-        url: `/workspaces`, // URL to navigate on notification click
+        url: target_link, // URL to navigate on notification click
       });
 
       try {
@@ -284,7 +284,7 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
       title: `Task Update: ${title}`,
       message: pushNotificationMessage,
       icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
-      url: `/workspaces`, // URL to navigate on notification click
+      url: target_link, // URL to navigate on notification click
     });
 
     try {

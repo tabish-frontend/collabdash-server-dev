@@ -104,7 +104,7 @@ exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
                 title: `Task Update: ${task.title}`,
                 message: pushNotificationMessage,
                 icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
-                url: `/workspaces`, // URL to navigate on notification click
+                url: target_link, // URL to navigate on notification click
             });
             try {
                 yield webPushConfig_1.default.sendNotification(subscription, payload);
@@ -197,7 +197,7 @@ exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
             title: `Task Update: ${title}`,
             message: pushNotificationMessage,
             icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
-            url: `/workspaces`, // URL to navigate on notification click
+            url: target_link, // URL to navigate on notification click
         });
         try {
             yield webPushConfig_1.default.sendNotification(subscription, payload);
