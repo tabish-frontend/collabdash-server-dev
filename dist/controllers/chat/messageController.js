@@ -13,6 +13,7 @@ exports.sendMessage = exports.getParticipitantsByThreadKey = exports.getThreadBy
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const index_1 = require("../../index"); // Adjust the path based on your project structure
+const utils_2 = require("../../utils");
 exports.getThreads = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
     // Find threads where the current user is a participant
@@ -85,6 +86,7 @@ exports.getParticipitantsByThreadKey = (0, utils_1.catchAsync)((req, res) => __a
         .status(200)
         .json(new utils_1.AppResponse(200, [user], "", utils_1.ResponseStatus.SUCCESS));
 }));
+const lastMessageTimestamps = {};
 exports.sendMessage = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { body, contentType, attachments, recipientIds, threadId } = req.body;
     const authorId = req.user._id;
@@ -118,6 +120,19 @@ exports.sendMessage = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
             });
         }
     });
+    const threadKey = thread._id.toString(); // Convert ObjectId to string
+    const now = Date.now();
+    // If there's a last message timestamp and it's within 30 seconds, skip sending notification
+    if (lastMessageTimestamps[threadKey] &&
+        now - lastMessageTimestamps[threadKey] < 30 * 1000) {
+        return res
+            .status(201)
+            .json(new utils_1.AppResponse(201, { threadId: thread._id, message: newMessage }, "", utils_1.ResponseStatus.SUCCESS));
+    }
+    // Update the last message timestamp
+    lastMessageTimestamps[threadKey] = now;
+    // If it's been more than 30 seconds, send notification
+    yield (0, utils_2.sendChatNotification)(req.user, recipientIds, `/chat?threadKey=${thread._id}`, thread._id);
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, { threadId: thread._id, message: newMessage }, "", utils_1.ResponseStatus.SUCCESS));
