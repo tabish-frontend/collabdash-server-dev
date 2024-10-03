@@ -122,18 +122,12 @@ export const moveTask = catchAsync(async (req, res) => {
     const subscriptions = await PushSubscriptionModel.find({
       user: { $in: receiver },
     });
-    const populatedNotification = await NotificationModel.findById(
-      newNotification._id
-    ).populate("sender", "full_name avatar");
 
     receiver.forEach((recipientId: string) => {
       const receiverSocketId = getReceiverSocketId(recipientId);
 
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit(
-          "receiveNotification",
-          populatedNotification
-        );
+        io.to(receiverSocketId).emit("receiveNotification", newNotification);
       }
     });
     const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
@@ -260,23 +254,19 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
     link: title,
     target_link,
   });
+
   const subscriptions = await PushSubscriptionModel.find({
     user: { $in: receiver },
   });
-  const populatedNotification = await NotificationModel.findById(
-    newNotification._id
-  ).populate("sender", "full_name avatar");
 
   receiver.forEach((recipientId: string) => {
     const receiverSocketId = getReceiverSocketId(recipientId);
 
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit(
-        "receiveNotification",
-        populatedNotification
-      );
+      io.to(receiverSocketId).emit("receiveNotification", newNotification);
     }
   });
+
   const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
   // Send push notification
   subscriptions.forEach(async (subscription: any) => {

@@ -19,26 +19,19 @@ export const createNotification = catchAsync(async (req: any, res: any) => {
   const { receiver, message, message_type } = req.body;
   const sender = req.user._id;
 
-  const notification = await NotificationModel.create({
+  const newNotification = await NotificationModel.create({
     message,
     message_type,
     receiver,
     sender,
   });
 
-  // Populate the necessary fields
-  const populatedNotification = await NotificationModel.findById(
-    notification._id
-  )
-    .populate("sender", "full_name avatar")
-    .populate("receiver", "full_name avatar");
-
   res
     .status(201)
     .json(
       new AppResponse(
         201,
-        populatedNotification,
+        newNotification,
         "Notification created successfully",
         ResponseStatus.SUCCESS
       )
