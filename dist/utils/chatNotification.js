@@ -19,25 +19,19 @@ const webPushConfig_1 = __importDefault(require(".././config/webPushConfig"));
 // Function to send notifications without any cooldown
 const sendChatNotification = (sender, // The user sending the message
 recipientIds, // Array of user IDs to receive the notification
-targetLink, // The link to relevant content (task, thread, etc.)
-threadId // The thread ID for the chat (to track notifications)
+targetLink // The link to relevant content (task, thread, etc.)
 ) => __awaiter(void 0, void 0, void 0, function* () {
     // Notify all recipients
     for (const recipientId of recipientIds) {
-        if (recipientId === sender._id.toString()) {
-            // Skip the sender (don't notify the sender about their own message)
-            continue;
-        }
-        // Create the notification message dynamically
-        const notificationMessage = `has sent you a message.`;
-        // Create the notification in the database
+        const notificationMessage = recipientIds.length > 1
+            ? `has sent you a message in Group Chat`
+            : `has sent you a message.`;
         const newNotification = yield models_1.NotificationModel.create({
             sender: sender._id,
             receiver: recipientId,
             message: notificationMessage,
             link: `message`,
             target_link: targetLink,
-            threadId, // Save threadId to track notifications within this chat
         });
         // Populate sender details in the notification
         const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");

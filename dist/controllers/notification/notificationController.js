@@ -27,19 +27,15 @@ exports.getNotifications = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
 exports.createNotification = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { receiver, message, message_type } = req.body;
     const sender = req.user._id;
-    const notification = yield notificationModel_1.NotificationModel.create({
+    const newNotification = yield notificationModel_1.NotificationModel.create({
         message,
         message_type,
         receiver,
         sender,
     });
-    // Populate the necessary fields
-    const populatedNotification = yield notificationModel_1.NotificationModel.findById(notification._id)
-        .populate("sender", "full_name avatar")
-        .populate("receiver", "full_name avatar");
     res
         .status(201)
-        .json(new utils_1.AppResponse(201, populatedNotification, "Notification created successfully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(201, newNotification, "Notification created successfully", utils_1.ResponseStatus.SUCCESS));
 }));
 // Mark a notification as read
 exports.markNotificationAsRead = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

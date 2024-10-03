@@ -28,6 +28,7 @@ const meetingRoutes_1 = __importDefault(require("./routes/meetingRoutes"));
 const notificationRoutes_1 = __importDefault(require("./routes/notification/notificationRoutes"));
 const subscriptionRoutes_1 = __importDefault(require("./routes/notification/subscriptionRoutes"));
 const contactsRoutes_1 = __importDefault(require("./routes/contactsRoutes"));
+const todosRoutes_1 = __importDefault(require("./routes/todos/todosRoutes"));
 const utils_1 = require("./utils");
 const http_1 = require("http"); // Import the HTTP server
 const socket_io_1 = require("socket.io"); // Import Socket.IO server
@@ -74,6 +75,7 @@ app.use("/api/v1/meetings", meetingRoutes_1.default);
 app.use("/api/v1/notifications", notificationRoutes_1.default);
 app.use("/api/v1/subscriptions", subscriptionRoutes_1.default);
 app.use("/api/v1/contacts", contactsRoutes_1.default);
+app.use("/api/v1/todos", todosRoutes_1.default);
 // Catch-all for unhandled routes
 app.all("*", (req, res, next) => {
     next(new utils_1.AppError(`Can't find ${req.originalUrl} on this server!`, 404));

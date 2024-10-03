@@ -91,7 +91,7 @@ exports.sendMessage = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
     const { body, contentType, attachments, recipientIds, threadId } = req.body;
     const authorId = req.user._id;
     const participantIds = [authorId, ...recipientIds];
-    console.log("recipientIds", recipientIds);
+    const filterRecipientIds = recipientIds.filter((recipientId) => recipientId !== req.user._id.toString());
     let thread = yield models_1.ThreadModel.findById(threadId);
     if (!threadId) {
         thread = yield models_1.ThreadModel.create({
@@ -110,7 +110,7 @@ exports.sendMessage = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
     }
     yield Promise.all([thread.save(), newMessage.save()]);
     // SOCKET IO FUNCTIONALITY WILL GO HERE
-    recipientIds.forEach((recipientId) => {
+    filterRecipientIds.forEach((recipientId) => {
         const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
         console.log("receiverSocketId", receiverSocketId);
         if (receiverSocketId) {
@@ -132,7 +132,7 @@ exports.sendMessage = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
     // Update the last message timestamp
     lastMessageTimestamps[threadKey] = now;
     // If it's been more than 30 seconds, send notification
-    yield (0, utils_2.sendChatNotification)(req.user, recipientIds, `/chat?threadKey=${thread._id}`, thread._id);
+    yield (0, utils_2.sendChatNotification)(req.user, filterRecipientIds, `/chat?threadKey=${thread._id}`);
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, { threadId: thread._id, message: newMessage }, "", utils_1.ResponseStatus.SUCCESS));

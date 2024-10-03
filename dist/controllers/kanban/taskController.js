@@ -90,11 +90,10 @@ exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
         const subscriptions = yield models_2.PushSubscriptionModel.find({
             user: { $in: receiver },
         });
-        const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
         receiver.forEach((recipientId) => {
             const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
             if (receiverSocketId) {
-                index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
+                index_1.io.to(receiverSocketId).emit("receiveNotification", newNotification);
             }
         });
         const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
@@ -183,11 +182,10 @@ exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     const subscriptions = yield models_2.PushSubscriptionModel.find({
         user: { $in: receiver },
     });
-    const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
     receiver.forEach((recipientId) => {
         const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
         if (receiverSocketId) {
-            index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
+            index_1.io.to(receiverSocketId).emit("receiveNotification", newNotification);
         }
     });
     const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
