@@ -26,4 +26,5 @@ __exportStar(require("./email-templates"), exports);
 __exportStar(require("./cloudinary"), exports);
 __exportStar(require("./helper"), exports);
 __exportStar(require("./attendance-actions"), exports);
+__exportStar(require("./chatNotification"), exports);
 //# sourceMappingURL=index.js.map

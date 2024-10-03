@@ -10,3 +10,4 @@ export * from "./email-templates";
 export * from "./cloudinary";
 export * from "./helper";
 export * from "./attendance-actions";
+export * from "./chatNotification";

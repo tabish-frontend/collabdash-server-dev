@@ -7,6 +7,7 @@ import {
   ResponseStatus,
 } from "../../utils";
 import { io, getReceiverSocketId } from "../../index"; // Adjust the path based on your project structure
+import { sendChatNotification } from "../../utils";
 
 export const getThreads = catchAsync(async (req: any, res: any) => {
   const userId = req.user._id;
@@ -102,6 +103,7 @@ export const getParticipitantsByThreadKey = catchAsync(
       .json(new AppResponse(200, [user], "", ResponseStatus.SUCCESS));
   }
 );
+const lastMessageTimestamps: { [threadId: string]: number } = {};
 
 export const sendMessage = catchAsync(async (req: any, res: any) => {
   const { body, contentType, attachments, recipientIds, threadId } = req.body;
@@ -146,6 +148,36 @@ export const sendMessage = catchAsync(async (req: any, res: any) => {
       });
     }
   });
+  const threadKey = thread._id.toString(); // Convert ObjectId to string
+  const now = Date.now();
+
+  // If there's a last message timestamp and it's within 30 seconds, skip sending notification
+  if (
+    lastMessageTimestamps[threadKey] &&
+    now - lastMessageTimestamps[threadKey] < 30 * 1000
+  ) {
+    return res
+      .status(201)
+      .json(
+        new AppResponse(
+          201,
+          { threadId: thread._id, message: newMessage },
+          "",
+          ResponseStatus.SUCCESS
+        )
+      );
+  }
+
+  // Update the last message timestamp
+  lastMessageTimestamps[threadKey] = now;
+
+  // If it's been more than 30 seconds, send notification
+  await sendChatNotification(
+    req.user,
+    recipientIds,
+    `/chat?threadKey=${thread._id}`,
+    thread._id
+  );
 
   return res
     .status(201)
