@@ -6,27 +6,21 @@ import webPush from ".././config/webPushConfig";
 export const sendChatNotification = async (
   sender: any, // The user sending the message
   recipientIds: string[], // Array of user IDs to receive the notification
-  targetLink: string, // The link to relevant content (task, thread, etc.)
-  threadId: any // The thread ID for the chat (to track notifications)
+  targetLink: string // The link to relevant content (task, thread, etc.)
 ) => {
   // Notify all recipients
   for (const recipientId of recipientIds) {
-    if (recipientId === sender._id.toString()) {
-      // Skip the sender (don't notify the sender about their own message)
-      continue;
-    }
+    const notificationMessage =
+      recipientIds.length > 1
+        ? `has sent you a message in Group Chat`
+        : `has sent you a message.`;
 
-    // Create the notification message dynamically
-    const notificationMessage = `has sent you a message.`;
-
-    // Create the notification in the database
     const newNotification = await NotificationModel.create({
       sender: sender._id,
       receiver: recipientId,
       message: notificationMessage,
       link: `message`,
       target_link: targetLink,
-      threadId, // Save threadId to track notifications within this chat
     });
 
     // Populate sender details in the notification

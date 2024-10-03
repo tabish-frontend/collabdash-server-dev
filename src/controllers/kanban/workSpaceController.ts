@@ -56,8 +56,6 @@ export const getAllWorkspaces = catchAsync(async (req, res) => {
           path: "columns",
           populate: {
             path: "tasks",
-            select:
-              "title description column assignedTo owner attachments priority dueDate",
             populate: [
               { path: "assignedTo", select: "full_name username avatar" },
               { path: "owner", select: "full_name username avatar" },
@@ -93,7 +91,6 @@ export const updateWorkspace = catchAsync(async (req, res) => {
           path: "columns",
           populate: {
             path: "tasks",
-            select: "title description column assignedTo owner",
             populate: [
               { path: "assignedTo", select: "full_name username avatar" },
               { path: "owner", select: "full_name username avatar" },

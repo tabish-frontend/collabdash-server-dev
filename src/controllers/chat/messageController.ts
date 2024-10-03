@@ -110,7 +110,9 @@ export const sendMessage = catchAsync(async (req: any, res: any) => {
   const authorId = req.user._id;
   const participantIds = [authorId, ...recipientIds];
 
-  console.log("recipientIds", recipientIds);
+  const filterRecipientIds = recipientIds.filter(
+    (recipientId: string) => recipientId !== req.user._id.toString()
+  );
 
   let thread = await ThreadModel.findById(threadId);
 
@@ -136,7 +138,7 @@ export const sendMessage = catchAsync(async (req: any, res: any) => {
 
   // SOCKET IO FUNCTIONALITY WILL GO HERE
 
-  recipientIds.forEach((recipientId: string) => {
+  filterRecipientIds.forEach((recipientId: string) => {
     const receiverSocketId = getReceiverSocketId(recipientId);
 
     console.log("receiverSocketId", receiverSocketId);
@@ -174,9 +176,8 @@ export const sendMessage = catchAsync(async (req: any, res: any) => {
   // If it's been more than 30 seconds, send notification
   await sendChatNotification(
     req.user,
-    recipientIds,
-    `/chat?threadKey=${thread._id}`,
-    thread._id
+    filterRecipientIds,
+    `/chat?threadKey=${thread._id}`
   );
 
   return res
