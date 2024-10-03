@@ -28,4 +28,12 @@ const meetingSchema: Schema<Meeting> = new Schema<Meeting>(
   }
 );
 
+// Post hook to populate fields after save
+meetingSchema.post("save", async function (this: any) {
+  // Populate owner
+  await this.populate("owner", "full_name username avatar");
+  // Populate participants
+  await this.populate("participants", "full_name username avatar time_zone");
+});
+
 export const MeetingModel = mongoose.model("Meeting", meetingSchema);

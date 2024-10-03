@@ -23,6 +23,12 @@ const notificationSchema: Schema<Notification> = new Schema<Notification>(
   }
 );
 
+// Post hook to populate fields after save
+notificationSchema.post("save", async function (this: any) {
+  await this.populate("sender", "full_name username avatar"); // Populate sender
+  await this.populate("receiver", "full_name username avatar"); // Populate receivers
+});
+
 export const NotificationModel = mongoose.model(
   "Notification",
   notificationSchema
