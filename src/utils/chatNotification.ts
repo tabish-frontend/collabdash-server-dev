@@ -5,21 +5,41 @@ import webPush from ".././config/webPushConfig";
 // Function to send notifications without any cooldown
 export const sendChatNotification = async (
   sender: any, // The user sending the message
+  threadId: string,
   recipientIds: string[], // Array of user IDs to receive the notification
-  targetLink: string // The link to relevant content (task, thread, etc.)
+  contentType: string
 ) => {
   // Notify all recipients
   for (const recipientId of recipientIds) {
-    const notificationMessage =
-      recipientIds.length > 1
-        ? `has sent you a message in Group Chat`
-        : `has sent you a message.`;
+    let notificationMessage = "";
+    let generateLink = "";
+    let targetLink = "";
+    // /chat?threadKey=${thread._id}
+
+    // Check if the content type is "call"
+    if (contentType === "call") {
+      notificationMessage =
+        recipientIds.length > 1
+          ? "starting a video call in Group Chat click here to join"
+          : "starting a video call in Chat click here to join";
+
+      generateLink = "click here to join";
+      targetLink = `/chat/room?threadKey=${threadId}`;
+    } else {
+      notificationMessage =
+        recipientIds.length > 1
+          ? "has sent you a message in Group Chat"
+          : "has sent you a message.";
+
+      generateLink = "message";
+      targetLink = `/chat?threadKey=${threadId}`;
+    }
 
     const newNotification = await NotificationModel.create({
       sender: sender._id,
       receiver: recipientId,
       message: notificationMessage,
-      link: `message`,
+      link: generateLink,
       target_link: targetLink,
     });
 

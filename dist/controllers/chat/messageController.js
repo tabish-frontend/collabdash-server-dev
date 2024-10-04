@@ -112,7 +112,6 @@ exports.sendMessage = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
     // SOCKET IO FUNCTIONALITY WILL GO HERE
     filterRecipientIds.forEach((recipientId) => {
         const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
-        console.log("receiverSocketId", receiverSocketId);
         if (receiverSocketId) {
             index_1.io.to(receiverSocketId).emit("receiveMessage", {
                 threadId: thread._id,
@@ -132,7 +131,7 @@ exports.sendMessage = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
     // Update the last message timestamp
     lastMessageTimestamps[threadKey] = now;
     // If it's been more than 30 seconds, send notification
-    yield (0, utils_2.sendChatNotification)(req.user, filterRecipientIds, `/chat?threadKey=${thread._id}`);
+    yield (0, utils_2.sendChatNotification)(req.user, thread._id.toString(), filterRecipientIds, contentType);
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, { threadId: thread._id, message: newMessage }, "", utils_1.ResponseStatus.SUCCESS));

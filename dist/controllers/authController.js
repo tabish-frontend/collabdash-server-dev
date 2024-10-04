@@ -82,7 +82,7 @@ exports.login = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, vo
     return res.status(200).json(new utils_1.AppResponse(200, {
         user: loggedInUser,
         accessToken,
-    }, "User Logged In Successfully", utils_1.ResponseStatus.SUCCESS));
+    }, "Welcome to CollabDash", utils_1.ResponseStatus.SUCCESS));
 }));
 // FORGOT PASSWORD
 exports.forgotPassword = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {

@@ -134,7 +134,7 @@ export const login = catchAsync(
           user: loggedInUser,
           accessToken,
         },
-        "User Logged In Successfully",
+        "Welcome to CollabDash",
         ResponseStatus.SUCCESS
       )
     );

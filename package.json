@@ -4,6 +4,7 @@
   "description": "Human resourse management system",
   "main": "index.ts",
   "scripts": {
+    "start:dev": "nodemon -r dotenv/config src/server.ts",
     "start": "node server.js",
     "dev": "node server.js",
     "build": "rimraf dist && tsc",

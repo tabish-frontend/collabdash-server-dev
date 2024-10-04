@@ -18,19 +18,36 @@ const index_1 = require("../index");
 const webPushConfig_1 = __importDefault(require(".././config/webPushConfig"));
 // Function to send notifications without any cooldown
 const sendChatNotification = (sender, // The user sending the message
-recipientIds, // Array of user IDs to receive the notification
-targetLink // The link to relevant content (task, thread, etc.)
-) => __awaiter(void 0, void 0, void 0, function* () {
+threadId, recipientIds, // Array of user IDs to receive the notification
+contentType) => __awaiter(void 0, void 0, void 0, function* () {
     // Notify all recipients
     for (const recipientId of recipientIds) {
-        const notificationMessage = recipientIds.length > 1
-            ? `has sent you a message in Group Chat`
-            : `has sent you a message.`;
+        let notificationMessage = "";
+        let generateLink = "";
+        let targetLink = "";
+        // /chat?threadKey=${thread._id}
+        // Check if the content type is "call"
+        if (contentType === "call") {
+            notificationMessage =
+                recipientIds.length > 1
+                    ? "starting a video call in Group Chat click here to join"
+                    : "starting a video call in Chat click here to join";
+            generateLink = "click here to join";
+            targetLink = `/chat/room?threadKey=${threadId}`;
+        }
+        else {
+            notificationMessage =
+                recipientIds.length > 1
+                    ? "has sent you a message in Group Chat"
+                    : "has sent you a message.";
+            generateLink = "message";
+            targetLink = `/chat?threadKey=${threadId}`;
+        }
         const newNotification = yield models_1.NotificationModel.create({
             sender: sender._id,
             receiver: recipientId,
             message: notificationMessage,
-            link: `message`,
+            link: generateLink,
             target_link: targetLink,
         });
         // Populate sender details in the notification
