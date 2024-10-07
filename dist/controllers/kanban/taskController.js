@@ -65,7 +65,6 @@ exports.deleteTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
 exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { task_id, column_id, index, target_link } = req.body;
     const user = req.user;
-    console.log("target_link", target_link);
     const task = yield models_1.TaskModel.findById(task_id).orFail(() => new utils_1.AppError("Task not found", 404));
     if (column_id) {
         const previousColumn = yield models_1.ColumnModel.findByIdAndUpdate(task.column, {
@@ -134,9 +133,7 @@ exports.uploadAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
     let attachment = "";
     if ((0, utils_1.isFilesObject)(req.files)) {
         const file = yield (0, utils_1.uploadOnCloudinary)(req.files.attachment[0].path);
-        console.log("File", file);
         attachment = file.url;
-        console.log("attachment", attachment);
     }
     return res
         .status(200)

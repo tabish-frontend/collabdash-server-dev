@@ -50,33 +50,30 @@ contentType) => __awaiter(void 0, void 0, void 0, function* () {
             link: generateLink,
             target_link: targetLink,
         });
-        // Populate sender details in the notification
-        const populatedNotification = yield models_1.NotificationModel.findById(newNotification._id).populate("sender", "full_name avatar");
         // Emit the notification to the recipient's socket if they are online
         const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId);
         if (receiverSocketId) {
-            index_1.io.to(receiverSocketId).emit("receiveNotification", populatedNotification);
+            index_1.io.to(receiverSocketId).emit("receiveNotification", newNotification);
         }
-        const subscriptions = yield models_1.PushSubscriptionModel.find({
+        const subscribeUser = yield models_1.PushSubscriptionModel.find({
             user: recipientId,
         });
         // Create the push notification message
         const pushNotificationMessage = `${sender.full_name} ${notificationMessage}`;
-        // Send push notification to all subscriptions of the recipient
-        subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
-            const payload = JSON.stringify({
-                title: `New Message from ${sender.full_name}`,
-                message: pushNotificationMessage,
-                icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
-                url: targetLink, // URL to navigate on notification click
-            });
+        const payload = JSON.stringify({
+            title: `New Message from ${sender.full_name}`,
+            message: pushNotificationMessage,
+            icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+            url: targetLink,
+        });
+        for (const subscription of subscribeUser) {
             try {
                 yield webPushConfig_1.default.sendNotification(subscription, payload);
             }
             catch (error) {
-                console.log("Error sending push notification:", error);
+                console.error("Error sending push notification:", error);
             }
-        }));
+        }
     }
 });
 exports.sendChatNotification = sendChatNotification;

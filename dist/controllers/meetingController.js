@@ -112,12 +112,14 @@ function scheduleNotifications(meeting) {
     });
 }
 exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { title, time, participants } = req.body;
+    const { title, time, participants, recurring, meeting_days } = req.body;
     const owner = req.user;
     const newMeeting = yield models_1.MeetingModel.create({
         title,
         time,
         participants,
+        recurring,
+        meeting_days: recurring ? meeting_days : [],
         owner: owner._id,
     });
     if (participants.length) {
@@ -137,12 +139,20 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     // Determine filter based on the status
     if (status === "upcoming") {
-        // Set filter to get meetings that are scheduled after two hours ago, i.e., upcoming
-        filter = { time: { $gte: twoHoursAgo } };
+        // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
+        filter = {
+            $or: [
+                { time: { $gte: twoHoursAgo } },
+                { recurring: true }, // Recurring meetings, always include
+            ],
+        };
     }
     else if (status === "completed") {
-        // Get the current time and subtract 2 hours
-        filter = { time: { $lt: twoHoursAgo } };
+        // Only non-recurring meetings that are completed (time < twoHoursAgo)
+        filter = {
+            time: { $lt: twoHoursAgo },
+            recurring: false, // Exclude recurring meetings from completed
+        };
     }
     // Add condition to check if the user is the owner or a participant
     filter = Object.assign(Object.assign({}, filter), { $or: [

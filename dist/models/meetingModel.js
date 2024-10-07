@@ -38,6 +38,7 @@ const meetingSchema = new mongoose_1.Schema({
     title: {
         type: String,
         required: true,
+        unique: true,
     },
     time: {
         type: Date,
@@ -54,6 +55,8 @@ const meetingSchema = new mongoose_1.Schema({
         ref: "User",
         required: true,
     },
+    recurring: { type: Boolean, default: false },
+    meeting_days: { type: [String], default: [] },
 }, {
     timestamps: true,
 });

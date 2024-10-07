@@ -137,13 +137,15 @@ async function scheduleNotifications(meeting: any) {
 }
 
 export const createMeeting = catchAsync(async (req: any, res: any) => {
-  const { title, time, participants } = req.body;
+  const { title, time, participants, recurring, meeting_days } = req.body;
   const owner = req.user;
 
   const newMeeting: any = await MeetingModel.create({
     title,
     time,
     participants,
+    recurring,
+    meeting_days: recurring ? meeting_days : [],
     owner: owner._id,
   });
 
@@ -176,13 +178,19 @@ export const getAllMeetings = catchAsync(async (req, res) => {
 
   // Determine filter based on the status
   if (status === "upcoming") {
-    // Set filter to get meetings that are scheduled after two hours ago, i.e., upcoming
-
-    filter = { time: { $gte: twoHoursAgo } };
+    // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
+    filter = {
+      $or: [
+        { time: { $gte: twoHoursAgo } }, // Future meetings
+        { recurring: true }, // Recurring meetings, always include
+      ],
+    };
   } else if (status === "completed") {
-    // Get the current time and subtract 2 hours
-
-    filter = { time: { $lt: twoHoursAgo } };
+    // Only non-recurring meetings that are completed (time < twoHoursAgo)
+    filter = {
+      time: { $lt: twoHoursAgo },
+      recurring: false, // Exclude recurring meetings from completed
+    };
   }
 
   // Add condition to check if the user is the owner or a participant

@@ -43,40 +43,33 @@ export const sendChatNotification = async (
       target_link: targetLink,
     });
 
-    // Populate sender details in the notification
-    const populatedNotification = await NotificationModel.findById(
-      newNotification._id
-    ).populate("sender", "full_name avatar");
-
     // Emit the notification to the recipient's socket if they are online
     const receiverSocketId = getReceiverSocketId(recipientId);
+
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit(
-        "receiveNotification",
-        populatedNotification
-      );
+      io.to(receiverSocketId).emit("receiveNotification", newNotification);
     }
-    const subscriptions = await PushSubscriptionModel.find({
+
+    const subscribeUser = await PushSubscriptionModel.find({
       user: recipientId,
     });
 
     // Create the push notification message
     const pushNotificationMessage = `${sender.full_name} ${notificationMessage}`;
 
-    // Send push notification to all subscriptions of the recipient
-    subscriptions.forEach(async (subscription: any) => {
-      const payload = JSON.stringify({
-        title: `New Message from ${sender.full_name}`,
-        message: pushNotificationMessage,
-        icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Replace with your icon URL
-        url: targetLink, // URL to navigate on notification click
-      });
+    const payload = JSON.stringify({
+      title: `New Message from ${sender.full_name}`,
+      message: pushNotificationMessage,
+      icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg",
+      url: targetLink,
+    });
 
+    for (const subscription of subscribeUser) {
       try {
         await webPush.sendNotification(subscription, payload);
       } catch (error: any) {
-        console.log("Error sending push notification:", error);
+        console.error("Error sending push notification:", error);
       }
-    });
+    }
   }
 };

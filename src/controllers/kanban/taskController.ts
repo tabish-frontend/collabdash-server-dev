@@ -84,8 +84,6 @@ export const moveTask = catchAsync(async (req, res) => {
   const { task_id, column_id, index, target_link } = req.body;
   const user = req.user;
 
-  console.log("target_link", target_link);
-
   const task: any = await TaskModel.findById(task_id).orFail(
     () => new AppError("Task not found", 404)
   );
@@ -180,10 +178,7 @@ export const uploadAttachment = catchAsync(async (req, res) => {
   if (isFilesObject(req.files)) {
     const file = await uploadOnCloudinary(req.files.attachment[0].path);
 
-    console.log("File", file);
     attachment = file.url;
-
-    console.log("attachment", attachment);
   }
 
   return res

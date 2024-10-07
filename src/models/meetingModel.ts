@@ -6,6 +6,7 @@ const meetingSchema: Schema<Meeting> = new Schema<Meeting>(
     title: {
       type: String,
       required: true,
+      unique: true,
     },
     time: {
       type: Date,
@@ -22,6 +23,8 @@ const meetingSchema: Schema<Meeting> = new Schema<Meeting>(
       ref: "User",
       required: true,
     },
+    recurring: { type: Boolean, default: false },
+    meeting_days: { type: [String], default: [] },
   },
   {
     timestamps: true,

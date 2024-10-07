@@ -5,4 +5,6 @@ export interface Meeting {
   time: Date;
   participants: Types.ObjectId[];
   owner: Types.ObjectId;
+  recurring: boolean;
+  meeting_days: string[];
 }

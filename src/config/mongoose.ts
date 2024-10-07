@@ -20,7 +20,7 @@ export const db_connect = async (): Promise<void> => {
 
   try {
     // Attempt to establish a connection to the MongoDB database
-    await mongoose.connect(`${DB_URL}/${DB_Name}`);
+    await mongoose.connect(`${DB_URL}/${process.env.DB_Name}`);
     console.log("MongoDB Connected successfully.");
   } catch (error) {
     // Log and rethrow the error for further handling

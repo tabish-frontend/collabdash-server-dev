@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.db_connect = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const utils_1 = require("../utils");
 // Define a TypeScript type for the function to explicitly state it returns a Promise<void>
 const db_connect = () => __awaiter(void 0, void 0, void 0, function* () {
     // Check for the presence of necessary environment variables
@@ -29,7 +28,7 @@ const db_connect = () => __awaiter(void 0, void 0, void 0, function* () {
     const DB_URL = dbConnectionUrl.replace("<PASSWORD>", dbSecret);
     try {
         // Attempt to establish a connection to the MongoDB database
-        yield mongoose_1.default.connect(`${DB_URL}/${utils_1.DB_Name}`);
+        yield mongoose_1.default.connect(`${DB_URL}/${process.env.DB_Name}`);
         console.log("MongoDB Connected successfully.");
     }
     catch (error) {

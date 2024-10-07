@@ -42,7 +42,6 @@ exports.subscribe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void
         res.status(201).json({ message: "" });
     }
     catch (error) {
-        // console.error("Error saving subscription:", error);
         // res.sendStatus(500);
     }
 }));

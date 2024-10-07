@@ -20,7 +20,6 @@ exports.updateMe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
     if (req.body.password || req.body.confirm_password) {
         throw new utils_1.AppError("This route is not for password updates, Please use /updateMyPassword route.", 400);
     }
-    // console.log("req.files", req.files);
     if ((0, utils_1.isFilesObject)(req.files)) {
         const avatar = yield (0, utils_1.uploadOnCloudinary)(req.files.attachment[0].path);
         req.body.avatar = avatar.url;
