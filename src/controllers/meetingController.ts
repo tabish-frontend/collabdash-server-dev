@@ -171,47 +171,95 @@ export const getAllMeetings = catchAsync(async (req, res) => {
   const { status } = req.query;
   const userId = req.user._id;
 
-  let filter = {};
-
   // Get the current time and subtract 2 hours
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
-  // Determine filter based on the status
-  if (status === "upcoming") {
-    // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
-    filter = {
-      $or: [
-        { time: { $gte: twoHoursAgo } }, // Future meetings
-        { recurring: true }, // Recurring meetings, always include
-      ],
-    };
-  } else if (status === "completed") {
-    // Only non-recurring meetings that are completed (time < twoHoursAgo)
-    filter = {
-      time: { $lt: twoHoursAgo },
-      recurring: false, // Exclude recurring meetings from completed
-    };
-  }
+  let meetings: any[] = [];
 
-  // Add condition to check if the user is the owner or a participant
-  filter = {
-    ...filter,
+  // Base filter to check if the user is the owner or a participant
+  const baseFilter = {
     $or: [
       { owner: userId }, // Check if the user is the owner
       { participants: userId }, // Check if the user is a participant
     ],
   };
 
-  // Find meetings with the updated filter and populate references
-  const meetings = await MeetingModel.find(filter)
-    .populate("owner", "full_name username avatar")
-    .populate("participants", "full_name username avatar")
-    .sort({ time: status === "upcoming" ? 1 : -1 });
+  if (status === "upcoming") {
+    // Query for regular upcoming meetings (time >= twoHoursAgo)
+    const upcomingMeetings = await MeetingModel.find({
+      ...baseFilter,
+      time: { $gte: twoHoursAgo },
+    })
+      .populate("owner", "full_name username avatar")
+      .populate("participants", "full_name username avatar")
+      .sort({ time: 1 });
+
+    // Query for recurring meetings (regardless of time)
+    const recurringMeetings = await MeetingModel.find({
+      ...baseFilter,
+      recurring: true,
+    })
+      .populate("owner", "full_name username avatar")
+      .populate("participants", "full_name username avatar")
+      .sort({ time: 1 });
+
+    // Combine both results
+    meetings = [...upcomingMeetings, ...recurringMeetings];
+  } else if (status === "completed") {
+    // Query for completed non-recurring meetings (time < twoHoursAgo)
+    meetings = await MeetingModel.find({
+      ...baseFilter,
+      time: { $lt: twoHoursAgo },
+      recurring: false,
+    })
+      .populate("owner", "full_name username avatar")
+      .populate("participants", "full_name username avatar")
+      .sort({ time: -1 });
+  }
 
   return res
     .status(200)
     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));
 });
+
+// export const getAllMeetings = catchAsync(async (req, res) => {
+//   const { status } = req.query;
+//   const userId = req.user._id;
+
+//   let filter = {};
+
+//   // Get the current time and subtract 2 hours
+//   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+//   // Determine filter based on the status
+//   if (status === "upcoming") {
+//     // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
+//     filter = { time: { $gte: twoHoursAgo } };
+//   } else if (status === "completed") {
+//     // Only non-recurring meetings that are completed (time < twoHoursAgo)
+
+//     filter = { time: { $lt: twoHoursAgo } };
+//   }
+
+//   // Add condition to check if the user is the owner or a participant
+//   filter = {
+//     ...filter,
+//     $or: [
+//       { owner: userId }, // Check if the user is the owner
+//       { participants: userId }, // Check if the user is a participant
+//     ],
+//   };
+
+//   // Find meetings with the updated filter and populate references
+//   const meetings = await MeetingModel.find(filter)
+//     .populate("owner", "full_name username avatar")
+//     .populate("participants", "full_name username avatar")
+//     .sort({ time: status === "upcoming" ? 1 : -1 });
+
+//   return res
+//     .status(200)
+//     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));
+// });
 
 export const getMeeting = catchAsync(async (req, res) => {
   const { id } = req.params;

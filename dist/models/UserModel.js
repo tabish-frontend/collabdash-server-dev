@@ -98,8 +98,8 @@ const userSchema = new mongoose_1.Schema({
     role: {
         type: String,
         trim: true,
-        enum: ["employee", "manager", "hr", "admin"],
-        default: types_1.Roles.HR,
+        enum: ["employee", "hr", "admin"],
+        default: types_1.Roles.Employee,
     },
     email: {
         type: String,

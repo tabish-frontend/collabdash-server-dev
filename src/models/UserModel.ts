@@ -63,8 +63,8 @@ const userSchema: Schema<User> = new Schema<User>(
     role: {
       type: String,
       trim: true,
-      enum: ["employee", "manager", "hr", "admin"],
-      default: Roles.HR,
+      enum: ["employee", "hr", "admin"],
+      default: Roles.Employee,
     },
     email: {
       type: String,

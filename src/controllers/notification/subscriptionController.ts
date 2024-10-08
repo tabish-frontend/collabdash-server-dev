@@ -68,6 +68,7 @@ export const sendNotification = catchAsync(async (req: any, res: any) => {
     res.sendStatus(500);
   }
 });
+
 export const removeSubscription = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user._id; // Get the user ID from the request

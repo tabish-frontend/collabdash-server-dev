@@ -134,40 +134,72 @@ exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
 exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { status } = req.query;
     const userId = req.user._id;
-    let filter = {};
     // Get the current time and subtract 2 hours
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    // Determine filter based on the status
-    if (status === "upcoming") {
-        // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
-        filter = {
-            $or: [
-                { time: { $gte: twoHoursAgo } },
-                { recurring: true }, // Recurring meetings, always include
-            ],
-        };
-    }
-    else if (status === "completed") {
-        // Only non-recurring meetings that are completed (time < twoHoursAgo)
-        filter = {
-            time: { $lt: twoHoursAgo },
-            recurring: false, // Exclude recurring meetings from completed
-        };
-    }
-    // Add condition to check if the user is the owner or a participant
-    filter = Object.assign(Object.assign({}, filter), { $or: [
+    let meetings = [];
+    // Base filter to check if the user is the owner or a participant
+    const baseFilter = {
+        $or: [
             { owner: userId },
             { participants: userId }, // Check if the user is a participant
-        ] });
-    // Find meetings with the updated filter and populate references
-    const meetings = yield models_1.MeetingModel.find(filter)
-        .populate("owner", "full_name username avatar")
-        .populate("participants", "full_name username avatar")
-        .sort({ time: status === "upcoming" ? 1 : -1 });
+        ],
+    };
+    if (status === "upcoming") {
+        // Query for regular upcoming meetings (time >= twoHoursAgo)
+        const upcomingMeetings = yield models_1.MeetingModel.find(Object.assign(Object.assign({}, baseFilter), { time: { $gte: twoHoursAgo } }))
+            .populate("owner", "full_name username avatar")
+            .populate("participants", "full_name username avatar")
+            .sort({ time: 1 });
+        // Query for recurring meetings (regardless of time)
+        const recurringMeetings = yield models_1.MeetingModel.find(Object.assign(Object.assign({}, baseFilter), { recurring: true }))
+            .populate("owner", "full_name username avatar")
+            .populate("participants", "full_name username avatar")
+            .sort({ time: 1 });
+        // Combine both results
+        meetings = [...upcomingMeetings, ...recurringMeetings];
+    }
+    else if (status === "completed") {
+        // Query for completed non-recurring meetings (time < twoHoursAgo)
+        meetings = yield models_1.MeetingModel.find(Object.assign(Object.assign({}, baseFilter), { time: { $lt: twoHoursAgo }, recurring: false }))
+            .populate("owner", "full_name username avatar")
+            .populate("participants", "full_name username avatar")
+            .sort({ time: -1 });
+    }
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));
 }));
+// export const getAllMeetings = catchAsync(async (req, res) => {
+//   const { status } = req.query;
+//   const userId = req.user._id;
+//   let filter = {};
+//   // Get the current time and subtract 2 hours
+//   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+//   // Determine filter based on the status
+//   if (status === "upcoming") {
+//     // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
+//     filter = { time: { $gte: twoHoursAgo } };
+//   } else if (status === "completed") {
+//     // Only non-recurring meetings that are completed (time < twoHoursAgo)
+//     filter = { time: { $lt: twoHoursAgo } };
+//   }
+//   // Add condition to check if the user is the owner or a participant
+//   filter = {
+//     ...filter,
+//     $or: [
+//       { owner: userId }, // Check if the user is the owner
+//       { participants: userId }, // Check if the user is a participant
+//     ],
+//   };
+//   // Find meetings with the updated filter and populate references
+//   const meetings = await MeetingModel.find(filter)
+//     .populate("owner", "full_name username avatar")
+//     .populate("participants", "full_name username avatar")
+//     .sort({ time: status === "upcoming" ? 1 : -1 });
+//   return res
+//     .status(200)
+//     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));
+// });
 exports.getMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     // Find the meeting by its _id and populate owner and participants
