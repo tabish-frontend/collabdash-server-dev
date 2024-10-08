@@ -47,7 +47,7 @@ async function sendPushNotifications(
 
   participants.forEach(async (participant: any) => {
     const subscribeUser = await PushSubscriptionModel.find({
-      user: { $in: participants },
+      user: { $in: participant },
     });
 
     let timeZone = "UTC+00:00";
