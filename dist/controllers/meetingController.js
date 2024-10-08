@@ -45,10 +45,10 @@ function sendAppNotification(meeting, isReminder = false, message = "") {
 function sendPushNotifications(meeting, isReminder = false, message = "") {
     return __awaiter(this, void 0, void 0, function* () {
         const { participants, title, time, owner } = meeting;
-        const subscribeUser = yield models_1.PushSubscriptionModel.find({
-            user: { $in: participants },
-        });
         participants.forEach((participant) => __awaiter(this, void 0, void 0, function* () {
+            const subscribeUser = yield models_1.PushSubscriptionModel.find({
+                user: { $in: participant },
+            });
             let timeZone = "UTC+00:00";
             if (participant.time_zone) {
                 timeZone = participant.time_zone.value;
