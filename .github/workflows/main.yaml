@@ -24,11 +24,12 @@ jobs:
           role-to-assume: arn:aws:iam::730755949664:role/gitactions
           role-session-name: gitactions
           aws-region: us-east-1
-      # - name: Install EB CLI
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install python3-pip
-      #     pip3 install --user --upgrade awsebcli
+      - name: Install EB CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install awscli --upgrade --user
+          pip3 install awsebcli --upgrade --user
       - name: Deploy to Elastic Beanstalk
         run: |
           cp package.json ./dist/
