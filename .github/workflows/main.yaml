@@ -24,7 +24,7 @@ jobs:
           role-to-assume: arn:aws:iam::730755949664:role/gitactions
           role-session-name: gitactions
           aws-region: us-east-1
-      - name: Install EB CLI
+      - name: Install EB CLI & Deploy to Elastic Beanstalk
         run: |
           sudo apt update
           sudo apt install -y python3-pip python3-venv
@@ -32,10 +32,6 @@ jobs:
           source ebcli/bin/activate
           pip3 install awscli --upgrade
           pip3 install awsebcli --upgrade
-      - name: Deploy to Elastic Beanstalk
-        run: |
-          python3 -m venv ebdeploy
-          source ebdeploy/bin/activate
           cp package.json ./dist/
           cd dist
           eb init --region us-east-1 --platform "Node.js 20 running on 64bit Amazon Linux 2023" collabdash
