@@ -3,20 +3,30 @@ on:
   push:
     branches: [main]
 jobs:
+  build:
+    permissions:
+      contents: write
+      id-token: write
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      # - name: Configure AWS credentials
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
+      #   run: aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID && aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY && aws configure set region $AWS_DEFAULT_REGION
       - name: Configure AWS credentials
-        env:
-          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-        run: aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID && aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY && aws configure set region $AWS_DEFAULT_REGION
-      - name: Install AWS CLI and EB CLI
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::730755949664:role/gitactions
+          role-session-name: gitactions
+          aws-region: us-east-1
+      - name: Install EB CLI
         run: |
           sudo apt-get update
-          sudo apt-get install awscli -y
           sudo apt-get install python3-pip
           pip3 install --user --upgrade awsebcli
       - name: Deploy to Elastic Beanstalk
