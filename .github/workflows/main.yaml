@@ -32,11 +32,15 @@ jobs:
           source ebcli/bin/activate
           pip3 install awscli --upgrade
           pip3 install awsebcli --upgrade
+          pwd
       - name: Deploy to Elastic Beanstalk
         run: |
+          pwd
           cp package.json ./dist/
           cd dist
+          pwd
           source ebcli/bin/activate
+          pwd
           eb init --region us-east-1 --platform "Node.js 20 running on 64bit Amazon Linux 2023" collabdash
           eb deploy backend-collabdash
           eb deploy fwddigi-collabdash
