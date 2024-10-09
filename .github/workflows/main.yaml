@@ -7,7 +7,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-  deploy:
+  # deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
