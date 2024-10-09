@@ -9,6 +9,8 @@ import { io, getReceiverSocketId } from "../index";
 import { DateTime } from "luxon";
 import cron from "node-cron";
 
+const scheduledTasks: { [meetingId: string]: cron.ScheduledTask[] } = {}; // Map to store scheduled tasks
+
 async function sendAppNotification(
   meeting: any,
   isReminder: boolean = false,
@@ -98,11 +100,23 @@ async function scheduleNotificationTask(
   const cronExpression = `${cronDateTime.minute} ${cronDateTime.hour} ${cronDateTime.day} ${cronDateTime.month} *`;
 
   const task = cron.schedule(cronExpression, async () => {
+    console.log(
+      `Executing task for meeting ID: ${meeting._id} at ${new Date()}`
+    );
     await sendAppNotification(meeting, true, message);
     await sendPushNotifications(meeting, true, message);
 
     task.stop();
   });
+
+  // Log when task is scheduled
+  console.log(`Scheduled task for meeting ID: ${meeting._id} at ${time}`);
+
+  // Store the task in the map
+  if (!scheduledTasks[meeting._id]) {
+    scheduledTasks[meeting._id] = [];
+  }
+  scheduledTasks[meeting._id].push(task);
 }
 
 async function scheduleNotifications(meeting: any) {
@@ -222,45 +236,6 @@ export const getAllMeetings = catchAsync(async (req, res) => {
     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));
 });
 
-// export const getAllMeetings = catchAsync(async (req, res) => {
-//   const { status } = req.query;
-//   const userId = req.user._id;
-
-//   let filter = {};
-
-//   // Get the current time and subtract 2 hours
-//   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-
-//   // Determine filter based on the status
-//   if (status === "upcoming") {
-//     // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
-//     filter = { time: { $gte: twoHoursAgo } };
-//   } else if (status === "completed") {
-//     // Only non-recurring meetings that are completed (time < twoHoursAgo)
-
-//     filter = { time: { $lt: twoHoursAgo } };
-//   }
-
-//   // Add condition to check if the user is the owner or a participant
-//   filter = {
-//     ...filter,
-//     $or: [
-//       { owner: userId }, // Check if the user is the owner
-//       { participants: userId }, // Check if the user is a participant
-//     ],
-//   };
-
-//   // Find meetings with the updated filter and populate references
-//   const meetings = await MeetingModel.find(filter)
-//     .populate("owner", "full_name username avatar")
-//     .populate("participants", "full_name username avatar")
-//     .sort({ time: status === "upcoming" ? 1 : -1 });
-
-//   return res
-//     .status(200)
-//     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));
-// });
-
 export const getMeeting = catchAsync(async (req, res) => {
   const { id } = req.params;
 
@@ -318,6 +293,22 @@ export const deleteMeeting = catchAsync(async (req, res) => {
   if (!meeting) {
     throw new AppError("No Meeting found with that ID", 400);
   }
+
+  console.log("scheduledTasks", scheduledTasks[id]);
+
+  // Stop and remove all scheduled tasks for this meeting
+  if (scheduledTasks[id]) {
+    console.log(`Stopping tasks for meeting ID: ${id}`);
+
+    scheduledTasks[id].forEach((task) => {
+      console.log(`Stopped task for meeting ID: ${id}`);
+      task.stop();
+    }); // Stop each task
+
+    delete scheduledTasks[id]; // Remove from the map
+    console.log(`Deleted all tasks for meeting ID: ${id}`);
+  }
+
   return res
     .status(200)
     .json(

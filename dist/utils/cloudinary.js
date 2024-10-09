@@ -59,7 +59,6 @@ const uploadOnCloudinary = (locaLFilePath) => __awaiter(void 0, void 0, void 0, 
         // upload the file on cloudinary
         const response = yield cloudinary_1.v2.uploader.upload(locaLFilePath, {
             resource_type: "auto",
-            allowed_formats: ["jpg", "png", "pdf"],
         });
         return response;
     }

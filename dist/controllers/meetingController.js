@@ -19,6 +19,7 @@ const webPushConfig_1 = __importDefault(require("../config/webPushConfig"));
 const index_1 = require("../index");
 const luxon_1 = require("luxon");
 const node_cron_1 = __importDefault(require("node-cron"));
+const scheduledTasks = {}; // Map to store scheduled tasks
 function sendAppNotification(meeting, isReminder = false, message = "") {
     return __awaiter(this, void 0, void 0, function* () {
         const { participants, title, time, owner } = meeting;
@@ -89,10 +90,18 @@ function scheduleNotificationTask(time, meeting, message) {
         const cronDateTime = luxon_1.DateTime.fromJSDate(time);
         const cronExpression = `${cronDateTime.minute} ${cronDateTime.hour} ${cronDateTime.day} ${cronDateTime.month} *`;
         const task = node_cron_1.default.schedule(cronExpression, () => __awaiter(this, void 0, void 0, function* () {
+            console.log(`Executing task for meeting ID: ${meeting._id} at ${new Date()}`);
             yield sendAppNotification(meeting, true, message);
             yield sendPushNotifications(meeting, true, message);
             task.stop();
         }));
+        // Log when task is scheduled
+        console.log(`Scheduled task for meeting ID: ${meeting._id} at ${time}`);
+        // Store the task in the map
+        if (!scheduledTasks[meeting._id]) {
+            scheduledTasks[meeting._id] = [];
+        }
+        scheduledTasks[meeting._id].push(task);
     });
 }
 function scheduleNotifications(meeting) {
@@ -169,37 +178,6 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
         .status(200)
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));
 }));
-// export const getAllMeetings = catchAsync(async (req, res) => {
-//   const { status } = req.query;
-//   const userId = req.user._id;
-//   let filter = {};
-//   // Get the current time and subtract 2 hours
-//   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-//   // Determine filter based on the status
-//   if (status === "upcoming") {
-//     // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
-//     filter = { time: { $gte: twoHoursAgo } };
-//   } else if (status === "completed") {
-//     // Only non-recurring meetings that are completed (time < twoHoursAgo)
-//     filter = { time: { $lt: twoHoursAgo } };
-//   }
-//   // Add condition to check if the user is the owner or a participant
-//   filter = {
-//     ...filter,
-//     $or: [
-//       { owner: userId }, // Check if the user is the owner
-//       { participants: userId }, // Check if the user is a participant
-//     ],
-//   };
-//   // Find meetings with the updated filter and populate references
-//   const meetings = await MeetingModel.find(filter)
-//     .populate("owner", "full_name username avatar")
-//     .populate("participants", "full_name username avatar")
-//     .sort({ time: status === "upcoming" ? 1 : -1 });
-//   return res
-//     .status(200)
-//     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));
-// });
 exports.getMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     // Find the meeting by its _id and populate owner and participants
@@ -239,6 +217,17 @@ exports.deleteMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
     // Check if meeting exists
     if (!meeting) {
         throw new utils_1.AppError("No Meeting found with that ID", 400);
+    }
+    console.log("scheduledTasks", scheduledTasks[id]);
+    // Stop and remove all scheduled tasks for this meeting
+    if (scheduledTasks[id]) {
+        console.log(`Stopping tasks for meeting ID: ${id}`);
+        scheduledTasks[id].forEach((task) => {
+            console.log(`Stopped task for meeting ID: ${id}`);
+            task.stop();
+        }); // Stop each task
+        delete scheduledTasks[id]; // Remove from the map
+        console.log(`Deleted all tasks for meeting ID: ${id}`);
     }
     return res
         .status(200)

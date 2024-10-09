@@ -56,7 +56,6 @@ export const uploadOnCloudinary = async (locaLFilePath: string | null) => {
     // upload the file on cloudinary
     const response = await cloudinary.uploader.upload(locaLFilePath, {
       resource_type: "auto",
-      allowed_formats: ["jpg", "png", "pdf"],
     });
 
     return response;
