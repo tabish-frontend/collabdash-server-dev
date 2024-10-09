@@ -30,8 +30,8 @@ jobs:
           sudo apt install -y python3-pip python3-venv
           python3 -m venv ebcli
           source ebcli/bin/activate
-          pip3 install awscli --upgrade --user
-          pip3 install awsebcli --upgrade --user
+          pip3 install awscli --upgrade
+          pip3 install awsebcli --upgrade
       - name: Deploy to Elastic Beanstalk
         run: |
           cp package.json ./dist/
