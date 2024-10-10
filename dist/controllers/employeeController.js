@@ -22,7 +22,6 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteEmployee = exports.updateEmployee = exports.getEmployee = exports.getAllEmployees = void 0;
 const utils_1 = require("../utils");
-const types_1 = require("../types");
 const models_1 = require("../models");
 const handleFactory_1 = require("./handleFactory");
 const getDayOfWeek = (date) => {
@@ -125,9 +124,7 @@ exports.getEmployee = (0, handleFactory_1.getOne)(models_1.UserModel, utils_1.Ex
 exports.updateEmployee = (0, handleFactory_1.updateOne)(models_1.UserModel, utils_1.ExcludedFields, "shift");
 exports.deleteEmployee = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username } = req.params;
-    const document = yield models_1.UserModel.findOneAndUpdate({ username: username }, {
-        account_status: types_1.AccountStatus.Deleted,
-    });
+    const document = yield models_1.UserModel.findOneAndDelete({ username });
     if (!document) {
         throw new utils_1.AppError("No document found with that ID", 404);
     }

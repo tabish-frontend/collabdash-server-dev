@@ -46,10 +46,10 @@ exports.manageAttendanceLogs = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             }
         }
         switch (action) {
-            case "clockIn":
+            case "Time_in":
                 attendance = (0, utils_1.handleClockIn)(attendance, userId);
                 break;
-            case "clockOut":
+            case "Time_out":
                 attendance = (0, utils_1.handleClockOut)(attendance, shiftDuration);
                 break;
             case "break":

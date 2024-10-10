@@ -74,7 +74,7 @@ export const signup = catchAsync(
         new AppResponse(
           201,
           createdUser,
-          "User created succefully",
+          "Employee Created",
           ResponseStatus.SUCCESS
         )
       );

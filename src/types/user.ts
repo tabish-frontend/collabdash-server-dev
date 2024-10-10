@@ -24,7 +24,8 @@ export interface User {
   country: string;
   languages: string[];
   gender: string;
-  national_identity_number: number;
+  identity_number: number;
+  identity_type: string;
   bank_details: BankDetails;
   account_status: string;
   time_zone: {

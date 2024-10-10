@@ -50,7 +50,7 @@ exports.signup = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, v
     }
     return res
         .status(201)
-        .json(new utils_1.AppResponse(201, createdUser, "User created succefully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(201, createdUser, "Employee Created", utils_1.ResponseStatus.SUCCESS));
 }));
 // LOGIN USER
 exports.login = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
