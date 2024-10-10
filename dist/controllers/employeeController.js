@@ -122,7 +122,7 @@ exports.getAllEmployees = (0, utils_1.catchAsync)((req, res, next) => __awaiter(
     }, "", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.getEmployee = (0, handleFactory_1.getOne)(models_1.UserModel, utils_1.ExcludedFields, "shift");
-exports.updateEmployee = (0, handleFactory_1.updateOne)(models_1.UserModel, utils_1.ExcludedFields);
+exports.updateEmployee = (0, handleFactory_1.updateOne)(models_1.UserModel, utils_1.ExcludedFields, "shift");
 exports.deleteEmployee = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username } = req.params;
     const document = yield models_1.UserModel.findOneAndUpdate({ username: username }, {

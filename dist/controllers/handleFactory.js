@@ -45,14 +45,17 @@ const getAll = (Model, excludeCurrentUser = false, hideFields) => (0, utils_1.ca
     }, "", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.getAll = getAll;
-const updateOne = (Model, hideFields) => (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const updateOne = (Model, hideFields, popOptions) => (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id, username } = req.params;
-    const document = yield Model.findOneAndUpdate({
+    let query = yield Model.findOneAndUpdate({
         $or: [{ username }, { _id }],
     }, req.body, {
         new: true,
         runValidators: true,
     }).select(hideFields);
+    if (popOptions)
+        query = query.populate(popOptions);
+    const document = yield query;
     if (!document) {
         return next(new utils_1.AppError("No document found with that ID", 404));
     }

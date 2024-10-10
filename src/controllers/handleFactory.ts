@@ -58,11 +58,11 @@ export const getAll = (
     );
   });
 
-export const updateOne = (Model: any, hideFields: string) =>
+export const updateOne = (Model: any, hideFields: string, popOptions?: any) =>
   catchAsync(async (req, res, next) => {
     const { _id, username } = req.params;
 
-    const document = await Model.findOneAndUpdate(
+    let query = await Model.findOneAndUpdate(
       {
         $or: [{ username }, { _id }],
       },
@@ -72,6 +72,9 @@ export const updateOne = (Model: any, hideFields: string) =>
         runValidators: true,
       }
     ).select(hideFields);
+
+    if (popOptions) query = query.populate(popOptions);
+    const document = await query;
 
     if (!document) {
       return next(new AppError("No document found with that ID", 404));
