@@ -61,7 +61,7 @@ const updateOne = (Model, hideFields, popOptions) => (0, utils_1.catchAsync)((re
     }
     return res
         .status(200)
-        .json(new utils_1.AppResponse(200, document, "User updated Successfully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, document, "Employee Updated", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.updateOne = updateOne;
 //# sourceMappingURL=handleFactory.js.map

@@ -120,11 +120,15 @@ const userSchema: Schema<User> = new Schema<User>(
       type: String,
       trim: true,
     },
-    national_identity_number: {
+    identity_number: {
       type: Number,
       trim: true,
-      unique: true,
-      required: [true, "Please provide valid NIC number"],
+      default: null,
+    },
+    identity_type: {
+      type: String,
+      trim: true,
+      default: "",
     },
     bank_details: {
       type: bankDetailsSchema,
@@ -162,15 +166,6 @@ const userSchema: Schema<User> = new Schema<User>(
     timestamps: true,
   }
 );
-
-// userSchema.pre<Query<any, any>>(/^find/, function (next) {
-//   this.populate({
-//     path: "shift",
-//     select: "-__v",
-//   });
-
-//   next();
-// });
 
 // MIDDLEWARE == // PRE-SAVE HOOKS START
 userSchema.pre("save", async function (next) {

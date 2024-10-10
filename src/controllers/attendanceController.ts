@@ -55,10 +55,10 @@ export const manageAttendanceLogs = catchAsync(async (req, res) => {
     }
 
     switch (action) {
-      case "clockIn":
+      case "Time_in":
         attendance = handleClockIn(attendance, userId);
         break;
-      case "clockOut":
+      case "Time_out":
         attendance = handleClockOut(attendance, shiftDuration);
         break;
       case "break":

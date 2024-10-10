@@ -86,7 +86,7 @@ export const updateOne = (Model: any, hideFields: string, popOptions?: any) =>
         new AppResponse(
           200,
           document,
-          "User updated Successfully",
+          "Employee Updated",
           ResponseStatus.SUCCESS
         )
       );
