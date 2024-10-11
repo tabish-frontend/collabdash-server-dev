@@ -45,6 +45,13 @@ export const signup = catchAsync(
       $or: [{ username }, { email }],
     });
 
+    if (existedUser.account_status === AccountStatus.Deleted) {
+      throw new AppError(
+        "User with email or username already exists in databse but Deleted",
+        409
+      );
+    }
+
     if (existedUser) {
       throw new AppError("User with email or username already exists", 409);
     }
@@ -85,6 +92,8 @@ export const signup = catchAsync(
 export const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
+
+    console.log("req.body", req.body);
 
     const username = email;
 

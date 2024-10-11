@@ -35,6 +35,9 @@ exports.signup = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, v
     const existedUser = yield models_1.UserModel.findOne({
         $or: [{ username }, { email }],
     });
+    if (existedUser.account_status === types_1.AccountStatus.Deleted) {
+        throw new utils_1.AppError("User with email or username already exists in databse but Deleted", 409);
+    }
     if (existedUser) {
         throw new utils_1.AppError("User with email or username already exists", 409);
     }
@@ -55,6 +58,7 @@ exports.signup = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, v
 // LOGIN USER
 exports.login = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
+    console.log("req.body", req.body);
     const username = email;
     // 1) Check if email and password is exist
     if (!email) {

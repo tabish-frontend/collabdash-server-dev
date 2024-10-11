@@ -142,7 +142,12 @@ export const updateEmployee = updateOne(UserModel, ExcludedFields, "shift");
 export const deleteEmployee = catchAsync(async (req, res) => {
   const { username } = req.params;
 
-  const document = await UserModel.findOneAndDelete({ username });
+  const document = await UserModel.findOneAndUpdate(
+    { username: username },
+    {
+      account_status: AccountStatus.Deleted,
+    }
+  );
 
   if (!document) {
     throw new AppError("No document found with that ID", 404);

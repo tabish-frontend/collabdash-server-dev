@@ -52,6 +52,7 @@ const notificationSchema = new mongoose_1.Schema({
 }, {
     timestamps: true, // Automatically adds `createdAt` and `updatedAt`
 });
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3 * 24 * 60 * 60 });
 // Post hook to populate fields after save
 notificationSchema.post("save", function () {
     return __awaiter(this, void 0, void 0, function* () {
@@ -60,4 +61,11 @@ notificationSchema.post("save", function () {
     });
 });
 exports.NotificationModel = mongoose_1.default.model("Notification", notificationSchema);
+exports.NotificationModel.syncIndexes()
+    .then(() => {
+    console.log("Indexes synchronized successfully for NotificationModel.");
+})
+    .catch((error) => {
+    console.error("Error synchronizing indexes for NotificationModel:", error);
+});
 //# sourceMappingURL=notificationModel.js.map
