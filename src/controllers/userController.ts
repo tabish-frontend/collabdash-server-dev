@@ -42,7 +42,7 @@ export const updateMe = catchAsync(async (req, res) => {
       new AppResponse(
         200,
         updatedUser,
-        "User Updated succefully",
+        "Information Updated",
         ResponseStatus.SUCCESS
       )
     );

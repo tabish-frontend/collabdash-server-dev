@@ -30,7 +30,7 @@ exports.updateMe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
     }).select(utils_1.ExcludedFields);
     return res
         .status(201)
-        .json(new utils_1.AppResponse(200, updatedUser, "User Updated succefully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, updatedUser, "Information Updated", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.deleteMe = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield models_1.UserModel.findByIdAndUpdate(req.user._id, {
