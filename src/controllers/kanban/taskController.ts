@@ -17,7 +17,7 @@ import { PushSubscriptionModel } from "../../models";
 import webPush from "../../config/webPushConfig";
 import { io, getReceiverSocketId } from "../../index";
 
-export const addTask = catchAsync(async (req: any, res: any) => {
+export const addTask = catchAsync(async (req: any, res: any, next) => {
   const { title, board, column } = req.body;
   const owner = req.user._id;
 
@@ -44,6 +44,10 @@ export const addTask = catchAsync(async (req: any, res: any) => {
     .populate("owner", "full_name username avatar")
     .populate("assignedTo", "full_name username avatar");
 
+  req.body.socket_board = req.body.board;
+
+  next();
+
   return res
     .status(201)
     .json(
@@ -56,7 +60,7 @@ export const addTask = catchAsync(async (req: any, res: any) => {
     );
 });
 
-export const deleteTask = catchAsync(async (req, res) => {
+export const deleteTask = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
   const deletedTask = await TaskModel.findByIdAndDelete(id);
@@ -75,12 +79,16 @@ export const deleteTask = catchAsync(async (req, res) => {
     $pull: { tasks: id },
   });
 
+  req.body.socket_board = deletedTask.board;
+
+  next();
+
   return res
     .status(200)
     .json(new AppResponse(200, null, "Task Deleted", ResponseStatus.SUCCESS));
 });
 
-export const moveTask = catchAsync(async (req, res) => {
+export const moveTask = catchAsync(async (req, res, next) => {
   const { task_id, column_id, index, target_link } = req.body;
   const user = req.user;
 
@@ -166,6 +174,10 @@ export const moveTask = catchAsync(async (req, res) => {
     .populate("column", "name")
     .populate("assignedTo", "full_name username");
 
+  req.body.socket_board = populatedTask.board._id;
+
+  next();
+
   return res
     .status(200)
     .json(
@@ -205,7 +217,7 @@ export const deleteAttachment = catchAsync(async (req, res) => {
     );
 });
 
-export const updateTask = catchAsync(async (req: any, res: any) => {
+export const updateTask = catchAsync(async (req: any, res: any, next) => {
   const { id } = req.params;
 
   const { owner, assignedTo, title, target_link } = req.body;
@@ -231,6 +243,7 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
   if (!updatedTask) {
     throw new AppError("Board not found", 404);
   }
+
   // if (assignedTo.length) {
   const previousAssignedIds = existingTask.assignedTo.map((item: any) =>
     item._id.toString()
@@ -263,7 +276,7 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
   });
 
   const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
-  // Send push notification
+
   subscriptions.forEach(async (subscription: any) => {
     const payload = JSON.stringify({
       title: `Task Update: ${title}`,
@@ -276,11 +289,55 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
       await webPush.sendNotification(subscription, payload);
     } catch (error: any) {}
   });
-  // }
+
+  req.body.socket_board = updatedTask.board;
+
+  next();
 
   return res
     .status(200)
     .json(
       new AppResponse(200, updatedTask, "Task Updated", ResponseStatus.SUCCESS)
     );
+});
+
+export const fecthBoardForSocket = catchAsync(async (req, res) => {
+  const boardId = req.body.socket_board;
+  const userId = req.user._id;
+
+  console.log("boardId", boardId);
+
+  const board = await BoardModel.findById(boardId).populate([
+    { path: "owner", select: "full_name username avatar" },
+    { path: "members", select: "full_name username avatar" },
+    {
+      path: "columns",
+      populate: {
+        path: "tasks",
+        populate: [
+          { path: "assignedTo", select: "full_name username avatar" },
+          { path: "owner", select: "full_name username avatar" },
+        ],
+      },
+    },
+  ]);
+
+  // Collect all recipient IDs (owner + members), and exclude the current user
+  const filterRecipientIds = [
+    board.owner._id.toString(),
+    ...board.members.map((member) => member._id.toString()),
+  ].filter((id) => id !== userId.toString()); // Exclude the user who made the request
+
+  // Send the board data via socket to each recipient except the current user
+  filterRecipientIds.forEach((recipientId) => {
+    const receiverSocketId = getReceiverSocketId(recipientId); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("receiveSocketBoard", {
+        boardId: board._id,
+        workSpaceId: board.workspace,
+        boardData: board, // Send the whole populated board data
+      });
+    }
+  });
 });

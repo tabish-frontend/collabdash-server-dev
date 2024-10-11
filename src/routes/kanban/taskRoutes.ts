@@ -4,6 +4,7 @@ import {
   addTask,
   deleteAttachment,
   deleteTask,
+  fecthBoardForSocket,
   moveTask,
   updateTask,
   uploadAttachment,
@@ -18,11 +19,14 @@ router.use(Protect);
 
 // router.use(restrictTo("hr", "admin"));
 
-router.route("/").post(addTask);
+router.route("/").post(addTask, fecthBoardForSocket);
 
-router.route("/:id").patch(updateTask).delete(deleteTask);
+router
+  .route("/:id")
+  .patch(updateTask, fecthBoardForSocket)
+  .delete(deleteTask, fecthBoardForSocket);
 
-router.route("/move").post(moveTask);
+router.route("/move").post(moveTask, fecthBoardForSocket);
 
 router.use(express.urlencoded({ extended: false }));
 
