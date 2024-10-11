@@ -35,9 +35,12 @@ exports.signup = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, v
     const existedUser = yield models_1.UserModel.findOne({
         $or: [{ username }, { email }],
     });
-    if (existedUser.account_status === types_1.AccountStatus.Deleted) {
-        throw new utils_1.AppError("User with email or username already exists in databse but Deleted", 409);
-    }
+    // if (existedUser.account_status === AccountStatus.Deleted) {
+    //   throw new AppError(
+    //     "User with email or username already exists in databse but Deleted",
+    //     409
+    //   );
+    // }
     if (existedUser) {
         throw new utils_1.AppError("User with email or username already exists", 409);
     }
