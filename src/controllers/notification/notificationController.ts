@@ -32,7 +32,7 @@ export const createNotification = catchAsync(async (req: any, res: any) => {
       new AppResponse(
         201,
         newNotification,
-        "Notification created successfully",
+        "Notification Added",
         ResponseStatus.SUCCESS
       )
     );

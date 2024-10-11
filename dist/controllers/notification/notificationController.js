@@ -35,7 +35,7 @@ exports.createNotification = (0, utils_1.catchAsync)((req, res) => __awaiter(voi
     });
     res
         .status(201)
-        .json(new utils_1.AppResponse(201, newNotification, "Notification created successfully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(201, newNotification, "Notification Added", utils_1.ResponseStatus.SUCCESS));
 }));
 // Mark a notification as read
 exports.markNotificationAsRead = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
