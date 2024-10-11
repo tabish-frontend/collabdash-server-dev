@@ -4,14 +4,36 @@ import { AppResponse, catchAsync, ResponseStatus } from "../../utils";
 // Get notifications for the logged-in user
 export const getNotifications = catchAsync(async (req: any, res: any) => {
   const notifications = await NotificationModel.find({
-    receiver: { $in: [req.user._id] },
+    receiver: { $elemMatch: { user: req.user._id } }, // Find notifications where user is in the receiver array
   })
     .populate("sender", "full_name avatar")
     .sort({ createdAt: -1 });
 
+  // Transform notifications to include user._id outside the receiver array
+  const formattedNotifications = notifications.map((notification: any) => {
+    // Find the receiver entry for the requesting user
+    const receiverEntry = notification.receiver.find(
+      (rec: any) => rec.user.toString() === req.user._id.toString()
+    );
+
+    return {
+      _id: notification._id,
+      sender: notification.sender,
+      message: notification.message,
+      link: notification.link,
+      time: notification.time,
+      target_link: notification.target_link,
+      hide_sender_name: notification.hide_sender_name,
+      read: receiverEntry ? receiverEntry.read : false, // Add read status based on receiver
+      createdAt: notification.createdAt,
+    };
+  });
+
   return res
     .status(200)
-    .json(new AppResponse(200, notifications, "", ResponseStatus.SUCCESS));
+    .json(
+      new AppResponse(200, formattedNotifications, "", ResponseStatus.SUCCESS)
+    );
 });
 
 // Create a new notification

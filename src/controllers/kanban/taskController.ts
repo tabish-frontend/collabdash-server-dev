@@ -218,7 +218,7 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
     throw new AppError("Task not found", 404);
   }
 
-  const receiver = assignedTo.map((item: any) => item._id);
+  const receiverIds = assignedTo.map((item: any) => item._id);
 
   let notificationMessage = `has assigned you a Task ${title}`;
 
@@ -235,30 +235,52 @@ export const updateTask = catchAsync(async (req: any, res: any) => {
   const previousAssignedIds = existingTask.assignedTo.map((item: any) =>
     item._id.toString()
   );
-  const newlyAssignedUsers = receiver.filter(
+
+  const newlyAssignedUsers = receiverIds.filter(
     (recipientId: string) => !previousAssignedIds.includes(recipientId)
   );
 
   if (newlyAssignedUsers.length === 0) {
     notificationMessage = `has made some changes in Task ${title}`;
   }
-  const newNotification = await NotificationModel.create({
+
+  // Construct receiver objects based on the updated schema
+  const receivers = receiverIds.map((userId: string) => ({
+    user: userId,
+    read: false,
+  }));
+
+  const newNotification: any = await NotificationModel.create({
     sender: owner._id,
-    receiver,
+    receiver: receivers,
     message: notificationMessage,
     link: title,
     target_link,
   });
 
   const subscriptions = await PushSubscriptionModel.find({
-    user: { $in: receiver },
+    user: { $in: receiverIds },
   });
 
-  receiver.forEach((recipientId: string) => {
+  receiverIds.forEach((recipientId: string) => {
     const receiverSocketId = getReceiverSocketId(recipientId);
 
+    const receiverEntry = newNotification.receiver.find(
+      (rec: any) => rec.user.toString() === req.user._id.toString()
+    );
+
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("receiveNotification", newNotification);
+      io.to(receiverSocketId).emit("receiveNotification", {
+        _id: newNotification._id,
+        sender: newNotification.sender,
+        message: newNotification.message,
+        link: newNotification.link,
+        time: newNotification.time,
+        target_link: newNotification.target_link,
+        hide_sender_name: newNotification.hide_sender_name,
+        read: receiverEntry ? receiverEntry.read : false, // Add read status based on receiver
+        createdAt: newNotification.createdAt,
+      });
     }
   });
 
