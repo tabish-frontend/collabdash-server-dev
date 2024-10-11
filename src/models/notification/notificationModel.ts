@@ -23,6 +23,11 @@ const notificationSchema: Schema<Notification> = new Schema<Notification>(
   }
 );
 
+notificationSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 3 * 24 * 60 * 60 }
+);
+
 // Post hook to populate fields after save
 notificationSchema.post("save", async function (this: any) {
   await this.populate("sender", "full_name username avatar"); // Populate sender
@@ -33,3 +38,11 @@ export const NotificationModel = mongoose.model(
   "Notification",
   notificationSchema
 );
+
+NotificationModel.syncIndexes()
+  .then(() => {
+    console.log("Indexes synchronized successfully for NotificationModel.");
+  })
+  .catch((error) => {
+    console.error("Error synchronizing indexes for NotificationModel:", error);
+  });
