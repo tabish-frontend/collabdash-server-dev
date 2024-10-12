@@ -70,11 +70,11 @@ meetingSchema.post("save", function () {
     });
 });
 exports.MeetingModel = mongoose_1.default.model("Meeting", meetingSchema);
-// MeetingModel.syncIndexes()
-//   .then(() => {
-//     console.log("Indexes synchronized successfully for MeetingModel.");
-//   })
-//   .catch((error) => {
-//     console.error("Error synchronizing indexes for MeetingModel:", error);
-//   });
+exports.MeetingModel.syncIndexes()
+    .then(() => {
+    console.log("Indexes synchronized successfully for MeetingModel.");
+})
+    .catch((error) => {
+    console.error("Error synchronizing indexes for MeetingModel:", error);
+});
 //# sourceMappingURL=meetingModel.js.map

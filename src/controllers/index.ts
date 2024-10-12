@@ -13,3 +13,4 @@ export * from "./chat";
 export * from "./notification";
 export * from "./contacts";
 export * from "./todos";
+export * from "./others";

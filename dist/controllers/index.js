@@ -29,4 +29,5 @@ __exportStar(require("./chat"), exports);
 __exportStar(require("./notification"), exports);
 __exportStar(require("./contacts"), exports);
 __exportStar(require("./todos"), exports);
+__exportStar(require("./others"), exports);
 //# sourceMappingURL=index.js.map

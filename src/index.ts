@@ -23,6 +23,7 @@ import notificationRoutes from "./routes/notification/notificationRoutes";
 import subscriptionRoutes from "./routes/notification/subscriptionRoutes";
 import contactRoutes from "./routes/contactsRoutes";
 import todosRoutes from "./routes/todos/todosRoutes";
+import otherRoutes from "./routes/otherRoutes";
 
 import { AppError, xssMiddleware } from "./utils";
 import { createServer } from "http"; // Import the HTTP server
@@ -83,6 +84,7 @@ app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/subscriptions", subscriptionRoutes);
 app.use("/api/v1/contacts", contactRoutes);
 app.use("/api/v1/todos", todosRoutes);
+app.use("/api/v1/others", otherRoutes);
 
 // Catch-all for unhandled routes
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
