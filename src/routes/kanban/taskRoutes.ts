@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { Protect, restrictTo, uploadUserPhoto } from "../../middlewares";
+import { Protect, uploadUserPhoto } from "../../middlewares";
 import {
   addTask,
   deleteAttachment,
   deleteTask,
-  fecthBoardForSocket,
   moveTask,
   updateTask,
   uploadAttachment,
@@ -17,14 +16,11 @@ const router = Router();
 
 router.use(Protect);
 
-router.route("/").post(addTask, fecthBoardForSocket);
+router.route("/").post(addTask);
 
-router
-  .route("/:id")
-  .patch(updateTask, fecthBoardForSocket)
-  .delete(deleteTask, fecthBoardForSocket);
+router.route("/:id").patch(updateTask).delete(deleteTask);
 
-router.route("/move").post(moveTask, fecthBoardForSocket);
+router.route("/move").post(moveTask);
 
 router.use(express.urlencoded({ extended: false }));
 

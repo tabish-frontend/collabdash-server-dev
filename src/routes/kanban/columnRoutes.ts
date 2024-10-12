@@ -3,7 +3,6 @@ import { Protect, restrictTo } from "../../middlewares";
 import {
   addColumn,
   clearAnddeleteColumn,
-  fecthBoardForSocket,
   moveColumn,
   updateColumn,
 } from "../../controllers";
@@ -16,13 +15,10 @@ router.use(Protect);
 
 router.use(restrictTo("hr", "admin"));
 
-router.route("/").post(addColumn, fecthBoardForSocket);
+router.route("/").post(addColumn);
 
-router
-  .route("/:id")
-  .patch(updateColumn, fecthBoardForSocket)
-  .delete(clearAnddeleteColumn, fecthBoardForSocket);
+router.route("/:id").patch(updateColumn).delete(clearAnddeleteColumn);
 
-router.route("/move").post(moveColumn, fecthBoardForSocket);
+router.route("/move").post(moveColumn);
 
 export default router;

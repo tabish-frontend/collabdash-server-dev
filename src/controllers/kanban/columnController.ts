@@ -1,7 +1,8 @@
 import { ColumnModel, BoardModel, TaskModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
+import { io, getReceiverSocketId } from "../../index";
 
-export const addColumn = catchAsync(async (req: any, res: any, next) => {
+export const addColumn = catchAsync(async (req: any, res: any) => {
   const { name, board } = req.body;
 
   const owner = req.user._id;
@@ -12,7 +13,7 @@ export const addColumn = catchAsync(async (req: any, res: any, next) => {
     board,
   });
 
-  await BoardModel.findByIdAndUpdate(board, {
+  const currentBoard = await BoardModel.findByIdAndUpdate(board, {
     $push: { columns: newColumn._id },
   });
 
@@ -20,9 +21,17 @@ export const addColumn = catchAsync(async (req: any, res: any, next) => {
     "tasks"
   );
 
-  req.body.socket_board = board;
+  const filterRecipientIds = currentBoard.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== owner.toString()); // Exclude the user who made the request
 
-  next();
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("column created");
+    }
+  });
 
   return res
     .status(201)
@@ -36,7 +45,8 @@ export const addColumn = catchAsync(async (req: any, res: any, next) => {
     );
 });
 
-export const updateColumn = catchAsync(async (req: any, res: any, next) => {
+export const updateColumn = catchAsync(async (req: any, res: any) => {
+  const userId = req.user._id;
   const { id } = req.params;
   const { name } = req.body;
 
@@ -50,9 +60,19 @@ export const updateColumn = catchAsync(async (req: any, res: any, next) => {
     throw new AppError("Column not found", 404);
   }
 
-  req.body.socket_board = updatedColumn.board;
+  const currentBoard = await BoardModel.findById(updatedColumn.board);
 
-  next();
+  const filterRecipientIds = currentBoard.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("column updated");
+    }
+  });
 
   return res
     .status(200)
@@ -66,7 +86,8 @@ export const updateColumn = catchAsync(async (req: any, res: any, next) => {
     );
 });
 
-export const moveColumn = catchAsync(async (req: any, res: any, next) => {
+export const moveColumn = catchAsync(async (req: any, res: any) => {
+  const userId = req.user._id;
   const { board_id, column_id, index } = req.body;
 
   // Find the board by ID
@@ -90,16 +111,43 @@ export const moveColumn = catchAsync(async (req: any, res: any, next) => {
   // Save the updated board
   await board.save();
 
-  req.body.socket_board = board_id;
+  const populatedBoard = await BoardModel.findById(board_id)
+    .populate("owner", "full_name username avatar")
+    .populate("members", "full_name username avatar")
+    .populate({
+      path: "columns",
+      populate: {
+        path: "tasks",
+        model: "Task",
+      },
+    });
 
-  next();
+  const filterRecipientIds = populatedBoard.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("column moved");
+    }
+  });
 
   return res
     .status(200)
-    .json(new AppResponse(200, {}, "Column moved", ResponseStatus.SUCCESS));
+    .json(
+      new AppResponse(
+        200,
+        populatedBoard,
+        "Column moved",
+        ResponseStatus.SUCCESS
+      )
+    );
 });
 
-export const clearAnddeleteColumn = catchAsync(async (req, res, next) => {
+export const clearAnddeleteColumn = catchAsync(async (req, res) => {
+  const userId = req.user._id;
   const { id } = req.params;
   const { type } = req.query;
 
@@ -118,7 +166,7 @@ export const clearAnddeleteColumn = catchAsync(async (req, res, next) => {
     $set: { tasks: [] },
   });
 
-  await BoardModel.findByIdAndUpdate(column.board, {
+  const currentBoard = await BoardModel.findByIdAndUpdate(column.board, {
     $pull: { tasks: { $in: column.tasks } },
   });
 
@@ -131,9 +179,17 @@ export const clearAnddeleteColumn = catchAsync(async (req, res, next) => {
     });
   }
 
-  req.body.socket_board = column.board;
+  const filterRecipientIds = currentBoard.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
 
-  next();
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("column cleared | deleted");
+    }
+  });
 
   return res
     .status(200)

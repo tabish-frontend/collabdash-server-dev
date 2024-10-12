@@ -41,6 +41,18 @@ export const addBoard = catchAsync(async (req: any, res: any) => {
     .populate("members", "full_name username avatar")
     .populate("columns");
 
+  const filterRecipientIds = populatedBoard.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== owner.toString()); // Exclude the user who made the request
+
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("board created");
+    }
+  });
+
   return res
     .status(201)
     .json(
@@ -72,6 +84,7 @@ export const getAllBoards = catchAsync(async (req: any, res: any) => {
 });
 
 export const updateBoard = catchAsync(async (req: any, res: any) => {
+  const userId = req.user._id;
   const { id } = req.params;
 
   const updatedBoard = await BoardModel.findByIdAndUpdate(id, req.body, {
@@ -83,6 +96,18 @@ export const updateBoard = catchAsync(async (req: any, res: any) => {
   if (!updatedBoard) {
     throw new AppError("Board not found", 404);
   }
+
+  const filterRecipientIds = updatedBoard.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("board updated");
+    }
+  });
 
   return res
     .status(200)
@@ -97,7 +122,10 @@ export const updateBoard = catchAsync(async (req: any, res: any) => {
 });
 
 export const deleteBoard = catchAsync(async (req, res) => {
+  const userId = req.user._id;
   const { id } = req.params;
+
+  const currentWorkSpace = await WorkspaceModel.findOne({ boards: id });
 
   const deletedBoard = await BoardModel.findOneAndDelete({ _id: id });
 
@@ -109,46 +137,19 @@ export const deleteBoard = catchAsync(async (req, res) => {
     throw new AppError("No Board found with that ID", 400);
   }
 
+  const filterRecipientIds = currentWorkSpace.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("board deleted");
+    }
+  });
+
   return res
     .status(200)
     .json(new AppResponse(200, null, "Board Deleted", ResponseStatus.SUCCESS));
-});
-
-export const fecthBoardForSocket = catchAsync(async (req, res) => {
-  const boardId = req.body.socket_board;
-  const userId = req.user._id;
-
-  const board = await BoardModel.findById(boardId).populate([
-    { path: "owner", select: "full_name username avatar" },
-    { path: "members", select: "full_name username avatar" },
-    {
-      path: "columns",
-      populate: {
-        path: "tasks",
-        populate: [
-          { path: "assignedTo", select: "full_name username avatar" },
-          { path: "owner", select: "full_name username avatar" },
-        ],
-      },
-    },
-  ]);
-
-  // Collect all recipient IDs (owner + members), and exclude the current user
-  const filterRecipientIds = [
-    board.owner._id.toString(),
-    ...board.members.map((member) => member._id.toString()),
-  ].filter((id) => id !== userId.toString()); // Exclude the user who made the request
-
-  // Send the board data via socket to each recipient except the current user
-  filterRecipientIds.forEach((recipientId) => {
-    const receiverSocketId = getReceiverSocketId(recipientId); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("receiveSocketBoard", {
-        boardId: board._id,
-        workSpaceId: board.workspace,
-        boardData: board, // Send the whole populated board data
-      });
-    }
-  });
 });

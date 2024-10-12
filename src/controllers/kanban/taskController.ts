@@ -17,7 +17,7 @@ import { PushSubscriptionModel } from "../../models";
 import webPush from "../../config/webPushConfig";
 import { io, getReceiverSocketId } from "../../index";
 
-export const addTask = catchAsync(async (req: any, res: any, next) => {
+export const addTask = catchAsync(async (req: any, res: any) => {
   const { title, board, column } = req.body;
   const owner = req.user._id;
 
@@ -35,8 +35,9 @@ export const addTask = catchAsync(async (req: any, res: any, next) => {
   });
 
   // Add the new task to the board
-  await BoardModel.findByIdAndUpdate(board, {
+  const currentBoard = await BoardModel.findByIdAndUpdate(board, {
     $push: { tasks: newTask._id },
+    new: true,
   });
 
   // Populate the necessary fields
@@ -44,9 +45,17 @@ export const addTask = catchAsync(async (req: any, res: any, next) => {
     .populate("owner", "full_name username avatar")
     .populate("assignedTo", "full_name username avatar");
 
-  req.body.socket_board = req.body.board;
+  const filterRecipientIds = currentBoard.members
+    .map((member) => member._id.toString())
+    .filter((id) => id !== owner.toString()); // Exclude the user who made the request
 
-  next();
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("task created");
+    }
+  });
 
   return res
     .status(201)
@@ -60,8 +69,9 @@ export const addTask = catchAsync(async (req: any, res: any, next) => {
     );
 });
 
-export const deleteTask = catchAsync(async (req, res, next) => {
+export const deleteTask = catchAsync(async (req, res) => {
   const { id } = req.params;
+  const userId = req.user._id;
 
   const deletedTask = await TaskModel.findByIdAndDelete(id);
 
@@ -75,20 +85,29 @@ export const deleteTask = catchAsync(async (req, res, next) => {
     $pull: { tasks: id },
   });
 
-  await BoardModel.findByIdAndUpdate(deletedTask.board, {
+  const currentBoard = await BoardModel.findByIdAndUpdate(deletedTask.board, {
     $pull: { tasks: id },
+    new: true,
   });
 
-  req.body.socket_board = deletedTask.board;
+  const filterRecipientIds = currentBoard.members
+    .map((member) => member._id.toString())
+    .filter((id) => id !== userId.toString()); // Exclude the user who made the request
 
-  next();
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("task deleted");
+    }
+  });
 
   return res
     .status(200)
     .json(new AppResponse(200, null, "Task Deleted", ResponseStatus.SUCCESS));
 });
 
-export const moveTask = catchAsync(async (req, res, next) => {
+export const moveTask = catchAsync(async (req, res) => {
   const { task_id, column_id, index, target_link } = req.body;
   const user = req.user;
 
@@ -169,14 +188,22 @@ export const moveTask = catchAsync(async (req, res, next) => {
     await column.save();
   }
 
-  const populatedTask = await TaskModel.findById(task_id)
-    .populate("board", "name")
+  const populatedTask: any = await TaskModel.findById(task_id)
+    .populate("board", "name members")
     .populate("column", "name")
     .populate("assignedTo", "full_name username");
 
-  req.body.socket_board = populatedTask.board._id;
+  const filterRecipientIds = populatedTask.board.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== user._id.toString()); // Exclude the user who made the request
 
-  next();
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("task moved");
+    }
+  });
 
   return res
     .status(200)
@@ -217,14 +244,11 @@ export const deleteAttachment = catchAsync(async (req, res) => {
     );
 });
 
-export const updateTask = catchAsync(async (req: any, res: any, next) => {
+export const updateTask = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
 
   const { owner, assignedTo, title, target_link } = req.body;
-  const existingTask = await TaskModel.findById(id).populate(
-    "assignedTo",
-    "_id"
-  );
+  const existingTask = await TaskModel.findById(id).populate("assignedTo");
 
   if (!existingTask) {
     throw new AppError("Task not found", 404);
@@ -234,15 +258,28 @@ export const updateTask = catchAsync(async (req: any, res: any, next) => {
 
   let notificationMessage = `has assigned you a Task ${title}`;
 
-  const updatedTask = await TaskModel.findByIdAndUpdate(id, req.body, {
+  const updatedTask: any = await TaskModel.findByIdAndUpdate(id, req.body, {
     new: true,
   })
     .populate("owner", "username full_name avatar")
-    .populate("assignedTo", "username full_name avatar");
+    .populate("assignedTo", "username full_name avatar")
+    .populate("board");
 
   if (!updatedTask) {
     throw new AppError("Board not found", 404);
   }
+
+  const filterRecipientIds = updatedTask.board.members
+    .map((member: any) => member._id.toString())
+    .filter((id: any) => id !== owner.toString()); // Exclude the user who made the request
+
+  filterRecipientIds.forEach((member: any) => {
+    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("task updated");
+    }
+  });
 
   // if (assignedTo.length) {
   const previousAssignedIds = existingTask.assignedTo.map((item: any) =>
@@ -289,10 +326,6 @@ export const updateTask = catchAsync(async (req: any, res: any, next) => {
       await webPush.sendNotification(subscription, payload);
     } catch (error: any) {}
   });
-
-  req.body.socket_board = updatedTask.board;
-
-  next();
 
   return res
     .status(200)
