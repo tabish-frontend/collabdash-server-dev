@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteWorkSpace = exports.updateWorkspace = exports.getAllWorkspaces = exports.addWorkspace = void 0;
-const enum_1 = require("../../types/enum");
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 exports.addWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -30,22 +29,16 @@ exports.addWorkspace = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, v
         .json(new utils_1.AppResponse(201, populatedWorkSpace, "WorkSpace Added Successfully", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.getAllWorkspaces = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let workspacesQuery;
-    // If user is Admin or HR, retrieve all workspaces; otherwise, filter by user membership
-    if (req.user.role === enum_1.Roles.Employee) {
-        workspacesQuery = models_1.WorkspaceModel.find({ members: req.user._id });
-    }
-    else {
-        workspacesQuery = models_1.WorkspaceModel.find(); // Fetch all workspaces
-    }
-    const workspaces = yield workspacesQuery
+    const workspaces = yield models_1.WorkspaceModel.find({
+        $or: [{ members: req.user._id }, { owner: req.user._id }],
+    })
         .populate("owner", "full_name username avatar")
         .populate("members", "full_name username avatar")
         .populate({
         path: "boards",
-        match: req.user.role === enum_1.Roles.Employee
-            ? { members: req.user._id } // Filter boards by user membership
-            : {},
+        match: {
+            $or: [{ members: req.user._id }, { owner: req.user._id }],
+        },
         populate: [
             { path: "owner", select: "full_name username avatar" },
             { path: "members", select: "full_name username avatar" },

@@ -187,8 +187,7 @@ export const getAllMeetings = catchAsync(async (req, res) => {
 
   // Get the current time and subtract 2 hours
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-
-  let meetings: any[] = [];
+  let filter = {};
 
   // Base filter to check if the user is the owner or a participant
   const baseFilter = {
@@ -199,38 +198,29 @@ export const getAllMeetings = catchAsync(async (req, res) => {
   };
 
   if (status === "upcoming") {
-    // Query for regular upcoming meetings (time >= twoHoursAgo)
-    const upcomingMeetings = await MeetingModel.find({
+    // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
+    filter = {
       ...baseFilter,
-      time: { $gte: twoHoursAgo },
-    })
-      .populate("owner", "full_name username avatar")
-      .populate("participants", "full_name username avatar")
-      .sort({ time: 1 });
-
-    // Query for recurring meetings (regardless of time)
-    const recurringMeetings = await MeetingModel.find({
-      ...baseFilter,
-      recurring: true,
-    })
-      .populate("owner", "full_name username avatar")
-      .populate("participants", "full_name username avatar")
-      .sort({ time: 1 });
-
-    // Combine both results
-    meetings = [...upcomingMeetings, ...recurringMeetings];
+      $or: [
+        { time: { $gte: twoHoursAgo } }, // Future meetings
+        { recurring: true }, // Recurring meetings, always include
+      ],
+    };
   } else if (status === "completed") {
-    // Query for completed non-recurring meetings (time < twoHoursAgo)
-    meetings = await MeetingModel.find({
+    // Only non-recurring meetings that are completed (time < twoHoursAgo)
+    filter = {
       ...baseFilter,
       time: { $lt: twoHoursAgo },
-      recurring: false,
-    })
-      .populate("owner", "full_name username avatar")
-      .populate("participants", "full_name username avatar")
-      .sort({ time: -1 });
+      recurring: false, // Exclude recurring meetings from completed
+    };
   }
 
+  const meetings = await MeetingModel.find(filter)
+    .populate("owner", "full_name username avatar")
+    .populate("participants", "full_name username avatar")
+    .sort({ time: status === "upcoming" ? 1 : -1 });
+
+  console.log("meetings", meetings);
   return res
     .status(200)
     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));

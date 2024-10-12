@@ -5,7 +5,7 @@ const middlewares_1 = require("../middlewares");
 const controllers_1 = require("../controllers");
 const router = (0, express_1.Router)();
 router.use(middlewares_1.Protect);
-// router.use(restrictTo("hr", "admin"));
+router.use((0, middlewares_1.restrictTo)("hr", "admin"));
 router.route("/deleteOldNotification").delete(controllers_1.deleteOldNotifications);
 exports.default = router;
 //# sourceMappingURL=otherRoutes.js.map

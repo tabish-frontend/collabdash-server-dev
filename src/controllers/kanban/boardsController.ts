@@ -1,5 +1,6 @@
 import { BoardModel, ColumnModel, WorkspaceModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
+import { io, getReceiverSocketId } from "../../index";
 
 export const addBoard = catchAsync(async (req: any, res: any) => {
   const { name, slug, description, members, workspace } = req.body;
@@ -111,4 +112,43 @@ export const deleteBoard = catchAsync(async (req, res) => {
   return res
     .status(200)
     .json(new AppResponse(200, null, "Board Deleted", ResponseStatus.SUCCESS));
+});
+
+export const fecthBoardForSocket = catchAsync(async (req, res) => {
+  const boardId = req.body.socket_board;
+  const userId = req.user._id;
+
+  const board = await BoardModel.findById(boardId).populate([
+    { path: "owner", select: "full_name username avatar" },
+    { path: "members", select: "full_name username avatar" },
+    {
+      path: "columns",
+      populate: {
+        path: "tasks",
+        populate: [
+          { path: "assignedTo", select: "full_name username avatar" },
+          { path: "owner", select: "full_name username avatar" },
+        ],
+      },
+    },
+  ]);
+
+  // Collect all recipient IDs (owner + members), and exclude the current user
+  const filterRecipientIds = [
+    board.owner._id.toString(),
+    ...board.members.map((member) => member._id.toString()),
+  ].filter((id) => id !== userId.toString()); // Exclude the user who made the request
+
+  // Send the board data via socket to each recipient except the current user
+  filterRecipientIds.forEach((recipientId) => {
+    const receiverSocketId = getReceiverSocketId(recipientId); // Fetch socket ID of the user
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("receiveSocketBoard", {
+        boardId: board._id,
+        workSpaceId: board.workspace,
+        boardData: board, // Send the whole populated board data
+      });
+    }
+  });
 });

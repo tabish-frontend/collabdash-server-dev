@@ -31,24 +31,16 @@ export const addWorkspace = catchAsync(async (req: any, res: any) => {
 });
 
 export const getAllWorkspaces = catchAsync(async (req, res) => {
-  let workspacesQuery;
-
-  // If user is Admin or HR, retrieve all workspaces; otherwise, filter by user membership
-  if (req.user.role === Roles.Employee) {
-    workspacesQuery = WorkspaceModel.find({ members: req.user._id });
-  } else {
-    workspacesQuery = WorkspaceModel.find(); // Fetch all workspaces
-  }
-
-  const workspaces = await workspacesQuery
+  const workspaces = await WorkspaceModel.find({
+    $or: [{ members: req.user._id }, { owner: req.user._id }],
+  })
     .populate("owner", "full_name username avatar")
     .populate("members", "full_name username avatar")
     .populate({
       path: "boards",
-      match:
-        req.user.role === Roles.Employee
-          ? { members: req.user._id } // Filter boards by user membership
-          : {}, // No filtering on boards for Admin or HR
+      match: {
+        $or: [{ members: req.user._id }, { owner: req.user._id }],
+      },
       populate: [
         { path: "owner", select: "full_name username avatar" },
         { path: "members", select: "full_name username avatar" },

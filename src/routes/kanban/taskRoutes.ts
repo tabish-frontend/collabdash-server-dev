@@ -17,8 +17,6 @@ const router = Router();
 
 router.use(Protect);
 
-// router.use(restrictTo("hr", "admin"));
-
 router.route("/").post(addTask, fecthBoardForSocket);
 
 router

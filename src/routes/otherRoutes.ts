@@ -5,7 +5,7 @@ import { deleteOldNotifications } from "../controllers";
 const router = Router();
 
 router.use(Protect);
-// router.use(restrictTo("hr", "admin"));
+router.use(restrictTo("hr", "admin"));
 
 router.route("/deleteOldNotification").delete(deleteOldNotifications);
 

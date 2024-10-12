@@ -1,7 +1,7 @@
 import { ColumnModel, BoardModel, TaskModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
 
-export const addColumn = catchAsync(async (req: any, res: any) => {
+export const addColumn = catchAsync(async (req: any, res: any, next) => {
   const { name, board } = req.body;
 
   const owner = req.user._id;
@@ -20,6 +20,10 @@ export const addColumn = catchAsync(async (req: any, res: any) => {
     "tasks"
   );
 
+  req.body.socket_board = board;
+
+  next();
+
   return res
     .status(201)
     .json(
@@ -32,7 +36,7 @@ export const addColumn = catchAsync(async (req: any, res: any) => {
     );
 });
 
-export const updateColumn = catchAsync(async (req: any, res: any) => {
+export const updateColumn = catchAsync(async (req: any, res: any, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -46,6 +50,10 @@ export const updateColumn = catchAsync(async (req: any, res: any) => {
     throw new AppError("Column not found", 404);
   }
 
+  req.body.socket_board = updatedColumn.board;
+
+  next();
+
   return res
     .status(200)
     .json(
@@ -58,7 +66,7 @@ export const updateColumn = catchAsync(async (req: any, res: any) => {
     );
 });
 
-export const moveColumn = catchAsync(async (req: any, res: any) => {
+export const moveColumn = catchAsync(async (req: any, res: any, next) => {
   const { board_id, column_id, index } = req.body;
 
   // Find the board by ID
@@ -82,30 +90,16 @@ export const moveColumn = catchAsync(async (req: any, res: any) => {
   // Save the updated board
   await board.save();
 
-  const populatedBoard = await BoardModel.findById(board_id)
-    .populate("owner", "full_name username avatar")
-    .populate("members", "full_name username avatar")
-    .populate({
-      path: "columns",
-      populate: {
-        path: "tasks",
-        model: "Task",
-      },
-    });
+  req.body.socket_board = board_id;
+
+  next();
 
   return res
     .status(200)
-    .json(
-      new AppResponse(
-        200,
-        populatedBoard,
-        "Column moved",
-        ResponseStatus.SUCCESS
-      )
-    );
+    .json(new AppResponse(200, {}, "Column moved", ResponseStatus.SUCCESS));
 });
 
-export const clearAnddeleteColumn = catchAsync(async (req, res) => {
+export const clearAnddeleteColumn = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { type } = req.query;
 
@@ -136,6 +130,10 @@ export const clearAnddeleteColumn = catchAsync(async (req, res) => {
       $pull: { columns: id },
     });
   }
+
+  req.body.socket_board = column.board;
+
+  next();
 
   return res
     .status(200)

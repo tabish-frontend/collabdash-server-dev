@@ -18,7 +18,7 @@ const utils_1 = require("../../utils");
 const models_2 = require("../../models");
 const webPushConfig_1 = __importDefault(require("../../config/webPushConfig"));
 const index_1 = require("../../index");
-exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.addTask = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, board, column } = req.body;
     const owner = req.user._id;
     // Create the new task
@@ -40,11 +40,13 @@ exports.addTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0
     const populatedTask = yield models_1.TaskModel.findById(newTask._id)
         .populate("owner", "full_name username avatar")
         .populate("assignedTo", "full_name username avatar");
+    req.body.socket_board = req.body.board;
+    next();
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, populatedTask, "Task created", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.deleteTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteTask = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const deletedTask = yield models_1.TaskModel.findByIdAndDelete(id);
     if (!deletedTask) {
@@ -58,11 +60,13 @@ exports.deleteTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     yield models_1.BoardModel.findByIdAndUpdate(deletedTask.board, {
         $pull: { tasks: id },
     });
+    req.body.socket_board = deletedTask.board;
+    next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, null, "Task Deleted", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.moveTask = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { task_id, column_id, index, target_link } = req.body;
     const user = req.user;
     const task = yield models_1.TaskModel.findById(task_id).orFail(() => new utils_1.AppError("Task not found", 404));
@@ -125,6 +129,8 @@ exports.moveTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
         .populate("board", "name")
         .populate("column", "name")
         .populate("assignedTo", "full_name username");
+    req.body.socket_board = populatedTask.board._id;
+    next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, populatedTask, "Task moved", utils_1.ResponseStatus.SUCCESS));
@@ -146,7 +152,7 @@ exports.deleteAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 
         .status(200)
         .json(new utils_1.AppResponse(200, null, "Attachment Deleted", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateTask = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { owner, assignedTo, title, target_link } = req.body;
     const existingTask = yield models_1.TaskModel.findById(id).populate("assignedTo", "_id");
@@ -186,7 +192,6 @@ exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
         }
     });
     const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
-    // Send push notification
     subscriptions.forEach((subscription) => __awaiter(void 0, void 0, void 0, function* () {
         const payload = JSON.stringify({
             title: `Task Update: ${title}`,
@@ -199,7 +204,8 @@ exports.updateTask = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
         }
         catch (error) { }
     }));
-    // }
+    req.body.socket_board = updatedTask.board;
+    next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, updatedTask, "Task Updated", utils_1.ResponseStatus.SUCCESS));

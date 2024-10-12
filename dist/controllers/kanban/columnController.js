@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.clearAnddeleteColumn = exports.moveColumn = exports.updateColumn = exports.addColumn = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
-exports.addColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.addColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, board } = req.body;
     const owner = req.user._id;
     const newColumn = yield models_1.ColumnModel.create({
@@ -24,22 +24,26 @@ exports.addColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void
         $push: { columns: newColumn._id },
     });
     const populatedColumn = yield models_1.ColumnModel.findById(newColumn._id).populate("tasks");
+    req.body.socket_board = board;
+    next();
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, populatedColumn, "Column created", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.updateColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { name } = req.body;
     const updatedColumn = yield models_1.ColumnModel.findByIdAndUpdate(id, { name }, { new: true }).populate("tasks");
     if (!updatedColumn) {
         throw new utils_1.AppError("Column not found", 404);
     }
+    req.body.socket_board = updatedColumn.board;
+    next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, updatedColumn, "Column Updated", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.moveColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.moveColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { board_id, column_id, index } = req.body;
     // Find the board by ID
     const board = yield models_1.BoardModel.findById(board_id);
@@ -57,21 +61,13 @@ exports.moveColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, voi
     board.columns.splice(index, 0, column_id);
     // Save the updated board
     yield board.save();
-    const populatedBoard = yield models_1.BoardModel.findById(board_id)
-        .populate("owner", "full_name username avatar")
-        .populate("members", "full_name username avatar")
-        .populate({
-        path: "columns",
-        populate: {
-            path: "tasks",
-            model: "Task",
-        },
-    });
+    req.body.socket_board = board_id;
+    next();
     return res
         .status(200)
-        .json(new utils_1.AppResponse(200, populatedBoard, "Column moved", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, {}, "Column moved", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.clearAnddeleteColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.clearAnddeleteColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { type } = req.query;
     const column = yield models_1.ColumnModel.findById(id);
@@ -94,6 +90,8 @@ exports.clearAnddeleteColumn = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             $pull: { columns: id },
         });
     }
+    req.body.socket_board = column.board;
+    next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, null, type === "delete" ? "Column deleted" : "Column  cleared", utils_1.ResponseStatus.SUCCESS));
