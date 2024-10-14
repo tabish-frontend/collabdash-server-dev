@@ -9,9 +9,10 @@ export const emitToBoardMembers = (eventName: string) => {
     const userId = req.user._id;
 
     // Fetch the board details, selecting only the owner and members
-    const board = eventName.includes("deleted")
-      ? deletedBoard
-      : await BoardModel.findById(boardId).select("owner members");
+    const board =
+      eventName === "board deleted"
+        ? deletedBoard
+        : await BoardModel.findById(boardId).select("owner members");
 
     // Fetch all users with the "admin" role
     const admins = await UserModel.find({ role: "admin" }).select("_id");

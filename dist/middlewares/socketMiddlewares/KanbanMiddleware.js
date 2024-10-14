@@ -19,7 +19,7 @@ const emitToBoardMembers = (eventName) => {
         const deletedBoard = req.socket_deleted_board;
         const userId = req.user._id;
         // Fetch the board details, selecting only the owner and members
-        const board = eventName.includes("deleted")
+        const board = eventName === "board deleted"
             ? deletedBoard
             : yield models_1.BoardModel.findById(boardId).select("owner members");
         // Fetch all users with the "admin" role
