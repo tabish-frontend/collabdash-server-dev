@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Protect, restrictTo } from "../../middlewares";
+import { emitToBoardMembers, Protect, restrictTo } from "../../middlewares";
 
 import {
   addBoard,
@@ -16,8 +16,14 @@ router.use(Protect);
 
 router.use(restrictTo("hr", "admin"));
 
-router.route("/").get(getAllBoards).post(addBoard);
+router
+  .route("/")
+  .get(getAllBoards)
+  .post(addBoard, emitToBoardMembers("board created"));
 
-router.route("/:id").patch(updateBoard).delete(deleteBoard);
+router
+  .route("/:id")
+  .patch(updateBoard, emitToBoardMembers("board updated"))
+  .delete(deleteBoard, emitToBoardMembers("board deleted"));
 
 export default router;

@@ -1,8 +1,25 @@
 import { BoardModel, ColumnModel, WorkspaceModel } from "../../models";
 import { AppError, AppResponse, ResponseStatus, catchAsync } from "../../utils";
-import { io, getReceiverSocketId } from "../../index";
 
-export const addBoard = catchAsync(async (req: any, res: any) => {
+export const getAllBoards = catchAsync(async (req: any, res: any) => {
+  const boards = await BoardModel.find()
+    .populate("owner", "username full_name")
+    .populate("members", "username full_name")
+    .populate("workspace", "name");
+
+  return res
+    .status(200)
+    .json(
+      new AppResponse(
+        200,
+        boards,
+        "Boards fetched successfully",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
+
+export const addBoard = catchAsync(async (req: any, res: any, next) => {
   const { name, slug, description, members, workspace } = req.body;
 
   const owner = req.user._id;
@@ -41,17 +58,9 @@ export const addBoard = catchAsync(async (req: any, res: any) => {
     .populate("members", "full_name username avatar")
     .populate("columns");
 
-  const filterRecipientIds = populatedBoard.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== owner.toString()); // Exclude the user who made the request
+  req.socket_board = newBoard._id;
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("board created");
-    }
-  });
+  next();
 
   return res
     .status(201)
@@ -65,26 +74,7 @@ export const addBoard = catchAsync(async (req: any, res: any) => {
     );
 });
 
-export const getAllBoards = catchAsync(async (req: any, res: any) => {
-  const boards = await BoardModel.find()
-    .populate("owner", "username full_name")
-    .populate("members", "username full_name")
-    .populate("workspace", "name");
-
-  return res
-    .status(200)
-    .json(
-      new AppResponse(
-        200,
-        boards,
-        "Boards fetched successfully",
-        ResponseStatus.SUCCESS
-      )
-    );
-});
-
-export const updateBoard = catchAsync(async (req: any, res: any) => {
-  const userId = req.user._id;
+export const updateBoard = catchAsync(async (req: any, res: any, next) => {
   const { id } = req.params;
 
   const updatedBoard = await BoardModel.findByIdAndUpdate(id, req.body, {
@@ -97,17 +87,9 @@ export const updateBoard = catchAsync(async (req: any, res: any) => {
     throw new AppError("Board not found", 404);
   }
 
-  const filterRecipientIds = updatedBoard.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+  req.socket_board = id;
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("board updated");
-    }
-  });
+  next();
 
   return res
     .status(200)
@@ -121,11 +103,8 @@ export const updateBoard = catchAsync(async (req: any, res: any) => {
     );
 });
 
-export const deleteBoard = catchAsync(async (req, res) => {
-  const userId = req.user._id;
+export const deleteBoard = catchAsync(async (req: any, res, next) => {
   const { id } = req.params;
-
-  const currentWorkSpace = await WorkspaceModel.findOne({ boards: id });
 
   const deletedBoard = await BoardModel.findOneAndDelete({ _id: id });
 
@@ -137,17 +116,10 @@ export const deleteBoard = catchAsync(async (req, res) => {
     throw new AppError("No Board found with that ID", 400);
   }
 
-  const filterRecipientIds = currentWorkSpace.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+  req.socket_board = id;
+  req.socket_deleted_board = deletedBoard;
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("board deleted");
-    }
-  });
+  next();
 
   return res
     .status(200)

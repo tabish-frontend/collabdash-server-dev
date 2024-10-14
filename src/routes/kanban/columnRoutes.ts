@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Protect, restrictTo } from "../../middlewares";
+import { emitToBoardMembers, Protect, restrictTo } from "../../middlewares";
 import {
   addColumn,
   clearAnddeleteColumn,
@@ -9,16 +9,17 @@ import {
 
 const router = Router();
 
-// PROTECTED ROUTES ONLY USE FOR HR
-
 router.use(Protect);
 
 router.use(restrictTo("hr", "admin"));
 
-router.route("/").post(addColumn);
+router.route("/").post(addColumn, emitToBoardMembers("column created"));
 
-router.route("/:id").patch(updateColumn).delete(clearAnddeleteColumn);
+router
+  .route("/:id")
+  .patch(updateColumn, emitToBoardMembers("column updated"))
+  .delete(clearAnddeleteColumn, emitToBoardMembers("column cleared | deleted"));
 
-router.route("/move").post(moveColumn);
+router.route("/move").post(moveColumn, emitToBoardMembers("column moved"));
 
 export default router;

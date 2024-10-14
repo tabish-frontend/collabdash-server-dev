@@ -168,7 +168,6 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
         .populate("owner", "full_name username avatar")
         .populate("participants", "full_name username avatar")
         .sort({ time: status === "upcoming" ? 1 : -1 });
-    console.log("meetings", meetings);
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, meetings, "", utils_1.ResponseStatus.SUCCESS));

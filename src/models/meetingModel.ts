@@ -41,10 +41,10 @@ meetingSchema.post("save", async function (this: any) {
 
 export const MeetingModel = mongoose.model("Meeting", meetingSchema);
 
-// MeetingModel.syncIndexes()
-//   .then(() => {
-//     console.log("Indexes synchronized successfully for MeetingModel.");
-//   })
-//   .catch((error) => {
-//     console.error("Error synchronizing indexes for MeetingModel:", error);
-//   });
+MeetingModel.syncIndexes()
+  .then(() => {
+    console.log("Indexes synchronized successfully for MeetingModel.");
+  })
+  .catch((error) => {
+    console.error("Error synchronizing indexes for MeetingModel:", error);
+  });

@@ -1,58 +1,27 @@
 import { WorkspaceModel } from "../../models";
 import { AppResponse, ResponseStatus, catchAsync } from "../../utils";
-import { io, getReceiverSocketId } from "../../index";
-
-export const addWorkspace = catchAsync(async (req: any, res: any) => {
-  const { name, slug, members } = req.body;
-
-  const owner = req.user._id;
-
-  const newWorkSpace = await WorkspaceModel.create({
-    name,
-    slug,
-    owner,
-    members,
-  });
-
-  const populatedWorkSpace = await WorkspaceModel.findById(newWorkSpace._id)
-    .populate("owner", "full_name username avatar")
-    .populate("members", "full_name username avatar");
-
-  const filterRecipientIds = populatedWorkSpace.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== owner.toString()); // Exclude the user who made the request
-
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("workSpace created");
-    }
-  });
-
-  return res
-    .status(201)
-    .json(
-      new AppResponse(
-        201,
-        populatedWorkSpace,
-        "WorkSpace Added Successfully",
-        ResponseStatus.SUCCESS
-      )
-    );
-});
+import { Roles } from "../../types/enum";
 
 export const getAllWorkspaces = catchAsync(async (req, res) => {
-  const workspaces = await WorkspaceModel.find({
-    $or: [{ members: req.user._id }, { owner: req.user._id }],
-  })
+  let workspacesQuery;
+
+  if (req.user.role === Roles.Admin) {
+    workspacesQuery = WorkspaceModel.find();
+  } else {
+    workspacesQuery = WorkspaceModel.find({
+      $or: [{ members: req.user._id }, { owner: req.user._id }],
+    });
+  }
+
+  const workspaces = await workspacesQuery
     .populate("owner", "full_name username avatar")
     .populate("members", "full_name username avatar")
     .populate({
       path: "boards",
-      match: {
-        $or: [{ members: req.user._id }, { owner: req.user._id }],
-      },
+      match:
+        req.user.role === Roles.Admin
+          ? {}
+          : { $or: [{ members: req.user._id }, { owner: req.user._id }] },
       populate: [
         { path: "owner", select: "full_name username avatar" },
         { path: "members", select: "full_name username avatar" },
@@ -74,8 +43,39 @@ export const getAllWorkspaces = catchAsync(async (req, res) => {
     .json(new AppResponse(200, workspaces, "", ResponseStatus.SUCCESS));
 });
 
-export const updateWorkspace = catchAsync(async (req, res) => {
-  const userId = req.user._id;
+export const addWorkspace = catchAsync(async (req: any, res: any, next) => {
+  const { name, slug, members } = req.body;
+
+  const owner = req.user._id;
+
+  const newWorkSpace = await WorkspaceModel.create({
+    name,
+    slug,
+    owner,
+    members,
+  });
+
+  const populatedWorkSpace = await WorkspaceModel.findById(newWorkSpace._id)
+    .populate("owner", "full_name username avatar")
+    .populate("members", "full_name username avatar");
+
+  req.socket_workspace_id = newWorkSpace._id;
+
+  next();
+
+  return res
+    .status(201)
+    .json(
+      new AppResponse(
+        201,
+        populatedWorkSpace,
+        "WorkSpace Added Successfully",
+        ResponseStatus.SUCCESS
+      )
+    );
+});
+
+export const updateWorkspace = catchAsync(async (req: any, res, next) => {
   const { id } = req.params;
 
   const updatedWorkspace = await WorkspaceModel.findByIdAndUpdate(
@@ -105,17 +105,9 @@ export const updateWorkspace = catchAsync(async (req, res) => {
       ],
     });
 
-  const filterRecipientIds = updatedWorkspace.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+  req.socket_workspace_id = id;
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("workSpace updated");
-    }
-  });
+  next();
 
   if (!updatedWorkspace) {
     return res
@@ -137,12 +129,9 @@ export const updateWorkspace = catchAsync(async (req, res) => {
     );
 });
 
-export const deleteWorkSpace = catchAsync(async (req, res) => {
-  const userId = req.user._id;
+export const deleteWorkSpace = catchAsync(async (req: any, res, next) => {
   const { id } = req.params;
 
-  const currentWorkSpace = await WorkspaceModel.findById(id);
-  // Trigger the middleware by using `findOneAndDelete`
   const deletedWorkspace = await WorkspaceModel.findOneAndDelete({ _id: id });
 
   if (!deletedWorkspace) {
@@ -153,17 +142,10 @@ export const deleteWorkSpace = catchAsync(async (req, res) => {
       );
   }
 
-  const filterRecipientIds = currentWorkSpace.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== userId.toString()); // Exclude the user who made the request
+  req.socket_workspace_id = id;
+  req.socket_deleted_workspace = deletedWorkspace;
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("workSpace deleted");
-    }
-  });
+  next();
 
   return res
     .status(200)

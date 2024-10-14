@@ -220,7 +220,6 @@ export const getAllMeetings = catchAsync(async (req, res) => {
     .populate("participants", "full_name username avatar")
     .sort({ time: status === "upcoming" ? 1 : -1 });
 
-  console.log("meetings", meetings);
   return res
     .status(200)
     .json(new AppResponse(200, meetings, "", ResponseStatus.SUCCESS));

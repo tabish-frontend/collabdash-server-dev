@@ -37,7 +37,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const taksModel_1 = require("./taksModel");
 const columnModel_1 = require("./columnModel");
 const BoardSchema = new mongoose_1.Schema({
-    name: { type: String, required: true },
+    name: { type: String, required: true, unique: true },
     slug: { type: String },
     description: { type: String },
     members: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
@@ -68,4 +68,11 @@ BoardSchema.pre("findOneAndDelete", function (next) {
     });
 });
 exports.BoardModel = mongoose_1.default.model("Board", BoardSchema);
+exports.BoardModel.syncIndexes()
+    .then(() => {
+    console.log("Indexes synchronized successfully for MeetingModel.");
+})
+    .catch((error) => {
+    console.error("Error synchronizing indexes for MeetingModel:", error);
+});
 //# sourceMappingURL=boardModel.js.map

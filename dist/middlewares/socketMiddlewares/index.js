@@ -14,11 +14,5 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./authMiddlewares"), exports);
-__exportStar(require("./generateRandomPasswordMiddleware"), exports);
-__exportStar(require("./getUserIdMiddleware"), exports);
-__exportStar(require("./multer"), exports);
-__exportStar(require("./filterAttendanceMiddleware"), exports);
-__exportStar(require("./excludeRolesMiddleware"), exports);
-__exportStar(require("./socketMiddlewares"), exports);
+__exportStar(require("./KanbanMiddleware"), exports);
 //# sourceMappingURL=index.js.map

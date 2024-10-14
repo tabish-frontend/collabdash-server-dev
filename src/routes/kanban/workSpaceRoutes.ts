@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Protect, restrictTo } from "../../middlewares";
+import { emitToWorkspaceMembers, Protect, restrictTo } from "../../middlewares";
 
 import {
   addWorkspace,
@@ -10,23 +10,22 @@ import {
 
 const router = Router();
 
-// PROTECTED ROUTES ONLY USE FOR HR
-
 router.use(Protect);
 
 router
   .route("/")
   .get(getAllWorkspaces)
-  .post(restrictTo("hr", "admin"), addWorkspace);
+  .post(
+    restrictTo("hr", "admin"),
+    addWorkspace,
+    emitToWorkspaceMembers("workSpace created")
+  );
 
 router.use(restrictTo("hr", "admin"));
 
-router.route("/:id").patch(updateWorkspace).delete(deleteWorkSpace);
+router
+  .route("/:id")
+  .patch(updateWorkspace, emitToWorkspaceMembers("workSpace updated"))
+  .delete(deleteWorkSpace, emitToWorkspaceMembers("workSpace deleted"));
 
 export default router;
-
-// router.route("/").get(getAllWorkspaces);
-
-// router.use(restrictTo("hr", "admin"));
-
-// router.route("/").post(addWorkspace);

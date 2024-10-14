@@ -5,7 +5,7 @@ import { ColumnModel } from "./columnModel";
 
 const BoardSchema: Schema<Board> = new Schema(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true, unique: true },
     slug: { type: String },
     description: { type: String },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -41,3 +41,11 @@ BoardSchema.pre("findOneAndDelete", async function (next) {
 });
 
 export const BoardModel = mongoose.model("Board", BoardSchema);
+
+BoardModel.syncIndexes()
+  .then(() => {
+    console.log("Indexes synchronized successfully for MeetingModel.");
+  })
+  .catch((error) => {
+    console.error("Error synchronizing indexes for MeetingModel:", error);
+  });

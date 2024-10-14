@@ -24,7 +24,7 @@ exports.addColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0
         $push: { columns: newColumn._id },
     });
     const populatedColumn = yield models_1.ColumnModel.findById(newColumn._id).populate("tasks");
-    req.body.socket_board = board;
+    req.socket_board = board;
     next();
     return res
         .status(201)
@@ -37,13 +37,14 @@ exports.updateColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(voi
     if (!updatedColumn) {
         throw new utils_1.AppError("Column not found", 404);
     }
-    req.body.socket_board = updatedColumn.board;
+    req.socket_board = updatedColumn.board;
     next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, updatedColumn, "Column Updated", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.moveColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
     const { board_id, column_id, index } = req.body;
     // Find the board by ID
     const board = yield models_1.BoardModel.findById(board_id);
@@ -61,13 +62,24 @@ exports.moveColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 
     board.columns.splice(index, 0, column_id);
     // Save the updated board
     yield board.save();
-    req.body.socket_board = board_id;
+    const populatedBoard = yield models_1.BoardModel.findById(board_id)
+        .populate("owner", "full_name username avatar")
+        .populate("members", "full_name username avatar")
+        .populate({
+        path: "columns",
+        populate: {
+            path: "tasks",
+            model: "Task",
+        },
+    });
+    req.socket_board = board_id;
     next();
     return res
         .status(200)
-        .json(new utils_1.AppResponse(200, {}, "Column moved", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, populatedBoard, "Column moved", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.clearAnddeleteColumn = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
     const { id } = req.params;
     const { type } = req.query;
     const column = yield models_1.ColumnModel.findById(id);
@@ -90,7 +102,7 @@ exports.clearAnddeleteColumn = (0, utils_1.catchAsync)((req, res, next) => __awa
             $pull: { columns: id },
         });
     }
-    req.body.socket_board = column.board;
+    req.socket_board = column.board;
     next();
     return res
         .status(200)

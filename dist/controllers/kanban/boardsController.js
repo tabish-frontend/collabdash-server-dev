@@ -9,11 +9,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fecthBoardForSocket = exports.deleteBoard = exports.updateBoard = exports.getAllBoards = exports.addBoard = void 0;
+exports.deleteBoard = exports.updateBoard = exports.addBoard = exports.getAllBoards = void 0;
 const models_1 = require("../../models");
 const utils_1 = require("../../utils");
-const index_1 = require("../../index");
-exports.addBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.getAllBoards = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const boards = yield models_1.BoardModel.find()
+        .populate("owner", "username full_name")
+        .populate("members", "username full_name")
+        .populate("workspace", "name");
+    return res
+        .status(200)
+        .json(new utils_1.AppResponse(200, boards, "Boards fetched successfully", utils_1.ResponseStatus.SUCCESS));
+}));
+exports.addBoard = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, slug, description, members, workspace } = req.body;
     const owner = req.user._id;
     const newBoard = yield models_1.BoardModel.create({
@@ -42,20 +50,13 @@ exports.addBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 
         .populate("owner", "full_name username avatar")
         .populate("members", "full_name username avatar")
         .populate("columns");
+    req.socket_board = newBoard._id;
+    next();
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, populatedBoard, "Board Added Successfully", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.getAllBoards = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const boards = yield models_1.BoardModel.find()
-        .populate("owner", "username full_name")
-        .populate("members", "username full_name")
-        .populate("workspace", "name");
-    return res
-        .status(200)
-        .json(new utils_1.AppResponse(200, boards, "Boards fetched successfully", utils_1.ResponseStatus.SUCCESS));
-}));
-exports.updateBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateBoard = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const updatedBoard = yield models_1.BoardModel.findByIdAndUpdate(id, req.body, {
         new: true,
@@ -65,11 +66,13 @@ exports.updateBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
     if (!updatedBoard) {
         throw new utils_1.AppError("Board not found", 404);
     }
+    req.socket_board = id;
+    next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, updatedBoard, "Board Updated", utils_1.ResponseStatus.SUCCESS));
 }));
-exports.deleteBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteBoard = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const deletedBoard = yield models_1.BoardModel.findOneAndDelete({ _id: id });
     yield models_1.WorkspaceModel.findByIdAndUpdate(deletedBoard.workspace, {
@@ -78,42 +81,11 @@ exports.deleteBoard = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, vo
     if (!deletedBoard) {
         throw new utils_1.AppError("No Board found with that ID", 400);
     }
+    req.socket_board = id;
+    req.socket_deleted_board = deletedBoard;
+    next();
     return res
         .status(200)
         .json(new utils_1.AppResponse(200, null, "Board Deleted", utils_1.ResponseStatus.SUCCESS));
-}));
-exports.fecthBoardForSocket = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const boardId = req.body.socket_board;
-    const userId = req.user._id;
-    const board = yield models_1.BoardModel.findById(boardId).populate([
-        { path: "owner", select: "full_name username avatar" },
-        { path: "members", select: "full_name username avatar" },
-        {
-            path: "columns",
-            populate: {
-                path: "tasks",
-                populate: [
-                    { path: "assignedTo", select: "full_name username avatar" },
-                    { path: "owner", select: "full_name username avatar" },
-                ],
-            },
-        },
-    ]);
-    // Collect all recipient IDs (owner + members), and exclude the current user
-    const filterRecipientIds = [
-        board.owner._id.toString(),
-        ...board.members.map((member) => member._id.toString()),
-    ].filter((id) => id !== userId.toString()); // Exclude the user who made the request
-    // Send the board data via socket to each recipient except the current user
-    filterRecipientIds.forEach((recipientId) => {
-        const receiverSocketId = (0, index_1.getReceiverSocketId)(recipientId); // Fetch socket ID of the user
-        if (receiverSocketId) {
-            index_1.io.to(receiverSocketId).emit("receiveSocketBoard", {
-                boardId: board._id,
-                workSpaceId: board.workspace,
-                boardData: board, // Send the whole populated board data
-            });
-        }
-    });
 }));
 //# sourceMappingURL=boardsController.js.map

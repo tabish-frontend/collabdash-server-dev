@@ -17,7 +17,7 @@ import { PushSubscriptionModel } from "../../models";
 import webPush from "../../config/webPushConfig";
 import { io, getReceiverSocketId } from "../../index";
 
-export const addTask = catchAsync(async (req: any, res: any) => {
+export const addTask = catchAsync(async (req: any, res: any, next) => {
   const { title, board, column } = req.body;
   const owner = req.user._id;
 
@@ -35,9 +35,8 @@ export const addTask = catchAsync(async (req: any, res: any) => {
   });
 
   // Add the new task to the board
-  const currentBoard = await BoardModel.findByIdAndUpdate(board, {
+  await BoardModel.findByIdAndUpdate(board, {
     $push: { tasks: newTask._id },
-    new: true,
   });
 
   // Populate the necessary fields
@@ -45,17 +44,9 @@ export const addTask = catchAsync(async (req: any, res: any) => {
     .populate("owner", "full_name username avatar")
     .populate("assignedTo", "full_name username avatar");
 
-  const filterRecipientIds = currentBoard.members
-    .map((member) => member._id.toString())
-    .filter((id) => id !== owner.toString()); // Exclude the user who made the request
+  req.socket_board = board;
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("task created");
-    }
-  });
+  next();
 
   return res
     .status(201)
@@ -69,45 +60,89 @@ export const addTask = catchAsync(async (req: any, res: any) => {
     );
 });
 
-export const deleteTask = catchAsync(async (req, res) => {
+export const updateTask = catchAsync(async (req: any, res: any, next) => {
+  const user = req.user;
   const { id } = req.params;
-  const userId = req.user._id;
 
-  const deletedTask = await TaskModel.findByIdAndDelete(id);
+  const { owner, assignedTo, title, target_link } = req.body;
+  const existingTask = await TaskModel.findById(id).populate("assignedTo");
 
-  if (!deletedTask) {
-    return res
-      .status(404)
-      .json(new AppResponse(404, null, "Task not found", ResponseStatus.ERROR));
+  if (!existingTask) {
+    throw new AppError("Task not found", 404);
   }
 
-  await ColumnModel.findByIdAndUpdate(deletedTask.column, {
-    $pull: { tasks: id },
-  });
+  const receiver = assignedTo.map((item: any) => item._id);
 
-  const currentBoard = await BoardModel.findByIdAndUpdate(deletedTask.board, {
-    $pull: { tasks: id },
+  let notificationMessage = `has assigned you a Task ${title}`;
+
+  const updatedTask: any = await TaskModel.findByIdAndUpdate(id, req.body, {
     new: true,
+  })
+    .populate("owner", "username full_name avatar")
+    .populate("assignedTo", "username full_name avatar")
+    .populate("board");
+
+  if (!updatedTask) {
+    throw new AppError("Board not found", 404);
+  }
+
+  req.socket_board = updatedTask.board._id;
+
+  next();
+
+  const previousAssignedIds = existingTask.assignedTo.map((item: any) =>
+    item._id.toString()
+  );
+  const newlyAssignedUsers = receiver.filter(
+    (recipientId: string) => !previousAssignedIds.includes(recipientId)
+  );
+
+  if (newlyAssignedUsers.length === 0) {
+    notificationMessage = `has made some changes in Task ${title}`;
+  }
+  const newNotification = await NotificationModel.create({
+    sender: owner._id,
+    receiver,
+    message: notificationMessage,
+    link: title,
+    target_link,
   });
 
-  const filterRecipientIds = currentBoard.members
-    .map((member) => member._id.toString())
-    .filter((id) => id !== userId.toString()); // Exclude the user who made the request
+  const subscriptions = await PushSubscriptionModel.find({
+    user: { $in: receiver },
+  });
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
+  receiver.forEach((recipientId: string) => {
+    const receiverSocketId = getReceiverSocketId(recipientId);
 
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("task deleted");
+      io.to(receiverSocketId).emit("receiveNotification", newNotification);
     }
+  });
+
+  const pushNotificationMessage = `${user.full_name} ${notificationMessage}`;
+
+  subscriptions.forEach(async (subscription: any) => {
+    const payload = JSON.stringify({
+      title: `Task Update: ${title}`,
+      message: pushNotificationMessage,
+      icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
+      url: target_link, // URL to navigate on notification click
+    });
+
+    try {
+      await webPush.sendNotification(subscription, payload);
+    } catch (error: any) {}
   });
 
   return res
     .status(200)
-    .json(new AppResponse(200, null, "Task Deleted", ResponseStatus.SUCCESS));
+    .json(
+      new AppResponse(200, updatedTask, "Task Updated", ResponseStatus.SUCCESS)
+    );
 });
 
-export const moveTask = catchAsync(async (req, res) => {
+export const moveTask = catchAsync(async (req: any, res, next) => {
   const { task_id, column_id, index, target_link } = req.body;
   const user = req.user;
 
@@ -193,23 +228,44 @@ export const moveTask = catchAsync(async (req, res) => {
     .populate("column", "name")
     .populate("assignedTo", "full_name username");
 
-  const filterRecipientIds = populatedTask.board.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== user._id.toString()); // Exclude the user who made the request
+  req.socket_board = populatedTask.board._id;
 
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("task moved");
-    }
-  });
+  next();
 
   return res
     .status(200)
     .json(
       new AppResponse(200, populatedTask, "Task moved", ResponseStatus.SUCCESS)
     );
+});
+
+export const deleteTask = catchAsync(async (req: any, res, next) => {
+  const { id } = req.params;
+  const userId = req.user._id;
+
+  const deletedTask = await TaskModel.findByIdAndDelete(id);
+
+  if (!deletedTask) {
+    return res
+      .status(404)
+      .json(new AppResponse(404, null, "Task not found", ResponseStatus.ERROR));
+  }
+
+  await ColumnModel.findByIdAndUpdate(deletedTask.column, {
+    $pull: { tasks: id },
+  });
+
+  await BoardModel.findByIdAndUpdate(deletedTask.board, {
+    $pull: { tasks: id },
+  });
+
+  req.socket_board = deletedTask.board;
+
+  next();
+
+  return res
+    .status(200)
+    .json(new AppResponse(200, null, "Task Deleted", ResponseStatus.SUCCESS));
 });
 
 export const uploadAttachment = catchAsync(async (req, res) => {
@@ -241,95 +297,5 @@ export const deleteAttachment = catchAsync(async (req, res) => {
     .status(200)
     .json(
       new AppResponse(200, null, "Attachment Deleted", ResponseStatus.SUCCESS)
-    );
-});
-
-export const updateTask = catchAsync(async (req: any, res: any) => {
-  const { id } = req.params;
-
-  const { owner, assignedTo, title, target_link } = req.body;
-  const existingTask = await TaskModel.findById(id).populate("assignedTo");
-
-  if (!existingTask) {
-    throw new AppError("Task not found", 404);
-  }
-
-  const receiver = assignedTo.map((item: any) => item._id);
-
-  let notificationMessage = `has assigned you a Task ${title}`;
-
-  const updatedTask: any = await TaskModel.findByIdAndUpdate(id, req.body, {
-    new: true,
-  })
-    .populate("owner", "username full_name avatar")
-    .populate("assignedTo", "username full_name avatar")
-    .populate("board");
-
-  if (!updatedTask) {
-    throw new AppError("Board not found", 404);
-  }
-
-  const filterRecipientIds = updatedTask.board.members
-    .map((member: any) => member._id.toString())
-    .filter((id: any) => id !== owner.toString()); // Exclude the user who made the request
-
-  filterRecipientIds.forEach((member: any) => {
-    const receiverSocketId = getReceiverSocketId(member); // Fetch socket ID of the user
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("task updated");
-    }
-  });
-
-  // if (assignedTo.length) {
-  const previousAssignedIds = existingTask.assignedTo.map((item: any) =>
-    item._id.toString()
-  );
-  const newlyAssignedUsers = receiver.filter(
-    (recipientId: string) => !previousAssignedIds.includes(recipientId)
-  );
-
-  if (newlyAssignedUsers.length === 0) {
-    notificationMessage = `has made some changes in Task ${title}`;
-  }
-  const newNotification = await NotificationModel.create({
-    sender: owner._id,
-    receiver,
-    message: notificationMessage,
-    link: title,
-    target_link,
-  });
-
-  const subscriptions = await PushSubscriptionModel.find({
-    user: { $in: receiver },
-  });
-
-  receiver.forEach((recipientId: string) => {
-    const receiverSocketId = getReceiverSocketId(recipientId);
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("receiveNotification", newNotification);
-    }
-  });
-
-  const pushNotificationMessage = `${owner.full_name} ${notificationMessage}`;
-
-  subscriptions.forEach(async (subscription: any) => {
-    const payload = JSON.stringify({
-      title: `Task Update: ${title}`,
-      message: pushNotificationMessage,
-      icon: "http://res.cloudinary.com/djorjfbc6/image/upload/v1727342021/mmwfdtqpql2ljosvj3kn.jpg", // Path to your notification icon
-      url: target_link, // URL to navigate on notification click
-    });
-
-    try {
-      await webPush.sendNotification(subscription, payload);
-    } catch (error: any) {}
-  });
-
-  return res
-    .status(200)
-    .json(
-      new AppResponse(200, updatedTask, "Task Updated", ResponseStatus.SUCCESS)
     );
 });
