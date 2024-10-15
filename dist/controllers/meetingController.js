@@ -145,7 +145,6 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
     const userId = req.user._id;
     // Get the current time and subtract 2 hours
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    let filter = {};
     // Base filter to check if the user is the owner or a participant
     const baseFilter = {
         $or: [
@@ -153,16 +152,24 @@ exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0,
             { participants: userId }, // Check if the user is a participant
         ],
     };
+    let filter = Object.assign({}, baseFilter);
     if (status === "upcoming") {
-        // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
-        filter = Object.assign(Object.assign({}, baseFilter), { $or: [
-                { time: { $gte: twoHoursAgo } },
-                { recurring: true }, // Recurring meetings, always include
+        // Filter for upcoming meetings
+        filter = Object.assign(Object.assign({}, baseFilter), { $and: [
+                {
+                    $or: [
+                        { time: { $gte: twoHoursAgo } },
+                        { recurring: true }, // Recurring meetings, always include
+                    ],
+                },
             ] });
     }
     else if (status === "completed") {
-        // Only non-recurring meetings that are completed (time < twoHoursAgo)
-        filter = Object.assign(Object.assign({}, baseFilter), { time: { $lt: twoHoursAgo }, recurring: false });
+        // Filter for completed meetings
+        filter = Object.assign(Object.assign({}, baseFilter), { $and: [
+                { time: { $lt: twoHoursAgo } },
+                { recurring: false }, // Exclude recurring meetings from completed
+            ] });
     }
     const meetings = yield models_1.MeetingModel.find(filter)
         .populate("owner", "full_name username avatar")

@@ -187,7 +187,6 @@ export const getAllMeetings = catchAsync(async (req, res) => {
 
   // Get the current time and subtract 2 hours
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-  let filter = {};
 
   // Base filter to check if the user is the owner or a participant
   const baseFilter = {
@@ -197,21 +196,29 @@ export const getAllMeetings = catchAsync(async (req, res) => {
     ],
   };
 
+  let filter: any = { ...baseFilter };
+
   if (status === "upcoming") {
-    // Set filter to get meetings that are either upcoming (time >= twoHoursAgo) or recurring
+    // Filter for upcoming meetings
     filter = {
       ...baseFilter,
-      $or: [
-        { time: { $gte: twoHoursAgo } }, // Future meetings
-        { recurring: true }, // Recurring meetings, always include
+      $and: [
+        {
+          $or: [
+            { time: { $gte: twoHoursAgo } }, // Future meetings
+            { recurring: true }, // Recurring meetings, always include
+          ],
+        },
       ],
     };
   } else if (status === "completed") {
-    // Only non-recurring meetings that are completed (time < twoHoursAgo)
+    // Filter for completed meetings
     filter = {
       ...baseFilter,
-      time: { $lt: twoHoursAgo },
-      recurring: false, // Exclude recurring meetings from completed
+      $and: [
+        { time: { $lt: twoHoursAgo } }, // Completed meetings
+        { recurring: false }, // Exclude recurring meetings from completed
+      ],
     };
   }
 
