@@ -271,7 +271,7 @@ export const deleteTask = catchAsync(async (req: any, res, next) => {
 export const uploadAttachment = catchAsync(async (req, res) => {
   let attachment = "";
   if (isFilesObject(req.files)) {
-    const file = await uploadOnCloudinary(req.files.attachment[0].path);
+    const file = await uploadOnCloudinary(req.files.attachment[0]);
 
     attachment = file.url;
   }

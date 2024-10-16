@@ -9,13 +9,46 @@ import {
 import { io, getReceiverSocketId } from "../../index"; // Adjust the path based on your project structure
 import { sendChatNotification } from "../../utils";
 
+// export const getThreads = catchAsync(async (req: any, res: any) => {
+//   const userId = req.user._id;
+
+//   // Find threads where the current user is a participant
+//   const threads = await ThreadModel.find({ participants: { $in: [userId] } })
+//     .populate("participants", "full_name avatar")
+//     .populate("messages");
+
+//   return res
+//     .status(201)
+//     .json(new AppResponse(201, threads, "", ResponseStatus.SUCCESS));
+// });
+
 export const getThreads = catchAsync(async (req: any, res: any) => {
   const userId = req.user._id;
 
-  // Find threads where the current user is a participant
-  const threads = await ThreadModel.find({ participants: { $in: [userId] } })
-    .populate("participants", "full_name avatar")
-    .populate("messages");
+  // Find threads where the current user is a participant, sorting by the latest message's createdAt
+  const threads = await ThreadModel.aggregate([
+    { $match: { participants: { $in: [userId] } } },
+    {
+      $lookup: {
+        from: "messages",
+        localField: "messages",
+        foreignField: "_id",
+        as: "messages",
+      },
+    },
+    {
+      $addFields: {
+        latestMessage: { $arrayElemAt: [{ $slice: ["$messages", -1] }, 0] },
+      },
+    },
+    { $sort: { "latestMessage.createdAt": -1 } },
+  ]);
+
+  // Populate participants information
+  await ThreadModel.populate(threads, {
+    path: "participants",
+    select: "full_name avatar",
+  });
 
   return res
     .status(201)

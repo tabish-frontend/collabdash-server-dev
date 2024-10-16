@@ -23,7 +23,7 @@ export const updateMe = catchAsync(async (req, res) => {
   }
 
   if (isFilesObject(req.files)) {
-    const avatar = await uploadOnCloudinary(req.files.attachment[0].path);
+    const avatar = await uploadOnCloudinary(req.files.attachment[0]);
     req.body.avatar = avatar.url;
   }
 
