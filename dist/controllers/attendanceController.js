@@ -82,12 +82,9 @@ exports.getTodayAttendanceOfUser = (0, utils_1.catchAsync)((req, res) => __await
             user: userId,
             date: { $gte: startOfDay, $lte: endOfDay },
         });
-        if (!attendance) {
-            throw new utils_1.AppError("Attendance not found for today", 404);
-        }
         return res
             .status(200)
-            .json(new utils_1.AppResponse(200, { attendance }, "", utils_1.ResponseStatus.SUCCESS));
+            .json(new utils_1.AppResponse(200, attendance, "", utils_1.ResponseStatus.SUCCESS));
     }
     catch (error) {
         throw new utils_1.AppError((error === null || error === void 0 ? void 0 : error.message) || "Something went wrong", 404);

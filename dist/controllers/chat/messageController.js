@@ -14,12 +14,41 @@ const models_1 = require("../../models");
 const utils_1 = require("../../utils");
 const index_1 = require("../../index"); // Adjust the path based on your project structure
 const utils_2 = require("../../utils");
+// export const getThreads = catchAsync(async (req: any, res: any) => {
+//   const userId = req.user._id;
+//   // Find threads where the current user is a participant
+//   const threads = await ThreadModel.find({ participants: { $in: [userId] } })
+//     .populate("participants", "full_name avatar")
+//     .populate("messages");
+//   return res
+//     .status(201)
+//     .json(new AppResponse(201, threads, "", ResponseStatus.SUCCESS));
+// });
 exports.getThreads = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
-    // Find threads where the current user is a participant
-    const threads = yield models_1.ThreadModel.find({ participants: { $in: [userId] } })
-        .populate("participants", "full_name avatar")
-        .populate("messages");
+    // Find threads where the current user is a participant, sorting by the latest message's createdAt
+    const threads = yield models_1.ThreadModel.aggregate([
+        { $match: { participants: { $in: [userId] } } },
+        {
+            $lookup: {
+                from: "messages",
+                localField: "messages",
+                foreignField: "_id",
+                as: "messages",
+            },
+        },
+        {
+            $addFields: {
+                latestMessage: { $arrayElemAt: [{ $slice: ["$messages", -1] }, 0] },
+            },
+        },
+        { $sort: { "latestMessage.createdAt": -1 } },
+    ]);
+    // Populate participants information
+    yield models_1.ThreadModel.populate(threads, {
+        path: "participants",
+        select: "full_name avatar",
+    });
     return res
         .status(201)
         .json(new utils_1.AppResponse(201, threads, "", utils_1.ResponseStatus.SUCCESS));

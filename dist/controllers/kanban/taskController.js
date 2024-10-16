@@ -198,7 +198,7 @@ exports.deleteTask = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 
 exports.uploadAttachment = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let attachment = "";
     if ((0, utils_1.isFilesObject)(req.files)) {
-        const file = yield (0, utils_1.uploadOnCloudinary)(req.files.attachment[0].path);
+        const file = yield (0, utils_1.uploadOnCloudinary)(req.files.attachment[0]);
         attachment = file.url;
     }
     return res

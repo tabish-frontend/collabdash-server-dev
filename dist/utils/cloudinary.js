@@ -1,6 +1,4 @@
 "use strict";
-// import { v2 as cloudinary } from "cloudinary";
-// import fs from "fs";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,36 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteFromCloudinary = exports.uploadOnCloudinary = void 0;
-// cloudinary.config({
-//   cloud_name: process.env.CLOUDINARY_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY,
-//   api_secret: process.env.CLOUDINARY_API_SECRET,
-// });
-// export const uploadOnCloudinary = async (locaLFilePath: string | null) => {
-//   try {
-//     if (!locaLFilePath) return null;
-//     // Determine the file type based on extension
-//     const fileExtension = locaLFilePath.split(".").pop()?.toLowerCase();
-//     let resourceType: "image" | "video" | "raw" | "auto" = "auto";
-//     // If it's a document, set resource_type to 'raw'
-//     if (["pdf", "doc", "docx", "txt"].includes(fileExtension || "")) {
-//       resourceType = "raw";
-//     }
-//     // Upload the file on Cloudinary
-//     const response = await cloudinary.uploader.upload(locaLFilePath, {
-//       resource_type: resourceType,
-//       allowed_formats: ["jpg", "png", "pdf", "doc", "docx", "txt"],
-//     });
-//     fs.unlinkSync(locaLFilePath); // Remove the locally saved temporary file after successful upload
-//     return response;
-//   } catch (error) {
-//     fs.unlinkSync(locaLFilePath); // Remove the locally saved temporary file if the upload fails
-//     return null;
-//   }
-// };
-// export const deleteFromCloudinary = async (id: string) => {
-//   await cloudinary.uploader.destroy(id);
-// };
 const cloudinary_1 = require("cloudinary");
 const fs_1 = __importDefault(require("fs"));
 cloudinary_1.v2.config({
@@ -52,18 +20,30 @@ cloudinary_1.v2.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const uploadOnCloudinary = (locaLFilePath) => __awaiter(void 0, void 0, void 0, function* () {
+const uploadOnCloudinary = (locaLFile) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!locaLFilePath)
+        if (!locaLFile)
             return null;
-        // upload the file on cloudinary
-        const response = yield cloudinary_1.v2.uploader.upload(locaLFilePath, {
+        const fileExtension = locaLFile.originalname.split(".").pop(); // Get the file extension
+        const publicIdWithoutExtension = locaLFile.originalname.replace(/\.[^/.]+$/, ""); // Remove existing extension
+        // Upload the file to Cloudinary
+        const response = yield cloudinary_1.v2.uploader.upload(locaLFile.path, {
             resource_type: "auto",
+            public_id: publicIdWithoutExtension,
+            format: fileExtension,
+            use_filename: true,
+            unique_filename: false,
         });
-        return response;
+        console.log("response", response);
+        // Clean up the local file after upload
+        fs_1.default.unlinkSync(locaLFile.path); // Remove the local file after upload
+        return response; // Return the Cloudinary response
     }
     catch (error) {
-        fs_1.default.unlinkSync(locaLFilePath); // remove the locally save temporary file as the uplad operation got failed
+        console.error("Error uploading to Cloudinary:", error);
+        if (fs_1.default.existsSync(locaLFile.path)) {
+            fs_1.default.unlinkSync(locaLFile.path); // Clean up the local file on error
+        }
         return null;
     }
 });

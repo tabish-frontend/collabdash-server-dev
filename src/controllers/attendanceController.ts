@@ -101,13 +101,9 @@ export const getTodayAttendanceOfUser = catchAsync(async (req, res) => {
       date: { $gte: startOfDay, $lte: endOfDay },
     });
 
-    if (!attendance) {
-      throw new AppError("Attendance not found for today", 404);
-    }
-
     return res
       .status(200)
-      .json(new AppResponse(200, { attendance }, "", ResponseStatus.SUCCESS));
+      .json(new AppResponse(200, attendance, "", ResponseStatus.SUCCESS));
   } catch (error) {
     throw new AppError(error?.message || "Something went wrong", 404);
   }
