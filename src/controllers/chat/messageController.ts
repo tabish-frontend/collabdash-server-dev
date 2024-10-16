@@ -9,50 +9,28 @@ import {
 import { io, getReceiverSocketId } from "../../index"; // Adjust the path based on your project structure
 import { sendChatNotification } from "../../utils";
 
-// export const getThreads = catchAsync(async (req: any, res: any) => {
-//   const userId = req.user._id;
-
-//   // Find threads where the current user is a participant
-//   const threads = await ThreadModel.find({ participants: { $in: [userId] } })
-//     .populate("participants", "full_name avatar")
-//     .populate("messages");
-
-//   return res
-//     .status(201)
-//     .json(new AppResponse(201, threads, "", ResponseStatus.SUCCESS));
-// });
-
 export const getThreads = catchAsync(async (req: any, res: any) => {
   const userId = req.user._id;
 
-  // Find threads where the current user is a participant, sorting by the latest message's createdAt
-  const threads = await ThreadModel.aggregate([
-    { $match: { participants: { $in: [userId] } } },
-    {
-      $lookup: {
-        from: "messages",
-        localField: "messages",
-        foreignField: "_id",
-        as: "messages",
-      },
-    },
-    {
-      $addFields: {
-        latestMessage: { $arrayElemAt: [{ $slice: ["$messages", -1] }, 0] },
-      },
-    },
-    { $sort: { "latestMessage.createdAt": -1 } },
-  ]);
+  // Fetch all threads where the current user is a participant and populate messages
+  const threads = await ThreadModel.find({ participants: { $in: [userId] } })
+    .populate("participants", "full_name avatar")
+    .populate("messages");
 
-  // Populate participants information
-  await ThreadModel.populate(threads, {
-    path: "participants",
-    select: "full_name avatar",
+  // Sort the threads by the latest message's createdAt
+  const sortedThreads = threads.sort((a, b) => {
+    const latestMessageA = a.messages.length
+      ? Math.max(...a.messages.map((msg: any) => msg.createdAt))
+      : 0;
+    const latestMessageB = b.messages.length
+      ? Math.max(...b.messages.map((msg: any) => msg.createdAt))
+      : 0;
+    return latestMessageB - latestMessageA; // Sort in descending order
   });
 
   return res
-    .status(201)
-    .json(new AppResponse(201, threads, "", ResponseStatus.SUCCESS));
+    .status(200) // Use 200 status for successful responses
+    .json(new AppResponse(200, sortedThreads, "", ResponseStatus.SUCCESS)); // Use status 200
 });
 
 export const getThreadByKey = catchAsync(async (req: any, res: any) => {
