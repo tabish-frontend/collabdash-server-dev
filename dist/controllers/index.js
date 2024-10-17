@@ -30,4 +30,5 @@ __exportStar(require("./notification"), exports);
 __exportStar(require("./contacts"), exports);
 __exportStar(require("./todos"), exports);
 __exportStar(require("./others"), exports);
+__exportStar(require("./calenderEvens"), exports);
 //# sourceMappingURL=index.js.map
