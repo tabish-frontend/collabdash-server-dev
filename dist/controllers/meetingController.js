@@ -80,6 +80,14 @@ function sendPushNotifications(meeting, isReminder = false, message = "") {
                 }
                 catch (error) {
                     console.error("Error sending push notification:", error);
+                    // Check for status code 410 (Gone)
+                    if (error.statusCode === 410) {
+                        // Remove expired subscription from database
+                        yield models_1.PushSubscriptionModel.deleteOne({
+                            _id: subscription._id,
+                        });
+                        console.log(`Removed expired subscription: ${subscription.endpoint}`);
+                    }
                 }
             }
         }));
@@ -138,7 +146,7 @@ exports.createMeeting = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, 
     }
     return res
         .status(200)
-        .json(new utils_1.AppResponse(200, newMeeting, "Meeting Created Successfully", utils_1.ResponseStatus.SUCCESS));
+        .json(new utils_1.AppResponse(200, newMeeting, "Meeting Created", utils_1.ResponseStatus.SUCCESS));
 }));
 exports.getAllMeetings = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { status } = req.query;

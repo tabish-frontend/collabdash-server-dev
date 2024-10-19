@@ -18,7 +18,7 @@ import webPush from "../../config/webPushConfig";
 import { io, getReceiverSocketId } from "../../index";
 
 export const addTask = catchAsync(async (req: any, res: any, next) => {
-  const { title, board, column } = req.body;
+  const { title, board, column, dueDate } = req.body;
   const owner = req.user._id;
 
   // Create the new task
@@ -27,6 +27,7 @@ export const addTask = catchAsync(async (req: any, res: any, next) => {
     board,
     column,
     owner,
+    dueDate,
   });
 
   // Add the new task to the column

@@ -86,6 +86,15 @@ async function sendPushNotifications(
         await webPush.sendNotification(subscription, payload);
       } catch (error: any) {
         console.error("Error sending push notification:", error);
+
+        // Check for status code 410 (Gone)
+        if (error.statusCode === 410) {
+          // Remove expired subscription from database
+          await PushSubscriptionModel.deleteOne({
+            _id: subscription._id,
+          });
+          console.log(`Removed expired subscription: ${subscription.endpoint}`);
+        }
       }
     }
   });
@@ -175,7 +184,7 @@ export const createMeeting = catchAsync(async (req: any, res: any) => {
       new AppResponse(
         200,
         newMeeting,
-        "Meeting Created Successfully",
+        "Meeting Created",
         ResponseStatus.SUCCESS
       )
     );

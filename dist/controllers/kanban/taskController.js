@@ -19,7 +19,7 @@ const models_2 = require("../../models");
 const webPushConfig_1 = __importDefault(require("../../config/webPushConfig"));
 const index_1 = require("../../index");
 exports.addTask = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { title, board, column } = req.body;
+    const { title, board, column, dueDate } = req.body;
     const owner = req.user._id;
     // Create the new task
     const newTask = yield models_1.TaskModel.create({
@@ -27,6 +27,7 @@ exports.addTask = (0, utils_1.catchAsync)((req, res, next) => __awaiter(void 0, 
         board,
         column,
         owner,
+        dueDate,
     });
     // Add the new task to the column
     yield models_1.ColumnModel.findByIdAndUpdate(column, {
