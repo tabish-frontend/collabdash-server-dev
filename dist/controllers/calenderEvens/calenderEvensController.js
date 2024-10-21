@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAllCalendarEvents = void 0;
+const enum_1 = require("../../types/enum");
 const models_1 = require("../../models"); // Adjust the import paths based on your project structure
 const utils_1 = require("../../utils"); // Assuming you have a catchAsync utility
 exports.getAllCalendarEvents = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -18,7 +19,7 @@ exports.getAllCalendarEvents = (0, utils_1.catchAsync)((req, res) => __awaiter(v
     let taskQuery = {};
     let meetingQuery = {};
     // If the user is not an admin, filter tasks and meetings by user ownership or participation
-    if (userRole !== "admin") {
+    if (userRole !== enum_1.Roles.Admin) {
         taskQuery = {
             $or: [{ owner: userId }, { assignedTo: userId }],
         };

@@ -1,3 +1,4 @@
+import { Roles } from "../../types/enum";
 import { TaskModel, MeetingModel } from "../../models"; // Adjust the import paths based on your project structure
 import { catchAsync } from "../../utils"; // Assuming you have a catchAsync utility
 import { Request, Response } from "express"; // Importing types for request and response
@@ -11,7 +12,7 @@ export const getAllCalendarEvents = catchAsync(
     let meetingQuery = {};
 
     // If the user is not an admin, filter tasks and meetings by user ownership or participation
-    if (userRole !== "admin") {
+    if (userRole !== Roles.Admin) {
       taskQuery = {
         $or: [{ owner: userId }, { assignedTo: userId }],
       };
