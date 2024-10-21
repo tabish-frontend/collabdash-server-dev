@@ -5,16 +5,21 @@ import { Request, Response } from "express"; // Importing types for request and 
 export const getAllCalendarEvents = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user._id;
+    const userRole = req.user.role;
 
-    // Build the query to fetch tasks where the user is either the owner or assigned
-    const taskQuery = {
-      $or: [{ owner: userId }, { assignedTo: userId }],
-    };
+    let taskQuery = {};
+    let meetingQuery = {};
 
-    // Build the query to fetch meetings where the user is either the owner or a participant
-    const meetingQuery = {
-      $or: [{ owner: userId }, { participants: userId }],
-    };
+    // If the user is not an admin, filter tasks and meetings by user ownership or participation
+    if (userRole !== "admin") {
+      taskQuery = {
+        $or: [{ owner: userId }, { assignedTo: userId }],
+      };
+
+      meetingQuery = {
+        $or: [{ owner: userId }, { participants: userId }],
+      };
+    }
 
     // Fetch tasks and meetings concurrently
     const [tasks, meetings] = await Promise.all([
@@ -26,21 +31,22 @@ export const getAllCalendarEvents = catchAsync(
         .populate("owner", "full_name username avatar"),
     ]);
 
-    // Transform tasks and meetings into the desired format
+    // Transform tasks into the desired format
     const taskEvents = tasks.map((task) => ({
       id: task._id,
       start: task.dueDate,
-      end: new Date(task.dueDate.getTime() + 1 * 60 * 60 * 1000), // Add 2 hours to the dueDate
+      end: new Date(task.dueDate.getTime() + 2 * 60 * 60 * 1000), // Add 2 hours to the dueDate
       title: task.title,
       color: "#F79009",
       type: "task",
       details: task, // Include the entire task object for additional details
     }));
 
+    // Transform meetings into the desired format
     const meetingEvents = meetings.map((meeting) => ({
       id: meeting._id,
       start: meeting.time,
-      end: new Date(meeting.time.getTime() + 2 * 60 * 60 * 1000), // Add 1 hour to the meeting time
+      end: new Date(meeting.time.getTime() + 1 * 60 * 60 * 1000), // Add 1 hour to the meeting time
       title: meeting.title,
       color: "#0a8263",
       type: "meeting",

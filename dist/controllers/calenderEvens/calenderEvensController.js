@@ -14,14 +14,18 @@ const models_1 = require("../../models"); // Adjust the import paths based on yo
 const utils_1 = require("../../utils"); // Assuming you have a catchAsync utility
 exports.getAllCalendarEvents = (0, utils_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
-    // Build the query to fetch tasks where the user is either the owner or assigned
-    const taskQuery = {
-        $or: [{ owner: userId }, { assignedTo: userId }],
-    };
-    // Build the query to fetch meetings where the user is either the owner or a participant
-    const meetingQuery = {
-        $or: [{ owner: userId }, { participants: userId }],
-    };
+    const userRole = req.user.role;
+    let taskQuery = {};
+    let meetingQuery = {};
+    // If the user is not an admin, filter tasks and meetings by user ownership or participation
+    if (userRole !== "admin") {
+        taskQuery = {
+            $or: [{ owner: userId }, { assignedTo: userId }],
+        };
+        meetingQuery = {
+            $or: [{ owner: userId }, { participants: userId }],
+        };
+    }
     // Fetch tasks and meetings concurrently
     const [tasks, meetings] = yield Promise.all([
         models_1.TaskModel.find(taskQuery)
@@ -31,20 +35,21 @@ exports.getAllCalendarEvents = (0, utils_1.catchAsync)((req, res) => __awaiter(v
             .populate("participants", "full_name username avatar")
             .populate("owner", "full_name username avatar"),
     ]);
-    // Transform tasks and meetings into the desired format
+    // Transform tasks into the desired format
     const taskEvents = tasks.map((task) => ({
         id: task._id,
         start: task.dueDate,
-        end: new Date(task.dueDate.getTime() + 1 * 60 * 60 * 1000),
+        end: new Date(task.dueDate.getTime() + 2 * 60 * 60 * 1000),
         title: task.title,
         color: "#F79009",
         type: "task",
         details: task, // Include the entire task object for additional details
     }));
+    // Transform meetings into the desired format
     const meetingEvents = meetings.map((meeting) => ({
         id: meeting._id,
         start: meeting.time,
-        end: new Date(meeting.time.getTime() + 2 * 60 * 60 * 1000),
+        end: new Date(meeting.time.getTime() + 1 * 60 * 60 * 1000),
         title: meeting.title,
         color: "#0a8263",
         type: "meeting",
